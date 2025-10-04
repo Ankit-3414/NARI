@@ -1,4 +1,4 @@
-# NARI – Not A Random Intelligence (v0.1)
+# NARI – Not A Random Intelligence
 
 👋 Welcome to **NARI**, your personal CLI study assistant!  
 This is the first version (v0.1) of NARI, designed to help you **track your study sessions**, manage subjects, and view your progress over time.
