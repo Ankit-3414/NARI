@@ -2,6 +2,7 @@
 import os
 import json
 from datetime import datetime
+from datetime import datetime
 
 # -------------------------
 # Paths
@@ -11,6 +12,18 @@ LOGS_DIR = os.path.join(DATA_DIR, "logs")
 SUBJECTS_FILE = os.path.join(DATA_DIR, "subjects.json")
 TASKS_FILE = os.path.join(DATA_DIR, "tasks.json")
 NOTES_FILE = os.path.join(DATA_DIR, "notes.json")
+
+def next_id(items):
+    """Return next numeric ID for a list of dicts with 'id' keys."""
+    if not items:
+        return 1
+    return max(int(item.get("id", 0)) for item in items) + 1
+
+
+def timestamp():
+    """Return current timestamp as a string in YYYY-MM-DD HH:MM:SS format."""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 # -------------------------
 # Directory & File Setup
