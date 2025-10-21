@@ -15,7 +15,7 @@ def _save_tasks(tasks):
 def add_task(argv):
     """add-task "title" -p priority -d yyyy-mm-dd"""
     parser = argparse.ArgumentParser(prog="add-task", add_help=False)
-    parser.add_argument("title", nargs=1)
+    parser.add_argument("title", nargs="+")  # Accept all words as title
     parser.add_argument("-p", "--priority", default="normal")
     parser.add_argument("-d", "--due", default=None)
     try:
@@ -24,7 +24,7 @@ def add_task(argv):
         print("Usage: add-task \"title\" [-p priority] [-d yyyy-mm-dd]")
         return
 
-    title = args.title[0]
+    title = " ".join(args.title)  # Join words into one string
     priority = args.priority
     due = args.due
 
