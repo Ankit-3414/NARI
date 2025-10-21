@@ -43,6 +43,22 @@ def ensure_directories_and_files():
             with open(path, "w") as f:
                 json.dump(default, f, indent=2)
 
+def pretty_print_list(title, items):
+    """Pretty print a list of tasks or items with basic formatting."""
+    print(f"\n=== {title} ===")
+    if not items:
+        print("No items found.")
+        return
+    for item in items:
+        status = item.get("status", "pending")
+        task_id = item.get("id", "?")
+        t_title = item.get("title", "")
+        priority = item.get("priority", "normal")
+        due = item.get("due", "N/A")
+        print(f"[{task_id}] {t_title} (Priority: {priority}, Due: {due}, Status: {status})")
+    print("=================\n")
+
+
 # -------------------------
 # JSON Helpers
 # -------------------------
