@@ -95,12 +95,43 @@ def open_note(argv):
         with open(note_path, "w") as f:
             f.write(note.get("content", ""))
 
-    # open editor (nano by default)
-    editor = os.environ.get("EDITOR", "nano")
+    # open editor (prefer $EDITOR, on Windows fallback to notepad, otherwise nano)
+    editor = os.environ.get("EDITOR") or ("notepad" if os.name == "nt" else "nano")
+    # Use system call — keep simple cross-platform behavior
     os.system(f"{editor} {note_path}")
 
     # read back updated content
     with open(note_path, "r") as f:
         note["content"] = f.read()
+    # save updated content back to notes.json
+    _save_notes(notes)
+    print(f"Note {id_} updated.")
 
-    _save_notes(not
+def delete_note(argv):
+    if not argv:
+        print("Usage: delete-note <id>")
+        return
+    try:
+        id_ = int(argv[0])
+    except ValueError:
+        print("Invalid id. Use integer.")
+        return
+
+    notes = _load_notes()
+    new_notes = [n for n in notes if int(n.get("id", -1)) != id_]
+    if len(new_notes) == len(notes):
+        print(f"No note with id {id_}")
+        return
+
+    # remove any associated text file
+    note_path = os.path.join(NOTES_DIR, f"{id_}.txt")
+    try:
+        if os.path.exists(note_path):
+            os.remove(note_path)
+    except Exception:
+        # non-fatal: continue even if file removal fails
+        pass
+
+    _save_notes(new_notes)
+    print(f"Note {id_} deleted.")
+

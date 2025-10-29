@@ -2,7 +2,6 @@
 import os
 import json
 from datetime import datetime
-from datetime import datetime
 
 # -------------------------
 # Paths
@@ -71,15 +70,29 @@ def load_json(path):
 
 def save_json(path, data):
     """Save JSON data to file safely."""
-    with open(path, "w") as f:
+    # ensure parent directory exists
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    # write atomically: write to temp file then replace
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w") as f:
         json.dump(data, f, indent=2)
+    try:
+        os.replace(tmp_path, path)
+    except Exception:
+        # fallback to non-atomic write
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
 
 # -------------------------
 # Timestamp Helper
 # -------------------------
 def current_timestamp():
     """Return a string timestamp."""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # kept for backward compatibility
+    return timestamp()
 
 # -------------------------
 # Logging Helper
