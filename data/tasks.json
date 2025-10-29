@@ -1,3 +1,13 @@
 {
-  "tasks": []
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Test task",
+      "priority": "normal",
+      "due": null,
+      "status": "completed",
+      "created": "2025-10-30 00:31:46",
+      "completed_at": "2025-10-30 00:31:46"
+    }
+  ]
 }
