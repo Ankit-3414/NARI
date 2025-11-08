@@ -36,5 +36,3 @@ This is the first version (v0.1) of NARI, designed to help you **track your stud
 python -m venv venv
 
 source venv/bin/activate  
-# Linux/macOS venv\Scripts\activate    
-# Windows  pip install -r requirements.txt
