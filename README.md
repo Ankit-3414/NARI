@@ -1,7 +1,7 @@
 # NARI – Not A Random Intelligence
 
 👋 Welcome to **NARI**, your personal CLI study assistant!  
-This is the first version (v0.1) of NARI, designed to help you **track your study sessions**, manage subjects, and view your progress over time.
+This is the second iteration (v0.22) of NARI, designed to help you **track your study sessions**, manage subjects, and view your progress over time.
 
 ---
 
@@ -34,6 +34,5 @@ This is the first version (v0.1) of NARI, designed to help you **track your stud
    git clone https://github.com/Ankit-3414/NARI.git
    cd NARI
 python -m venv venv
+
 source venv/bin/activate  
-# Linux/macOS venv\Scripts\activate    
-# Windows  pip install -r requirements.txt
