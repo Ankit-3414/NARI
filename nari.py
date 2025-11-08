@@ -1,25 +1,9 @@
-# nari.py (v0.2 Phase 1 unified CLI)
-import random
-from modules import subjects, study, utils
-from modules import tasks, notes
-
-# ensure data structure exists before anything else
-utils.ensure_directories_and_files()
-
-def greet():
-    greetings = [
-        "Hey! Ready to study?",
-        "👋 Welcome back!",
-        "Let's get productive! 🚀",
-        "Time to focus!",
-        "Hello! What shall we tackle today?"
-    ]
-    print(random.choice(greetings))
+﻿from modules import subjects, notes, tasks, utils
+from modules.study_manager import StudyManager
 
 def show_help():
-    print("\n🛠️  NARI Commands:")
     print(" subjects add <name>            - Add a new subject")
-    print(" subjects remove <name>         - Remove a subject")
+    print(" subjects remove <n>         - Remove a subject")
     print(" subjects list                  - List all subjects")
     print(" study start <subject>          - Start a study session")
     print(" study stop                     - Stop current session (prompts to save)")
@@ -44,7 +28,30 @@ def handle_command(cmd, args):
 
     # === STUDY ===
     elif cmd == "study":
-        study.handle_command(args, subjects.load_subjects)
+        study_mgr = StudyManager()
+        if not args:
+            print("Usage: study [start/stop/report]")
+            return
+        sub = args[0].lower()
+        sub_args = args[1:]
+        if sub == "start" and sub_args:
+            subject = " ".join(sub_args)
+            session = study_mgr.start_session({"subject": subject})
+            if session:
+                print(f"Started study session for {subject}")
+        elif sub == "stop":
+            # TODO: Get current active session and stop it
+            print("Stopping study session...")
+        elif sub == "report":
+            sessions = study_mgr.get_all_sessions()
+            if sessions:
+                print("\n=== Study Sessions ===")
+                for session in sessions:
+                    print(f"{session['date']} - {session['subject']}: {session.get('start_time', 'N/A')} to {session.get('end_time', 'N/A')}")
+            else:
+                print("No study sessions found")
+        else:
+            print("Unknown study command. Try: start, stop, report")
 
     # === TASKS ===
     elif cmd == "tasks":
@@ -84,23 +91,34 @@ def handle_command(cmd, args):
     elif cmd in ["help", "?"]:
         show_help()
     elif cmd in ["exit", "quit", "bye", "off"]:
-        print("👋 Goodbye!")
+        print(" Goodbye!")
         return "exit"
     else:
-        print("❓ Unknown command. Try 'subjects', 'study', 'tasks', 'notes', 'help', or 'exit'.")
+        print(" Unknown command. Try subjects, study, tasks, notes, help, or exit.")
 
 def main():
-    greet()
+    # Ensure data files exist
+    utils.ensure_directories_and_files()
+    
+    print("\n Welcome to NARI - Your Study Assistant!")
+    print("Type help for available commands")
+    
     while True:
-        raw = input("\n> ").strip()
-        if not raw:
-            continue
-        parts = raw.split()
-        cmd = parts[0].lower()
-        args = parts[1:]
-        result = handle_command(cmd, args)
-        if result == "exit":
+        try:
+            raw = input("\n> ").strip()
+            if not raw:
+                continue
+            parts = raw.split()
+            cmd = parts[0].lower()
+            args = parts[1:]
+            result = handle_command(cmd, args)
+            if result == "exit":
+                break
+        except KeyboardInterrupt:
+            print("\n Goodbye!")
             break
+        except Exception as e:
+            print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     main()

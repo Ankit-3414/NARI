@@ -7,7 +7,23 @@
       "due": null,
       "status": "completed",
       "created": "2025-10-30 00:31:46",
-      "completed_at": "2025-10-30 00:31:46"
+      "completed_at": "2025-11-09 02:21:06"
+    },
+    {
+      "id": 2,
+      "title": "WebSocket Test Task",
+      "priority": "normal",
+      "due": null,
+      "status": "pending",
+      "created": "2025-11-09 02:06:18"
+    },
+    {
+      "id": 3,
+      "title": "Test task",
+      "priority": "normal",
+      "due": null,
+      "status": "pending",
+      "created": "2025-11-09 02:21:06"
     }
   ]
 }

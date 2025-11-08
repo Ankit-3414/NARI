@@ -27,6 +27,10 @@ def timestamp():
 # -------------------------
 # Directory & File Setup
 # -------------------------
+def ensure_directory(path):
+    """Create directory if it doesn't exist."""
+    os.makedirs(path, exist_ok=True)
+
 def ensure_directories_and_files():
     """Create necessary directories and empty JSON files if they don't exist."""
     os.makedirs(LOGS_DIR, exist_ok=True)
