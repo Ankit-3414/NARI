@@ -13,15 +13,6 @@ from flask import send_from_directory, render_template
 server_thread = None
 server_running = False
 
-# Serve React App
-@app.route('/')
-def serve_index():
-    return send_from_directory('frontend/dist', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('frontend/dist', path)
-
 def show_help():
     print("\n=== NARI CLI Commands ===")
     print(" subjects add <name>                  - Add a new subject")
