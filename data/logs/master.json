@@ -1,18 +1,3 @@
 {
-  "sessions": [
-    {
-      "date": "2025-11-09",
-      "subject": "Test Subject",
-      "start_time": "02:13",
-      "end_time": "02:13",
-      "elapsed_minutes": 0
-    },
-    {
-      "date": "2025-11-09",
-      "subject": "Test Subject",
-      "start_time": "02:13",
-      "end_time": "02:13",
-      "elapsed_minutes": 0
-    }
-  ]
+  "sessions": []
 }
