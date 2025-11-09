@@ -113,14 +113,16 @@ def stop_server():
         print("Server is not running.")
 
 def check_server_status():
-    try:
-        response = requests.get("http://localhost:5000", timeout=2)
-        if response.status_code in [200, 404]:
-            print("✅ Server is running at http://localhost:5000")
-        else:
-            print("⚠️ Server responded but not healthy.")
-    except requests.exceptions.RequestException:
-        print("❌ Server is not running.")
+    urls = ["http://0.0.0.0:5000", "http://127.0.0.1:5000"]
+    for url in urls:
+        try:
+            response = requests.get(url, timeout=2)
+            if response.status_code in [200, 404]:
+                print(f"✅ Server is running at {url}")
+                return
+        except requests.exceptions.RequestException:
+            continue
+    print("❌ Server is not running.")
 
 def restart_server():
     stop_server()
@@ -165,9 +167,18 @@ def main():
         check_server_status()
     if args.restart:
         restart_server()
-    if args.server:
+    if args.server and args.cli:
         run_server()
-    if args.cli:
+        run_cli()
+    elif args.server:
+        run_server()
+        print("Press Ctrl+C to stop the server.")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nServer stopped.")
+    elif args.cli:
         run_cli()
     if not any([args.cli, args.server, args.status, args.restart]):
         print("No mode specified. Use --cli, --server, --status, or --restart.")
