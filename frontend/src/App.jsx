@@ -1,6 +1,6 @@
 import React from "react";
-import NariFrontend from "./components/NariFrontend";
+import Home from "./components/Home";
 
 export default function App() {
-  return <NariFrontend />;
+  return <Home />;
 }

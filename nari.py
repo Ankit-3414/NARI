@@ -5,12 +5,22 @@ import time
 import sys
 
 from modules import subjects, notes, tasks, utils
-from modules.study_manager import StudyManager
+from backend import session_manager
 from backend.app import _app as app
 from backend.socket import socketio
+from flask import send_from_directory, render_template
 
 server_thread = None
 server_running = False
+
+# Serve React App
+@app.route('/')
+def serve_index():
+    return send_from_directory('frontend/dist', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('frontend/dist', path)
 
 def show_help():
     print("\n=== NARI CLI Commands ===")
@@ -33,22 +43,27 @@ def show_help():
 def handle_command(cmd, args):
     if cmd in ["subjects", "subject"]:
         subjects.handle_command(args)
-    elif cmd in ["add", "remove", "list"]:
-        subjects.handle_command([cmd] + args)
     elif cmd == "study":
-        study_mgr = StudyManager()
         if not args:
             print("Usage: study [start/stop/report]")
             return
         sub, sub_args = args[0].lower(), args[1:]
         if sub == "start" and sub_args:
             subject = " ".join(sub_args)
-            session = study_mgr.start_session({"subject": subject})
-            if session:
+            ok, result = session_manager.start_session(subject)
+            if ok:
                 print(f"Started study session for {subject}")
+            else:
+                print(f"Error starting study session: {result}")
         elif sub == "stop":
-            print("Stopping study session...")  # TODO: Implement session stop logic
+            ok, result = session_manager.stop_session(save=True)
+            if ok:
+                print(f"Stopped study session: {result['subject']} for {result['elapsed_seconds']} seconds")
+            else:
+                print(f"Error stopping study session: {result}")
         elif sub == "report":
+            from modules.study_manager import StudyManager # Local import for report
+            study_mgr = StudyManager()
             sessions = study_mgr.get_all_sessions()
             if sessions:
                 print("\n=== Study Sessions ===")

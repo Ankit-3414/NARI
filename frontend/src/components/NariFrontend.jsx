@@ -15,16 +15,23 @@ import SubjectsPanel from "./Panels/SubjectsPanel";
 import StudyPanel from "./Panels/StudyPanel";
 import ActivityPanel from "./Panels/ActivityPanel";
 import CoreOrb from "./CoreOrb";
+import Clock from "./Clock";
 
 export default function NariFrontend() {
   const [subjects, setSubjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [notes, setNotes] = useState([]);
   const [studyStatus, setStudyStatus] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState(null); // New state for selected subject
+  const [elapsedTime, setElapsedTime] = useState(0); // New state for elapsed time
   const [serverOk, setServerOk] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null); // New state for error messages
   const [activity, setActivity] = useState([]);
   const socketRef = useRef(null);
+
+  function pushActivity(line) {
+    setActivity((a) => [{ time: new Date().toLocaleTimeString(), text: line }, ...a].slice(0, 200));
+  }
 
   // initial load
   useEffect(() => {
@@ -103,17 +110,40 @@ export default function NariFrontend() {
     socket.on("study_stopped", (payload) => {
       setStudyStatus(null);
       pushActivity(`Study stopped: ${payload.subject}`);
+      setElapsedTime(0); // Reset elapsed time on stop
     });
-
-    function pushActivity(line) {
-      setActivity((a) => [{ time: new Date().toLocaleTimeString(), text: line }, ...a].slice(0, 200));
-    }
 
     return () => {
       mounted = false;
       // optional: socket.disconnect();
     };
   }, []);
+
+  // Elapsed time calculation
+  useEffect(() => {
+    let elapsedTimerId;
+    if (studyStatus && studyStatus.start) {
+      const startTime = new Date(studyStatus.start).getTime();
+      elapsedTimerId = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    } else if (elapsedTimerId) {
+      clearInterval(elapsedTimerId);
+    }
+
+    return () => {
+      if (elapsedTimerId) {
+        clearInterval(elapsedTimerId);
+      }
+    };
+  }, [studyStatus, setElapsedTime]);
+
+  const formatElapsedTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#030417] to-[#071027] text-slate-100 p-6">
@@ -133,7 +163,7 @@ export default function NariFrontend() {
           </div>
 
           <div className="mt-4">
-            <SubjectsPanel subjects={subjects} setSubjects={setSubjects} />
+            <SubjectsPanel subjects={subjects} setSubjects={setSubjects} selectedSubject={selectedSubject} setSelectedSubject={setSelectedSubject} />
           </div>
 
           <div className="mt-6">
@@ -146,10 +176,19 @@ export default function NariFrontend() {
         </aside>
 
         <main className="col-span-6 rounded-3xl relative overflow-hidden p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] border border-[rgba(255,255,255,0.03)]">
+          <Clock />
           <div className="text-center mb-4">
             <div className="text-sm text-slate-400">Mode</div>
             <div className="text-2xl font-extrabold tracking-wide">{studyStatus ? "FOCUS" : "IDLE"}</div>
-            <div className="text-xs text-slate-500">{studyStatus ? `Studying: ${studyStatus.subject}` : "No subject selected"}</div>
+            <div className="text-xs text-slate-500">
+              {studyStatus ? (
+                <>
+                  Studying: {studyStatus.subject} ({formatElapsedTime(elapsedTime)})
+                </>
+              ) : (
+                selectedSubject ? `Selected: ${selectedSubject}` : "No subject selected"
+              )}
+            </div>
             {errorMessage && (
               <div className="mt-2 text-red-400 text-sm">
                 {errorMessage}
@@ -160,7 +199,7 @@ export default function NariFrontend() {
           <div className="flex flex-col items-center">
             <CoreOrb studyStatus={studyStatus} />
             <div className="mt-6">
-              <StudyPanel studyStatus={studyStatus} onStart={startStudy} onStop={stopStudy} />
+              <StudyPanel studyStatus={studyStatus} onStart={startStudy} onStop={stopStudy} selectedSubject={selectedSubject} />
             </div>
           </div>
         </main>

@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "node env.js && vite",
+  "dev": "vite",
+  "dev-host": "vite --host",
+
   "build": "vite build",
   "preview": "vite preview"
 }

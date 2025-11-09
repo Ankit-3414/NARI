@@ -32,3 +32,8 @@ def status():
 @bp.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({"ok": True})
+
+@bp.route("/api/time", methods=["GET"])
+def get_server_time():
+    from datetime import datetime
+    return jsonify({"serverTime": datetime.utcnow().isoformat() + "Z"})

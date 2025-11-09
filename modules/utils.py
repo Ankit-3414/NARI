@@ -69,26 +69,38 @@ def load_json(path):
     """Load JSON data from file safely."""
     if not os.path.exists(path):
         return {}
-    with open(path, "r") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        append_log("file_errors.log", f"FileNotFoundError: {path}")
+        return {}
+    except json.JSONDecodeError as e:
+        append_log("file_errors.log", f"JSONDecodeError in {path}: {e}")
+        return {}
+    except Exception as e:
+        append_log("file_errors.log", f"Unexpected error loading {path}: {e}")
+        return {}
 
 def save_json(path, data):
     """Save JSON data to file safely."""
-    # ensure parent directory exists
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
 
-    # write atomically: write to temp file then replace
     tmp_path = f"{path}.tmp"
-    with open(tmp_path, "w") as f:
-        json.dump(data, f, indent=2)
     try:
-        os.replace(tmp_path, path)
-    except Exception:
-        # fallback to non-atomic write
-        with open(path, "w") as f:
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+        os.replace(tmp_path, path)
+    except Exception as e:
+        append_log("file_errors.log", f"Error saving {path}: {e}")
+        # Fallback to non-atomic write if atomic fails, but log the error
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception as fallback_e:
+            append_log("file_errors.log", f"Fallback write failed for {path}: {fallback_e}")
 
 # -------------------------
 # Timestamp Helper

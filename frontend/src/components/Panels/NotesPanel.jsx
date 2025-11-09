@@ -1,5 +1,5 @@
 import React from "react";
-import { createNote } from "../../lib/api";
+import { createNote, deleteNote } from "../../lib/api";
 
 export default function NotesPanel({ notes = [] }) {
   async function add() {
@@ -9,6 +9,15 @@ export default function NotesPanel({ notes = [] }) {
       await createNote({ title, content: "" });
     } catch (e) {
       alert("Create failed: " + e.message);
+    }
+  }
+
+  async function remove(id) {
+    if (!confirm("Remove this note?")) return;
+    try {
+      await deleteNote(id);
+    } catch (e) {
+      alert("Delete failed: " + e.message);
     }
   }
 
@@ -22,7 +31,10 @@ export default function NotesPanel({ notes = [] }) {
         {notes.length === 0 && <div className="text-xs text-slate-500">No notes</div>}
         {notes.slice(0, 50).map((n) => (
           <div key={n.id} className="p-2 rounded-md bg-[rgba(255,255,255,0.01)]">
-            <div className="text-sm font-medium">{n.title}</div>
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium">{n.title}</div>
+              <button onClick={() => remove(n.id)} className="text-xs text-red-400">x</button>
+            </div>
             <div className="text-xs text-slate-500">{new Date(n.created).toLocaleString()}</div>
           </div>
         ))}
