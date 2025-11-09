@@ -6,6 +6,7 @@ import {
   getStudyStatus,
   startStudy,
   stopStudy,
+  getHealth,
 } from "../lib/api";
 import { getSocket } from "../lib/socket";
 import TasksPanel from "./Panels/TasksPanel";
@@ -21,6 +22,7 @@ export default function NariFrontend() {
   const [notes, setNotes] = useState([]);
   const [studyStatus, setStudyStatus] = useState(null);
   const [serverOk, setServerOk] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null); // New state for error messages
   const [activity, setActivity] = useState([]);
   const socketRef = useRef(null);
 
@@ -29,21 +31,25 @@ export default function NariFrontend() {
     let mounted = true;
     async function load() {
       try {
-        const [s, t, n, ss] = await Promise.all([
+        const [s, t, n, ss, healthStatus] = await Promise.all([
           getSubjects().catch(() => []),
           getTasks().catch(() => []),
           getNotes().catch(() => []),
           getStudyStatus().catch(() => null),
+          getHealth(),
         ]);
         if (!mounted) return;
+        console.log("Fetched subjects:", s); // Debugging line
         setSubjects(s || []);
         setTasks(t || []);
         setNotes(n || []);
         setStudyStatus(ss || null);
-        setServerOk(true);
+        setServerOk(healthStatus.ok);
+        setErrorMessage(healthStatus.ok ? null : "Failed to connect to server or load data.");
       } catch (e) {
         console.warn("load error", e);
         setServerOk(false);
+        setErrorMessage("Failed to connect to server or load data."); // Set a generic error message
       }
     }
     load();
@@ -110,11 +116,11 @@ export default function NariFrontend() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030417] to-[#071027] text-slate-100 p-6">
+    <div className="min-h-screen bg-linear-to-b from-[#030417] to-[#071027] text-slate-100 p-6">
       <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
         <aside className="col-span-3 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)] rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400/40 to-amber-400/30 flex items-center justify-center text-black font-bold">N</div>
+            <div className="w-12 h-12 rounded-full bg-linear-to-br from-cyan-400/40 to-amber-400/30 flex items-center justify-center text-black font-bold">N</div>
             <div>
               <div className="text-sm text-slate-300">NARI</div>
               <div className="text-xs text-slate-500">Not A Random Intelligence</div>
@@ -133,7 +139,7 @@ export default function NariFrontend() {
           <div className="mt-6">
             <div className="text-xs text-slate-400">Quick</div>
             <div className="mt-2 flex flex-col gap-2">
-              <button onClick={() => window.dispatchEvent(new Event("nari:add-task"))} className="py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-sm">+ Task</button>
+              <button onClick={() => window.dispatchEvent(new Event("nari:add-task"))} className="py-2 rounded-lg bg-linear-to-r from-pink-500 to-purple-500 text-sm">+ Task</button>
               <button onClick={() => window.dispatchEvent(new Event("nari:add-note"))} className="py-2 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)] text-sm">+ Note</button>
             </div>
           </div>
@@ -144,6 +150,11 @@ export default function NariFrontend() {
             <div className="text-sm text-slate-400">Mode</div>
             <div className="text-2xl font-extrabold tracking-wide">{studyStatus ? "FOCUS" : "IDLE"}</div>
             <div className="text-xs text-slate-500">{studyStatus ? `Studying: ${studyStatus.subject}` : "No subject selected"}</div>
+            {errorMessage && (
+              <div className="mt-2 text-red-400 text-sm">
+                {errorMessage}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col items-center">

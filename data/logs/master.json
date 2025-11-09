@@ -1,3 +1,11 @@
 {
-  "sessions": []
+  "sessions": [
+    {
+      "date": "2025-11-09",
+      "subject": "physics",
+      "start_time": "22:42",
+      "end_time": "22:43",
+      "elapsed_minutes": 0
+    }
+  ]
 }

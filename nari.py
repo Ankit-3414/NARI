@@ -6,7 +6,8 @@ import sys
 
 from modules import subjects, notes, tasks, utils
 from modules.study_manager import StudyManager
-from app import app, socketio
+from backend.app import _app as app
+from backend.socket import socketio
 
 server_thread = None
 server_running = False

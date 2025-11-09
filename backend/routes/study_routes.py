@@ -28,3 +28,7 @@ def stop():
 def status():
     s = session_manager.get_status()
     return jsonify(s)
+
+@bp.route("/api/health", methods=["GET"])
+def health_check():
+    return jsonify({"ok": True})

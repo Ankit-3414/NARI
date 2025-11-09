@@ -1,4 +1,16 @@
 {
-  "notes": []
-  
+  "notes": [
+    {
+      "id": 1,
+      "title": "i have done it!",
+      "content": "",
+      "created": "2025-11-09 22:44:40"
+    },
+    {
+      "id": 2,
+      "title": "hello?",
+      "content": "",
+      "created": "2025-11-09 22:44:49"
+    }
+  ]
 }
