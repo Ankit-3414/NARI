@@ -4,17 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "vite",
-  "dev-host": "vite --host",
-
-  "build": "vite build",
-  "preview": "vite preview"
-}
-,
+    "dev": "vite",
+    "dev-host": "vite --host",
+    "build": "npx vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
+    "react-circular-progressbar": "^2.2.0",
     "react-dom": "^19.1.1",
     "socket.io-client": "^4.8.1"
   },

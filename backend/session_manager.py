@@ -10,24 +10,27 @@ _current = {
     "start_time": None  # datetime
 }
 
+# ...existing code...
 def start_session(subject: str):
     with _lock:
         if _current["subject"] is not None:
             # already running
             return False, "session_already_running"
         _current["subject"] = subject
-        _current["start_time"] = datetime.now()
+        _current["start_time"] = datetime.utcnow() # <--- CHANGED TO UTC
         # emit event
-        socketio.emit("study_started", {"subject": subject, "start": _current["start_time"].isoformat()}, namespace=NAMESPACE)
-        return True, {"subject": subject, "start": _current["start_time"].isoformat()}
+        socketio.emit("study_started", {"subject": subject, "start": _current["start_time"].isoformat() + "Z"}, namespace=NAMESPACE) # <--- ADDED "Z" for UTC
+        return True, {"subject": subject, "start": _current["start_time"].isoformat() + "Z"} # <--- ADDED "Z" for UTC
+# ...existing code...
 
+# ...existing code...
 def stop_session(save: bool = True):
     with _lock:
         if _current["subject"] is None:
             return False, "no_active_session"
         subject = _current["subject"]
         start_time = _current["start_time"]
-        end_time = datetime.now()
+        end_time = datetime.utcnow() # <--- CHANGED TO UTC
         elapsed_seconds = int((end_time - start_time).total_seconds())
         # clear current BEFORE potentially slow persistence to keep status consistent
         _current["subject"] = None
@@ -45,17 +48,19 @@ def stop_session(save: bool = True):
     # emit event
     socketio.emit("study_stopped", {
         "subject": subject,
-        "start": start_time.isoformat(),
-        "end": end_time.isoformat(),
+        "start": start_time.isoformat() + "Z", # <--- ADDED "Z" for UTC
+        "end": end_time.isoformat() + "Z",     # <--- ADDED "Z" for UTC
         "elapsed_seconds": elapsed_seconds
     }, namespace=NAMESPACE)
-    return True, {"subject": subject, "start": start_time.isoformat(), "end": end_time.isoformat(), "elapsed_seconds": elapsed_seconds}
+    return True, {"subject": subject, "start": start_time.isoformat() + "Z", "end": end_time.isoformat() + "Z", "elapsed_seconds": elapsed_seconds}
+# ...existing code...
 
+# ...existing code...
 def get_status():
     with _lock:
         if _current["subject"] is None:
             return None
         return {
             "subject": _current["subject"],
-            "start": _current["start_time"].isoformat()
+            "start": _current["start_time"].isoformat() + "Z" # <--- ADDED "Z" for UTC
         }

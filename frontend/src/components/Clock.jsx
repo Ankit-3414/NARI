@@ -9,22 +9,30 @@ export default function Clock() {
       try {
         const response = await getServerTime();
         if (response && response.serverTime) {
-          setTime(new Date(response.serverTime));
+          const serverDate = new Date(response.serverTime);
+          setTime(serverDate);
+          console.log("Clock: Initialized with server time:", serverDate); // Log initial server time
         }
       } catch (error) {
-        console.error("Failed to fetch server time:", error);
-        // Fallback to local time if server time fetch fails
-        setTime(new Date());
+        console.error("Clock: Failed to fetch server time:", error);
+        setTime(new Date()); // Fallback to local time if server time fetch fails
       }
     }
 
     fetchAndSetTime();
 
     const timerId = setInterval(() => {
-      setTime(prevTime => new Date(prevTime.getTime() + 1000));
+      setTime(prevTime => {
+        const newTime = new Date(prevTime.getTime() + 1000);
+        console.log("Clock: Updating time to:", newTime); // Log every update
+        return newTime;
+      });
     }, 1000);
 
-    return () => clearInterval(timerId);
+    return () => {
+      console.log("Clock: Clearing interval."); // Log when interval is cleared
+      clearInterval(timerId);
+    };
   }, []);
 
   const formatTime = (date) => {

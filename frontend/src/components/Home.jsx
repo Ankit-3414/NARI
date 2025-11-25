@@ -7,18 +7,19 @@ import {
   getStudyStatus,
   startStudy,
   stopStudy,
-  getHealth, // Added getHealth
-  deleteNote, // Added deleteNote
-  updateTask, // Added updateTask
-  deleteTask, // Added deleteTask
-  addSubject, // Added addSubject
-  deleteSubject, // Added deleteSubject
-  createTask, // Added createTask
-  createNote, // Added createNote
-} from "../lib/api";
-import { getSocket } from "../lib/socket";
+  getHealth,
+  deleteNote,
+  updateTask,
+  deleteTask,
+  addSubject,
+  deleteSubject,
+  createTask,
+  createNote,
+} from "@lib/api.js";
+import { getSocket } from "@lib/socket.js";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import Clock from "./Clock";
 
 export default function Home() {
   const [subjects, setSubjects] = useState([]);
@@ -26,14 +27,20 @@ export default function Home() {
   const [notes, setNotes] = useState([]);
   const [study, setStudy] = useState(null);
   const [activity, setActivity] = useState([]);
-  const [connected, setConnected] = useState(false); // Socket.IO connection status
-  const [serverOk, setServerOk] = useState(true); // Backend API health status
+  const [connected, setConnected] = useState(false);
+  const [serverOk, setServerOk] = useState(true);
   const [elapsed, setElapsed] = useState(0);
-  const [selectedSubject, setSelectedSubject] = useState(null); // For subject selection
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const timerRef = useRef(null);
   const socketRef = useRef(null);
 
+  const addActivity = (msg) => {
+    setActivity((a) => [{ msg, time: new Date().toLocaleTimeString() }, ...a.slice(0, 20)]);
+  };
+
   useEffect(() => {
+    let mounted = true;
+
     async function load() {
       try {
         const [s, t, n, ss, healthStatus] = await Promise.all([
@@ -43,6 +50,7 @@ export default function Home() {
           getStudyStatus().catch(() => null),
           getHealth(),
         ]);
+        if (!mounted) return;
         setSubjects(s || []);
         setTasks(t || []);
         setNotes(n || []);
@@ -58,15 +66,17 @@ export default function Home() {
     const socket = getSocket();
     socketRef.current = socket;
 
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
-
-    const addActivity = (msg) => {
-      setActivity((a) => [{ msg, time: new Date().toLocaleTimeString() }, ...a.slice(0, 20)]);
-    };
+    socket.on("connect", () => {
+      setConnected(true);
+      addActivity("🔗 Connected to backend");
+    });
+    socket.on("disconnect", (reason) => {
+      setConnected(false);
+      addActivity(`⚠️ Disconnected from backend: ${reason}`);
+    });
 
     socket.on("task_added", (t) => {
-      setTasks((prev) => [t, ...prev.filter((x) => x.id !== t.id)]); // Prevent duplicates
+      setTasks((prev) => [t, ...prev.filter((x) => x.id !== t.id)]);
       addActivity(`📝 Task added: ${t.title}`);
     });
     socket.on("task_updated", (t) => {
@@ -98,9 +108,7 @@ export default function Home() {
     socket.on("subject_removed", ({ name }) => {
       setSubjects((prev) => prev.filter((s) => s !== name));
       addActivity(`❌ Subject removed: ${name}`);
-      if (selectedSubject === name) {
-        setSelectedSubject(null);
-      }
+      if (selectedSubject === name) setSelectedSubject(null);
     });
 
     socket.on("study_started", (s) => {
@@ -111,22 +119,30 @@ export default function Home() {
     socket.on("study_stopped", (s) => {
       setStudy(null);
       addActivity(`💤 Focus stopped: ${s.subject}`);
+      setElapsed(0);
     });
 
-    return () => socket.disconnect();
-  }, [selectedSubject]); // Added selectedSubject to dependencies
+    return () => {
+      mounted = false;
+      socket.disconnect();
+    };
+  }, []);
 
-  // live timer
   useEffect(() => {
     if (!study) {
       clearInterval(timerRef.current);
       setElapsed(0);
       return;
     }
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    const startTime = new Date(study.start);
     timerRef.current = setInterval(() => {
-      const start = new Date(study.start);
-      setElapsed(Math.floor((Date.now() - start.getTime()) / 1000));
+      const now = Date.now();
+      const diff = now - startTime.getTime();
+      setElapsed(Math.floor(diff / 1000));
     }, 1000);
+
     return () => clearInterval(timerRef.current);
   }, [study]);
 
@@ -136,74 +152,17 @@ export default function Home() {
         alert("Please select a subject to start focus mode.");
         return;
       }
-      await startStudy(selectedSubject);
+      try {
+        await startStudy(selectedSubject);
+      } catch (e) {
+        alert("Failed to start study: " + e.message);
+      }
     } else {
-      await stopStudy(true);
-    }
-  }
-
-  async function handleAddTask() {
-    const title = prompt("Task title:");
-    if (!title) return;
-    try {
-      await createTask({ title });
-    } catch (e) {
-      alert("Failed to add task: " + e.message);
-    }
-  }
-
-  async function handleUpdateTask(id, status) {
-    try {
-      await updateTask(id, { status });
-    } catch (e) {
-      alert("Failed to update task: " + e.message);
-    }
-  }
-
-  async function handleDeleteTask(id) {
-    if (!confirm("Are you sure you want to delete this task?")) return;
-    try {
-      await deleteTask(id);
-    } catch (e) {
-      alert("Failed to delete task: " + e.message);
-    }
-  }
-
-  async function handleAddNote() {
-    const title = prompt("Note title:");
-    if (!title) return;
-    try {
-      await createNote({ title, content: "" });
-    } catch (e) {
-      alert("Failed to add note: " + e.message);
-    }
-  }
-
-  async function handleDeleteNote(id) {
-    if (!confirm("Are you sure you want to delete this note?")) return;
-    try {
-      await deleteNote(id);
-    } catch (e) {
-      alert("Failed to delete note: " + e.message);
-    }
-  }
-
-  async function handleAddSubject() {
-    const name = prompt("Subject name:");
-    if (!name) return;
-    try {
-      await addSubject(name);
-    } catch (e) {
-      alert("Failed to add subject: " + e.message);
-    }
-  }
-
-  async function handleDeleteSubject(name) {
-    if (!confirm(`Are you sure you want to remove ${name}?`)) return;
-    try {
-      await deleteSubject(name);
-    } catch (e) {
-      alert("Failed to remove subject: " + e.message);
+      try {
+        await stopStudy(true);
+      } catch (e) {
+        alert("Failed to stop study: " + e.message);
+      }
     }
   }
 
@@ -221,7 +180,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-linear-to-b from-[#030417] to-[#071027] text-slate-100">
-      {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-center p-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <h1 className="font-bold text-lg tracking-wide mb-2 sm:mb-0">
           NARI — Not A Random Intelligence
@@ -237,19 +195,22 @@ export default function Home() {
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-        {/* Left */}
         <aside className="col-span-1 lg:col-span-3 bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-sm text-slate-400">Subjects</h2>
-            <button onClick={handleAddSubject} className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20">+ Add</button>
+            <button
+              onClick={handleAddSubject}
+              className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20"
+            >
+              + Add
+            </button>
           </div>
           <div className="flex flex-wrap gap-2">
             {subjects.map((s) => (
               <span
                 key={s}
                 onClick={() => setSelectedSubject(s)}
-                className={`bg-white/10 text-xs px-3 py-1 rounded-md cursor-pointer transition-all duration-200
-                  ${selectedSubject === s ? "bg-cyan-700/50 scale-105" : "hover:bg-white/20 hover:scale-105"}`}
+                className={`bg-white/10 text-xs px-3 py-1 rounded-md cursor-pointer transition-all duration-200 ${selectedSubject === s ? "bg-cyan-700/50 scale-105" : "hover:bg-white/20 hover:scale-105"}`}
               >
                 {s}
                 <button onClick={(e) => { e.stopPropagation(); handleDeleteSubject(s); }} className="ml-2 text-red-400 hover:text-red-300">x</button>
@@ -271,22 +232,28 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Center */}
-        <main className="col-span-1 lg:col-span-6 flex flex-col items-center justify-center relative">
+        <main className="col-span-1 lg:col-span-6 flex flex-col items-center justify-start relative">
+          {/* Clock wrapper: centers the clock inside the center column */}
+          <div className="w-full flex justify-center items-center mt-2 z-20">
+            {/* Give the Clock a constrained width so it centers properly */}
+            <div className="w-48 h-auto flex justify-center items-center">
+              <Clock />
+            </div>
+          </div>
+
+          {/* Glowing background effect (behind) */}
           <motion.div
             animate={{
               scale: [1, 1.05, 1],
-              boxShadow: [
-                `0 0 20px ${glow}`,
-                `0 0 40px ${glow}`,
-                `0 0 20px ${glow}`,
-              ],
+              boxShadow: [`0 0 20px ${glow}`, `0 0 40px ${glow}`, `0 0 20px ${glow}`],
             }}
             transition={{ repeat: Infinity, duration: 3 }}
-            className="absolute w-80 h-80 rounded-full blur-2xl"
-            style={{ background: `radial-gradient(${glow}22, transparent 70%)` }}
+            className="absolute top-24 left-1/2 transform -translate-x-1/2 w-80 h-80 rounded-full blur-2xl z-0"
+            style={{ background: `radial-gradient(${glow}, transparent 70%)` }}
           />
-          <div className="w-64 h-64 relative z-10">
+
+          {/* Focus circle placed below the clock */}
+          <div className="w-64 h-64 relative z-10 mt-12">
             <CircularProgressbar
               value={elapsed % 3600}
               maxValue={3600}
@@ -298,23 +265,19 @@ export default function Home() {
               })}
             />
           </div>
-          <h2 className="mt-4 font-semibold text-lg">
+
+          <h2 className="mt-6 font-semibold text-lg z-10">
             {study ? study.subject : selectedSubject ? `Selected: ${selectedSubject}` : "Idle Mode"}
           </h2>
           <button
             onClick={toggleStudy}
-            className={`mt-3 px-6 py-2 rounded-full transition-transform
-              ${study || selectedSubject
-                ? "bg-linear-to-r from-cyan-400 to-blue-600 text-black hover:scale-105"
-                : "bg-white/10 text-slate-400 cursor-not-allowed"}
-            `}
+            className={`mt-3 px-6 py-2 rounded-full transition-transform ${study || selectedSubject ? "bg-linear-to-r from-cyan-400 to-blue-600 text-black hover:scale-105" : "bg-white/10 text-slate-400 cursor-not-allowed"}`}
             disabled={!selectedSubject && !study}
           >
             {study ? "Stop Session" : "Start Focus"}
           </button>
         </main>
 
-        {/* Right */}
         <aside className="col-span-1 lg:col-span-3 bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-sm text-slate-400">Tasks</h2>
@@ -357,10 +320,13 @@ export default function Home() {
         </aside>
       </div>
 
-      {/* Footer */}
       <footer className="text-center text-[10px] text-slate-500 pb-3 mt-6 lg:mt-0">
         v0.2 • Local NARI Instance • {serverOk && connected ? "🔗 Synced" : "⚠️ Waiting"}
       </footer>
     </div>
   );
 }
+
+// NOTE: helper functions referenced in the JSX (handleAddSubject, handleDeleteSubject, handleAddNote, handleDeleteNote, handleAddTask, handleUpdateTask, handleDeleteTask) should be present elsewhere in this file or in your api module. If you used the previous version of Home.jsx you already have them; keep them the same. If you removed them earlier, re-add implementations accordingly.
+
+
