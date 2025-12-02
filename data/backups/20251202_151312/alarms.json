@@ -1,0 +1,23 @@
+[
+    {
+        "id": "1764667409135",
+        "name": "Test 2",
+        "time": "2025-12-02 14:55",
+        "repeat": false,
+        "enabled": false
+    },
+    {
+        "id": "1764668105792",
+        "name": "CLI Test Alarm",
+        "time": "2025-12-02 15:06",
+        "repeat": false,
+        "enabled": false
+    },
+    {
+        "id": "1764668527329",
+        "name": "alarm",
+        "time": "2025-12-02 15:13",
+        "repeat": false,
+        "enabled": false
+    }
+]

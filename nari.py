@@ -99,25 +99,8 @@ def handle_command(cmd, args):
     else:
         print("Unknown command. Try subjects, study, tasks, notes, help, or exit.")
 
-def run_server():
-    def start():
-        print("Starting NARI server on http://localhost:5000")
-        socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
-
-    global server_thread, server_running
-    server_thread = threading.Thread(target=start, daemon=True)
-    server_thread.start()
-    server_running = True
-    time.sleep(1)  # Give server time to start
-
-def stop_server():
-    global server_thread, server_running
-    if server_thread and server_thread.is_alive():
-        print("Stopping server...")
-        server_running = False
-        # Server will stop when main thread exits (daemon thread)
-    else:
-        print("Server is not running.")
+# ... (rest of the file remains unchanged)
+# The run_server and stop_server functions are removed.
 
 def check_server_status():
     urls = ["http://0.0.0.0:5000", "http://127.0.0.1:5000"]
@@ -191,4 +174,35 @@ def main():
         print("No mode specified. Use --cli, --server, --status, or --restart.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="NARI CLI and Server")
+    parser.add_argument("--server", action="store_true", help="Run NARI as a server")
+    args = parser.parse_args()
+
+    if args.server:
+        print("Server initialized for eventlet.")
+        from backend.core import clock_system, automation_engine
+        clock_manager = clock_system.ClockManager(socketio=socketio)
+        clock_manager.start()
+        automation_engine_instance = automation_engine.AutomationEngine(socketio=socketio)
+        print("Starting NARI server on http://localhost:5000")
+        socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    else:
+        print("\n👋 Welcome to NARI! Type 'help' for commands.")
+        while True:
+            try:
+                command_line = input("> ").strip()
+                if not command_line:
+                    continue
+                
+                parts = command_line.split(" ", 1)
+                cmd = parts[0].lower()
+                args = parts[1].split() if len(parts) > 1 else []
+
+                result = handle_command(cmd, args)
+                if result == "exit":
+                    break
+            except KeyboardInterrupt:
+                print("\nExiting NARI.")
+                break
+            except Exception as e:
+                print(f"An error occurred: {e}")

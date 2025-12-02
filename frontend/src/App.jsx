@@ -1,6 +1,7 @@
 import React from "react";
-import Home from "./components/Home";
+import Dashboard from "./components/Dashboard";
+import "./index.css";
 
 export default function App() {
-  return <Home />;
+  return <Dashboard />;
 }
