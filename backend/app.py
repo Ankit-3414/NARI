@@ -7,8 +7,8 @@ clock_manager = ClockManager(socketio)
 automation_engine = AutomationEngine(socketio)
 
 # Start background threads
-clock_manager.start()
-automation_engine.start()
+# clock_manager.start()
+# automation_engine.start()
 
 # Attach to app for route access
 _app.clock_manager = clock_manager
@@ -30,3 +30,6 @@ _app.register_blueprint(notes_bp)
 _app.register_blueprint(subjects_bp)
 _app.register_blueprint(study_bp)
 _app.register_blueprint(clock_bp)
+
+# Export for manual starting
+__all__ = ['_app', 'clock_manager', 'automation_engine']

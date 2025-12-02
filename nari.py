@@ -180,10 +180,12 @@ if __name__ == "__main__":
 
     if args.server:
         print("Server initialized for eventlet.")
-        from backend.core import clock_system, automation_engine
-        clock_manager = clock_system.ClockManager(socketio=socketio)
+        from backend.app import clock_manager, automation_engine
+        
+        print("Starting background services...")
         clock_manager.start()
-        automation_engine_instance = automation_engine.AutomationEngine(socketio=socketio)
+        automation_engine.start()
+        
         print("Starting NARI server on http://localhost:5000")
         socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
     else:
