@@ -10,7 +10,7 @@ import FocusModule from './modules/FocusModule';
 import AutomationModule from './modules/AutomationModule';
 import AlarmNotification from './AlarmNotification';
 import { getSocket } from '../lib/socket';
-import { getSocket } from '../lib/socket';
+
 import { getSubjects, getTasks, getNotes, getHealth } from '../lib/api';
 import { API_BASE } from '../config';
 
@@ -223,30 +223,25 @@ const Dashboard = () => {
                     onDismiss={() => {
                         setTriggeredAlarm(null);
                         // Optionally dismiss on backend
-                        setTriggeredAlarm(null);
-                        // Optionally dismiss on backend
                         fetch(`${API_BASE}/clock/alarms/${triggeredAlarm.id}/dismiss`, { method: 'POST' });
                     }}
+                    onSnooze={() => {
+                        setTriggeredAlarm(null);
+                        // Create a new alarm for 5 minutes from now
+                        const now = new Date();
+                        now.setMinutes(now.getMinutes() + 5);
+                        const snoozeTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                        fetch(`${API_BASE}/clock/alarms`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: `${triggeredAlarm.name} (Snoozed)`,
+                                time: snoozeTime,
+                                repeat: false
+                            })
+                        });
                     }}
-            onSnooze={() => {
-                setTriggeredAlarm(null);
-                // Create a new alarm for 5 minutes from now
-                const now = new Date();
-                now.setMinutes(now.getMinutes() + 5);
-                const snoozeTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-                const snoozeTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-                fetch(`${API_BASE}/clock/alarms`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: `${triggeredAlarm.name} (Snoozed)`,
-                        time: snoozeTime,
-                        repeat: false
-                    })
-                });
-            }}
                 />
             )}
         </>
