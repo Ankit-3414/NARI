@@ -1,0 +1,16 @@
+[
+    {
+        "id": "1765043831319",
+        "name": "test2",
+        "time": "2025-12-06 23:32",
+        "repeat": false,
+        "enabled": true
+    },
+    {
+        "id": "1765044014305",
+        "name": "test (Snoozed)",
+        "time": "2025-12-06 23:35",
+        "repeat": false,
+        "enabled": true
+    }
+]

@@ -103,7 +103,6 @@ If you are hosting the backend on a different machine (e.g., a VirtualBox VM) th
 3.  Rebuild the frontend (`npm run build`) after changing the config.
 
 ---
-
 ## 🔮 Vision
 NARI is built with a long-term vision to become a fully autonomous, highly intelligent personal assistant that integrates seamlessly into every aspect of productivity and life management.
 
@@ -112,4 +111,3 @@ NARI is built with a long-term vision to become a fully autonomous, highly intel
 ## 👤 Author
 **Ankit Upadhyay**
 *This is a personal project built with passion and a long-term vision.*
-

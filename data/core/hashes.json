@@ -1,4 +1,6 @@
 {
     "data\\clock\\alarms.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-    "data\\automation\\automation.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    "data\\automation\\automation.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "data/clock/alarms.json": "6c582730fe9b4f4ea710ddfe27c2af44a217855022ea836cbf898d20f040ced6",
+    "data/automation/automation.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
 }
