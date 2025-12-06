@@ -208,9 +208,7 @@ const Dashboard = () => {
                             <div className="lg:col-span-3">
                                 <AutomationModule />
                             </div>
-                            <div className="lg:col-span-3">
-                                <AutomationModule />
-                            </div>
+
                         </DashboardLayout>
                     </motion.div>
                 )}
