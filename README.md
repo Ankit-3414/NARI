@@ -104,5 +104,12 @@ If you are hosting the backend on a different machine (e.g., a VirtualBox VM) th
 
 ---
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🔮 Vision
+NARI is built with a long-term vision to become a fully autonomous, highly intelligent personal assistant that integrates seamlessly into every aspect of productivity and life management.
+
+---
+
+## 👤 Author
+**Ankit Upadhyay**
+*This is a personal project built with passion and a long-term vision.*
+
