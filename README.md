@@ -103,6 +103,3 @@ If you are hosting the backend on a different machine (e.g., a VirtualBox VM) th
 3.  Rebuild the frontend (`npm run build`) after changing the config.
 
 ---
-
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
