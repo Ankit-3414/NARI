@@ -1,3 +1,29 @@
 {
-  "tasks": []
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Test task",
+      "priority": "normal",
+      "due": null,
+      "status": "completed",
+      "created": "2025-12-07 00:18:10",
+      "completed_at": "2025-12-07 00:21:50"
+    },
+    {
+      "id": 2,
+      "title": "Test task",
+      "priority": "normal",
+      "due": null,
+      "status": "pending",
+      "created": "2025-12-07 00:20:07"
+    },
+    {
+      "id": 3,
+      "title": "Test task",
+      "priority": "normal",
+      "due": null,
+      "status": "pending",
+      "created": "2025-12-07 00:21:50"
+    }
+  ]
 }
