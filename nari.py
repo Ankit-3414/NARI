@@ -1,11 +1,4 @@
-﻿from backend.socket import socketio
-from flask import send_from_directory, render_template
-
-server_thread = None
-server_running = False
-
-def show_help():
-    print("\n=== NARI CLI Commands ===")
+﻿    print("\n=== NARI CLI Commands ===")
     print(" subjects add <name>                  - Add a new subject")
     print(" subjects remove <n>                  - Remove a subject")
     print(" subjects list                        - List all subjects")
