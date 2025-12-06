@@ -1,4 +1,23 @@
-﻿    print("\n=== NARI CLI Commands ===")
+﻿import eventlet
+eventlet.monkey_patch()
+
+import argparse
+import threading
+import requests
+import time
+import sys
+
+from modules import subjects, notes, tasks, utils
+from backend import session_manager
+from backend.app import _app as app
+from backend.socket import socketio
+from flask import send_from_directory, render_template
+
+server_thread = None
+server_running = False
+
+def show_help():
+    print("\n=== NARI CLI Commands ===")
     print(" subjects add <name>                  - Add a new subject")
     print(" subjects remove <n>                  - Remove a subject")
     print(" subjects list                        - List all subjects")
@@ -83,9 +102,6 @@ def handle_command(cmd, args):
     else:
         print("Unknown command. Try subjects, study, tasks, notes, help, or exit.")
 
-# ... (rest of the file remains unchanged)
-# The run_server and stop_server functions are removed.
-
 def check_server_status():
     urls = ["http://0.0.0.0:5000", "http://127.0.0.1:5000"]
     for url in urls:
@@ -99,10 +115,9 @@ def check_server_status():
     print("❌ Server is not running.")
 
 def restart_server():
-    stop_server()
-    time.sleep(1)
-    run_server()
-    print("🔄 Server restarted.")
+    # Since we are running as a service, we can't really restart ourselves easily
+    # But for CLI usage this might still be relevant
+    print("Please use 'sudo systemctl restart nari-backend' to restart the service.")
 
 def run_cli():
     utils.ensure_directories_and_files()
@@ -117,11 +132,6 @@ def run_cli():
             cmd, args = parts[0].lower(), parts[1:]
             result = handle_command(cmd, args)
             if result == "exit":
-                confirm = input("Do you want to stop the server too? (y/n): ").strip().lower()
-                if confirm == "y":
-                    stop_server()
-                else:
-                    print("Server will keep running in the background.")
                 print("Goodbye!")
                 break
         except KeyboardInterrupt:
@@ -142,27 +152,9 @@ def main():
     if args.restart:
         restart_server()
     if args.server and args.cli:
-        run_server()
-        run_cli()
+        # Not supported in this simplified version
+        print("Please run server and CLI separately.")
     elif args.server:
-        run_server()
-        print("Press Ctrl+C to stop the server.")
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nServer stopped.")
-    elif args.cli:
-        run_cli()
-    if not any([args.cli, args.server, args.status, args.restart]):
-        print("No mode specified. Use --cli, --server, --status, or --restart.")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="NARI CLI and Server")
-    parser.add_argument("--server", action="store_true", help="Run NARI as a server")
-    args = parser.parse_args()
-
-    if args.server:
         print("Server initialized for eventlet.")
         from backend.app import clock_manager, automation_engine
         
@@ -172,23 +164,10 @@ if __name__ == "__main__":
         
         print("Starting NARI server on http://localhost:5000")
         socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
-    else:
-        print("\n👋 Welcome to NARI! Type 'help' for commands.")
-        while True:
-            try:
-                command_line = input("> ").strip()
-                if not command_line:
-                    continue
-                
-                parts = command_line.split(" ", 1)
-                cmd = parts[0].lower()
-                args = parts[1].split() if len(parts) > 1 else []
+    elif args.cli:
+        run_cli()
+    if not any([args.cli, args.server, args.status, args.restart]):
+        print("No mode specified. Use --cli, --server, --status, or --restart.")
 
-                result = handle_command(cmd, args)
-                if result == "exit":
-                    break
-            except KeyboardInterrupt:
-                print("\nExiting NARI.")
-                break
-            except Exception as e:
-                print(f"An error occurred: {e}")
+if __name__ == "__main__":
+    main()
