@@ -32,40 +32,6 @@ def create_task():
     item = {
         "id": new_id,
         "title": title,
-import os
-import json
-from flask import Blueprint, request, jsonify, current_app
-from modules import utils
-from backend.socket import socketio, NAMESPACE
-
-bp = Blueprint("tasks_routes", __name__)
-
-TASKS_FILE = utils.TASKS_FILE
-
-def _read_tasks():
-    data = utils.load_json(TASKS_FILE) or {}
-    return data.get("tasks", [])
-
-def _write_tasks(tasks):
-    utils.save_json(TASKS_FILE, {"tasks": tasks})
-
-@bp.route("/api/tasks", methods=["GET"])
-def list_tasks():
-    return jsonify(_read_tasks())
-
-@bp.route("/api/tasks", methods=["POST"])
-def create_task():
-    payload = request.get_json() or {}
-    title = payload.get("title")
-    if not title:
-        return jsonify({"error": "title is required"}), 400
-    priority = payload.get("priority", "normal")
-    due = payload.get("due")
-    tasks = _read_tasks()
-    new_id = utils.next_id(tasks)
-    item = {
-        "id": new_id,
-        "title": title,
         "priority": priority,
         "due": due,
         "status": "pending",
