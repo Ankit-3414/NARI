@@ -108,3 +108,9 @@ export async function getHealth() {
         return { ok: false };
     }
 }
+
+// Activity
+export async function getActivityLog() {
+    const res = await fetch(`${API_BASE}/activity`);
+    return res.json();
+}

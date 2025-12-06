@@ -21,6 +21,29 @@ def create_note():
     payload = request.get_json() or {}
     title = payload.get("title")
     content = payload.get("content", "")
+from flask import Blueprint, request, jsonify
+from modules import utils
+from backend.socket import socketio, NAMESPACE
+
+bp = Blueprint("notes_routes", __name__)
+NOTES_FILE = utils.NOTES_FILE
+
+def _read_notes():
+    data = utils.load_json(NOTES_FILE) or {}
+    return data.get("notes", [])
+
+def _write_notes(notes):
+    utils.save_json(NOTES_FILE, {"notes": notes})
+
+@bp.route("/api/notes", methods=["GET"])
+def list_notes():
+    return jsonify(_read_notes())
+
+@bp.route("/api/notes", methods=["POST"])
+def create_note():
+    payload = request.get_json() or {}
+    title = payload.get("title")
+    content = payload.get("content", "")
     if not title:
         return jsonify({"error": "title required"}), 400
     notes = _read_notes()
@@ -29,6 +52,7 @@ def create_note():
     notes.append(note)
     _write_notes(notes)
     socketio.emit("note_added", note, namespace=NAMESPACE)
+    utils.log_user_activity(f"Note added: {title}")
     return jsonify(note), 201
 
 @bp.route("/api/notes/<int:note_id>", methods=["PUT"])
@@ -43,6 +67,7 @@ def update_note(note_id):
             notes[i] = n
             _write_notes(notes)
             socketio.emit("note_updated", n, namespace=NAMESPACE)
+            utils.log_user_activity(f"Note updated: {n['title']}")
             return jsonify(n)
     return jsonify({"error": "not found"}), 404
 
@@ -54,4 +79,5 @@ def delete_note(note_id):
         return jsonify({"error": "not found"}), 404
     _write_notes(new_notes)
     socketio.emit("note_deleted", {"id": note_id}, namespace=NAMESPACE)
+    utils.log_user_activity(f"Note deleted: {note_id}")
     return jsonify({"ok": True})

@@ -7,6 +7,7 @@ import {
   startStudy,
   stopStudy,
   getHealth,
+  getActivityLog,
 } from "../lib/api";
 import { getSocket } from "../lib/socket";
 import TasksPanel from "./Panels/TasksPanel";
@@ -38,12 +39,13 @@ export default function NariFrontend() {
     let mounted = true;
     async function load() {
       try {
-        const [s, t, n, ss, healthStatus] = await Promise.all([
+        const [s, t, n, ss, healthStatus, activityLog] = await Promise.all([
           getSubjects().catch(() => []),
           getTasks().catch(() => []),
           getNotes().catch(() => []),
           getStudyStatus().catch(() => null),
           getHealth(),
+          getActivityLog().catch(() => []),
         ]);
         if (!mounted) return;
         console.log("Fetched subjects:", s); // Debugging line
@@ -51,6 +53,7 @@ export default function NariFrontend() {
         setTasks(t || []);
         setNotes(n || []);
         setStudyStatus(ss || null);
+        setActivity(activityLog || []);
         setServerOk(healthStatus.ok);
         setErrorMessage(healthStatus.ok ? null : "Failed to connect to server or load data.");
       } catch (e) {
@@ -65,52 +68,51 @@ export default function NariFrontend() {
     socketRef.current = socket;
 
     // tasks
+    // tasks
     socket.on("task_added", (item) => {
       setTasks((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
-      pushActivity(`Task added: ${item.title}`);
     });
     socket.on("task_updated", (item) => {
       setTasks((prev) => prev.map((t) => (t.id === item.id ? item : t)));
-      pushActivity(`Task updated: ${item.title}`);
     });
     socket.on("task_deleted", ({ id }) => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
-      pushActivity(`Task deleted: ${id}`);
     });
 
     // notes
+    // notes
     socket.on("note_added", (n) => {
       setNotes((prev) => [n, ...prev]);
-      pushActivity(`Note added: ${n.title}`);
     });
     socket.on("note_updated", (n) => {
       setNotes((prev) => prev.map((x) => (x.id === n.id ? n : x)));
-      pushActivity(`Note updated: ${n.title}`);
     });
     socket.on("note_deleted", ({ id }) => {
       setNotes((prev) => prev.filter((x) => x.id !== id));
-      pushActivity(`Note deleted: ${id}`);
     });
 
     // subjects
+    // subjects
     socket.on("subject_added", ({ name }) => {
       setSubjects((prev) => (prev.includes(name) ? prev : [...prev, name]));
-      pushActivity(`Subject added: ${name}`);
     });
     socket.on("subject_removed", ({ name }) => {
       setSubjects((prev) => prev.filter((s) => s !== name));
-      pushActivity(`Subject removed: ${name}`);
     });
 
     // study
+    // study
     socket.on("study_started", (payload) => {
       setStudyStatus(payload);
-      pushActivity(`Study started: ${payload.subject}`);
     });
     socket.on("study_stopped", (payload) => {
       setStudyStatus(null);
-      pushActivity(`Study stopped: ${payload.subject}`);
       setElapsedTime(0); // Reset elapsed time on stop
+    });
+
+    // activity
+    socket.on("activity_logged", (item) => {
+      setActivity((prev) => [item, ...prev].slice(0, 200));
     });
 
     return () => {

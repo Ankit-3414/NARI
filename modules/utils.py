@@ -2,6 +2,7 @@
 import os
 import json
 from datetime import datetime
+from backend.socket import socketio, NAMESPACE
 
 # -------------------------
 # Paths
@@ -11,6 +12,7 @@ LOGS_DIR = os.path.join(DATA_DIR, "logs")
 SUBJECTS_FILE = os.path.join(DATA_DIR, "subjects.json")
 TASKS_FILE = os.path.join(DATA_DIR, "tasks.json")
 NOTES_FILE = os.path.join(DATA_DIR, "notes.json")
+ACTIVITY_LOG_FILE = os.path.join(DATA_DIR, "activity_log.json")
 
 def next_id(items):
     """Return next numeric ID for a list of dicts with 'id' keys."""
@@ -120,3 +122,45 @@ def append_log(filename, message):
     timestamp = current_timestamp()
     with open(path, "a") as f:
         f.write(f"[{timestamp}] {message}\n")
+
+# -------------------------
+# Activity Log Helper
+# -------------------------
+def log_user_activity(text):
+    """Log user activity to file and emit socket event."""
+    entry = {
+        "text": text,
+        "time": timestamp()
+    }
+    
+    # Load existing
+    data = load_json(ACTIVITY_LOG_FILE) or {}
+    logs = data.get("activity", [])
+    
+    # Append new entry
+    logs.append(entry)
+    
+    # Limit log size to last 1000 entries
+    if len(logs) > 1000:
+        logs = logs[-1000:]
+        
+    save_json(ACTIVITY_LOG_FILE, {"activity": logs})
+    
+    # Emit
+    socketio.emit("activity_logged", entry, namespace=NAMESPACE)
+
+def get_activity_log():
+    """Retrieve activity log."""
+    data = load_json(ACTIVITY_LOG_FILE) or {}
+    # Return reversed so newest is first? 
+    # The frontend currently prepends new items. 
+    # If we return history, we probably want newest first.
+    # Let's return as is (chronological) and let frontend handle order, 
+    # OR return reverse chronological.
+    # Frontend `ActivityPanel` maps `items`.
+    # `NariFrontend` `pushActivity` prepends.
+    # If I send initial list, I should probably send it sorted.
+    # Let's return reverse chronological (newest first).
+    logs = data.get("activity", [])
+    return logs[::-1]
+

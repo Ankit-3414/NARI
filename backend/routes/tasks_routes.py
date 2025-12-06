@@ -32,6 +32,40 @@ def create_task():
     item = {
         "id": new_id,
         "title": title,
+import os
+import json
+from flask import Blueprint, request, jsonify, current_app
+from modules import utils
+from backend.socket import socketio, NAMESPACE
+
+bp = Blueprint("tasks_routes", __name__)
+
+TASKS_FILE = utils.TASKS_FILE
+
+def _read_tasks():
+    data = utils.load_json(TASKS_FILE) or {}
+    return data.get("tasks", [])
+
+def _write_tasks(tasks):
+    utils.save_json(TASKS_FILE, {"tasks": tasks})
+
+@bp.route("/api/tasks", methods=["GET"])
+def list_tasks():
+    return jsonify(_read_tasks())
+
+@bp.route("/api/tasks", methods=["POST"])
+def create_task():
+    payload = request.get_json() or {}
+    title = payload.get("title")
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    priority = payload.get("priority", "normal")
+    due = payload.get("due")
+    tasks = _read_tasks()
+    new_id = utils.next_id(tasks)
+    item = {
+        "id": new_id,
+        "title": title,
         "priority": priority,
         "due": due,
         "status": "pending",
@@ -40,6 +74,7 @@ def create_task():
     tasks.append(item)
     _write_tasks(tasks)
     socketio.emit("task_added", item, namespace=NAMESPACE)
+    utils.log_user_activity(f"Task added: {title}")
     return jsonify(item), 201
 
 @bp.route("/api/tasks/<int:task_id>", methods=["GET"])
@@ -77,6 +112,7 @@ def update_task(task_id):
         return jsonify({"error": "not found"}), 404
     _write_tasks(tasks)
     socketio.emit("task_updated", updated, namespace=NAMESPACE)
+    utils.log_user_activity(f"Task updated: {updated['title']}")
     return jsonify(updated)
 
 @bp.route("/api/tasks/<int:task_id>", methods=["DELETE"])
@@ -87,4 +123,5 @@ def delete_task(task_id):
         return jsonify({"error": "not found"}), 404
     _write_tasks(new_tasks)
     socketio.emit("task_deleted", {"id": task_id}, namespace=NAMESPACE)
+    utils.log_user_activity(f"Task deleted: {task_id}")
     return jsonify({"ok": True})
