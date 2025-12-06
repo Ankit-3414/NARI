@@ -4,6 +4,6 @@
         "name": "test (Snoozed)",
         "time": "2025-12-06 23:35",
         "repeat": false,
-        "enabled": false
+        "enabled": true
     }
 ]
