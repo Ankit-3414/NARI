@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import sys
 import time
 from flask import Flask

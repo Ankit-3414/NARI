@@ -1,13 +1,4 @@
-﻿import argparse
-import threading
-import requests
-import time
-import sys
-
-from modules import subjects, notes, tasks, utils
-from backend import session_manager
-from backend.app import _app as app
-from backend.socket import socketio
+﻿from backend.socket import socketio
 from flask import send_from_directory, render_template
 
 server_thread = None
