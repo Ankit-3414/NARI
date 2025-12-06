@@ -1,0 +1,14 @@
+[Unit]
+Description=NARI Backend Service
+After=network.target
+
+[Service]
+User=ankit
+WorkingDirectory=/home/ankit/NARI
+ExecStart=/home/ankit/NARI/venv/bin/python /home/ankit/NARI/nari.py --server
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
