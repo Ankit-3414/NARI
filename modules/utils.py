@@ -41,6 +41,7 @@ def ensure_directories_and_files():
         (SUBJECTS_FILE, {}),
         (TASKS_FILE, {}),
         (NOTES_FILE, {}),
+        (ACTIVITY_LOG_FILE, {"activity": []}),
     ]
 
     for path, default in files_with_defaults:
@@ -128,39 +129,38 @@ def append_log(filename, message):
 # -------------------------
 def log_user_activity(text):
     """Log user activity to file and emit socket event."""
-    entry = {
-        "text": text,
-        "time": timestamp()
-    }
-    
-    # Load existing
-    data = load_json(ACTIVITY_LOG_FILE) or {}
-    logs = data.get("activity", [])
-    
-    # Append new entry
-    logs.append(entry)
-    
-    # Limit log size to last 1000 entries
-    if len(logs) > 1000:
-        logs = logs[-1000:]
+    try:
+        entry = {
+            "text": text,
+            "time": timestamp()
+        }
         
-    save_json(ACTIVITY_LOG_FILE, {"activity": logs})
-    
-    # Emit
-    socketio.emit("activity_logged", entry, namespace=NAMESPACE)
+        # Load existing
+        data = load_json(ACTIVITY_LOG_FILE) or {}
+        logs = data.get("activity", [])
+        
+        # Append new entry
+        logs.append(entry)
+        
+        # Limit log size to last 1000 entries
+        if len(logs) > 1000:
+            logs = logs[-1000:]
+            
+        save_json(ACTIVITY_LOG_FILE, {"activity": logs})
+        
+        # Emit
+        socketio.emit("activity_logged", entry, namespace=NAMESPACE)
+    except Exception as e:
+        print(f"ERROR in log_user_activity: {e}")
+        append_log("file_errors.log", f"Error in log_user_activity: {e}")
 
 def get_activity_log():
     """Retrieve activity log."""
-    data = load_json(ACTIVITY_LOG_FILE) or {}
-    # Return reversed so newest is first? 
-    # The frontend currently prepends new items. 
-    # If we return history, we probably want newest first.
-    # Let's return as is (chronological) and let frontend handle order, 
-    # OR return reverse chronological.
-    # Frontend `ActivityPanel` maps `items`.
-    # `NariFrontend` `pushActivity` prepends.
-    # If I send initial list, I should probably send it sorted.
-    # Let's return reverse chronological (newest first).
-    logs = data.get("activity", [])
-    return logs[::-1]
+    try:
+        data = load_json(ACTIVITY_LOG_FILE) or {}
+        logs = data.get("activity", [])
+        return logs[::-1]
+    except Exception as e:
+        print(f"ERROR in get_activity_log: {e}")
+        return []
 
