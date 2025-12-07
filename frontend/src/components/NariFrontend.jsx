@@ -45,7 +45,10 @@ export default function NariFrontend() {
           getNotes().catch(() => []),
           getStudyStatus().catch(() => null),
           getHealth(),
-          getActivityLog().catch(() => []),
+          getActivityLog().catch((e) => {
+            console.error("Failed to fetch activity log:", e);
+            return [];
+          }),
         ]);
         if (!mounted) return;
         console.log("Fetched subjects:", s); // Debugging line
@@ -62,6 +65,7 @@ export default function NariFrontend() {
         setErrorMessage("Failed to connect to server or load data."); // Set a generic error message
       }
     }
+    console.log("NARI Frontend v0.3.1 - Activity Log Update");
     load();
 
     const socket = getSocket();
