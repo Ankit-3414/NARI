@@ -21,6 +21,7 @@ export default function StudyPanel({ studyStatus, onStart, onStop, selectedSubje
               ? "bg-linear-to-r from-cyan-400 to-blue-600 text-black hover:scale-105"
               : "bg-[rgba(255,255,255,0.04)] text-slate-600 cursor-not-allowed"}
         `}
+        aria-label={studyStatus ? "Stop Focus Timer" : "Start Focus Timer"}
       >
         {studyStatus ? "Stop Focus" : "Start Focus"}
       </button>

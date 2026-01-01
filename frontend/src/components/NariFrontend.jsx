@@ -158,12 +158,12 @@ export default function NariFrontend() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full bg-linear-to-br from-cyan-400/40 to-amber-400/30 flex items-center justify-center text-black font-bold">N</div>
             <div>
-              <div className="text-sm text-slate-300">NARI</div>
+              <h1 className="text-sm text-slate-300 font-bold">NARI</h1>
               <div className="text-xs text-slate-500">Not A Random Intelligence</div>
             </div>
           </div>
 
-          <div className="text-xs text-slate-400">Server</div>
+          <h3 className="text-xs text-slate-400 font-semibold">Server</h3>
           <div className={`mt-2 inline-block px-2 py-1 rounded text-xs ${serverOk ? "bg-emerald-600/80 text-black" : "bg-red-600/80 text-white"}`}>
             {serverOk ? "Online" : "Offline"}
           </div>
@@ -173,10 +173,10 @@ export default function NariFrontend() {
           </div>
 
           <div className="mt-6">
-            <div className="text-xs text-slate-400">Quick</div>
+            <h3 className="text-xs text-slate-400 font-semibold">Quick</h3>
             <div className="mt-2 flex flex-col gap-2">
-              <button onClick={() => window.dispatchEvent(new Event("nari:add-task"))} className="py-2 rounded-lg bg-linear-to-r from-pink-500 to-purple-500 text-sm">+ Task</button>
-              <button onClick={() => window.dispatchEvent(new Event("nari:add-note"))} className="py-2 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)] text-sm">+ Note</button>
+              <button onClick={() => window.dispatchEvent(new Event("nari:add-task"))} className="py-2 rounded-lg bg-linear-to-r from-pink-500 to-purple-500 text-sm font-medium hover:brightness-110 active:scale-95 transition-all text-white shadow-lg shadow-purple-500/20" aria-label="Add new task">+ Task</button>
+              <button onClick={() => window.dispatchEvent(new Event("nari:add-note"))} className="py-2 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-sm hover:bg-[rgba(255,255,255,0.1)] active:scale-95 transition-all" aria-label="Add new note">+ Note</button>
             </div>
           </div>
         </aside>
@@ -184,8 +184,8 @@ export default function NariFrontend() {
         <main className="col-span-6 rounded-3xl relative overflow-hidden p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] border border-[rgba(255,255,255,0.03)]">
           <Clock />
           <div className="text-center mb-4">
-            <div className="text-sm text-slate-400">Mode</div>
-            <div className="text-2xl font-extrabold tracking-wide">{studyStatus ? "FOCUS" : "IDLE"}</div>
+            <h3 className="text-sm text-slate-400 font-semibold mb-1">Mode</h3>
+            <div className="text-2xl font-extrabold tracking-wide text-white drop-shadow-md">{studyStatus ? "FOCUS" : "IDLE"}</div>
             <div className="text-xs text-slate-500">
               {studyStatus ? (
                 <>

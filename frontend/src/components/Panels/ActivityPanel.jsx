@@ -4,7 +4,7 @@ export default function ActivityPanel({ items = [] }) {
   return (
     <div className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)] rounded-2xl p-4">
       <div className="flex justify-between items-center mb-3">
-        <div className="text-sm text-slate-300">Activity</div>
+        <h2 className="text-sm text-slate-300 font-semibold">Activity</h2>
         <div className="text-xs text-slate-500">Live</div>
       </div>
       <div className="text-xs text-slate-400 space-y-2 max-h-40 overflow-auto">

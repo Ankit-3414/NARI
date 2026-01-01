@@ -24,7 +24,7 @@ export default function SubjectsPanel({ subjects = [], setSubjects, selectedSubj
 
   return (
     <div>
-      <div className="text-xs text-slate-400">Subjects</div>
+      <h2 className="text-xs text-slate-400 font-semibold">Subjects</h2>
       <div className="mt-2 flex flex-wrap gap-2">
         {subjects.map((s) => (
           <div
@@ -34,10 +34,10 @@ export default function SubjectsPanel({ subjects = [], setSubjects, selectedSubj
               ${selectedSubject === s ? "bg-cyan-700/50 scale-105" : "bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] hover:scale-105"}`}
           >
             <span className="text-sm">{s}</span>
-            <button onClick={(e) => { e.stopPropagation(); remove(s); }} className="text-xs text-red-400">x</button>
+            <button onClick={(e) => { e.stopPropagation(); remove(s); }} className="text-xs text-red-400 hover:text-red-300 transition-colors" aria-label={`Remove subject ${s}`}>x</button>
           </div>
         ))}
-        <button onClick={add} className="px-3 py-1 text-xs rounded-md bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]">+ Add</button>
+        <button onClick={add} className="px-3 py-1 text-xs rounded-md bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] transition-colors" aria-label="Add new subject">+ Add</button>
       </div>
     </div>
   );
