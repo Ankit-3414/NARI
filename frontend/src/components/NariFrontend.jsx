@@ -156,7 +156,7 @@ export default function NariFrontend() {
       <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
         <aside className="col-span-3 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.03)] rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-linear-to-br from-cyan-400/40 to-amber-400/30 flex items-center justify-center text-black font-bold">N</div>
+            <img src="/nari_logo.png" alt="NARI Logo" className="w-12 h-12 rounded-full object-cover shadow-lg border border-cyan-500/20" />
             <div>
               <h1 className="text-sm text-slate-300 font-bold">NARI</h1>
               <div className="text-xs text-slate-500">Not A Random Intelligence</div>
