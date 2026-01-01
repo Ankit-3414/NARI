@@ -7,12 +7,15 @@ from backend.socket import socketio, NAMESPACE
 # -------------------------
 # Paths
 # -------------------------
-DATA_DIR = "data"
+# Use absolute paths to avoid issues with different working directories
+BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "data")
 LOGS_DIR = os.path.join(DATA_DIR, "logs")
 SUBJECTS_FILE = os.path.join(DATA_DIR, "subjects.json")
 TASKS_FILE = os.path.join(DATA_DIR, "tasks.json")
 NOTES_FILE = os.path.join(DATA_DIR, "notes.json")
 ACTIVITY_LOG_FILE = os.path.join(DATA_DIR, "activity_log.json")
+
 
 def next_id(items):
     """Return next numeric ID for a list of dicts with 'id' keys."""
@@ -133,6 +136,7 @@ def append_log(filename, message):
 def log_user_activity(text):
     """Log user activity to file and emit socket event."""
     try:
+        print(f"DEBUG: Logging activity -> {text}")
         entry = {
             "text": text,
             "time": timestamp()
@@ -150,6 +154,7 @@ def log_user_activity(text):
             logs = logs[-1000:]
             
         save_json(ACTIVITY_LOG_FILE, {"activity": logs})
+        print(f"DEBUG: Saved activity log. Count now {len(logs)}")
         
         # Emit
         socketio.emit("activity_logged", entry, namespace=NAMESPACE)
@@ -162,8 +167,10 @@ def get_activity_log():
     try:
         data = load_json(ACTIVITY_LOG_FILE) or {}
         logs = data.get("activity", [])
+        print(f"DEBUG: Loaded {len(logs)} activity entries from {ACTIVITY_LOG_FILE}")
         return logs[::-1]
     except Exception as e:
         print(f"ERROR in get_activity_log: {e}")
         return []
+
 

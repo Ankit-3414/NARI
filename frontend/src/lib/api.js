@@ -111,6 +111,6 @@ export async function getHealth() {
 
 // Activity
 export async function getActivityLog() {
-    const res = await fetch(`${API_BASE}/activity`);
+    const res = await fetch(`${API_BASE}/activity?t=${Date.now()}`);
     return res.json();
 }
