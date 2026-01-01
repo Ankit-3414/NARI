@@ -3,6 +3,26 @@
     {
       "text": "Debug entry 1",
       "time": "2025-12-07 18:45:27"
+    },
+    {
+      "text": "Note deleted: 2",
+      "time": "2025-12-09 10:28:25"
+    },
+    {
+      "text": "Note deleted: 3",
+      "time": "2025-12-09 10:28:25"
+    },
+    {
+      "text": "Task deleted: 1",
+      "time": "2025-12-09 10:28:27"
+    },
+    {
+      "text": "Task deleted: 2",
+      "time": "2025-12-09 10:28:27"
+    },
+    {
+      "text": "Task deleted: 3",
+      "time": "2025-12-09 10:28:27"
     }
   ]
 }
