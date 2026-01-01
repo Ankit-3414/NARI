@@ -44,6 +44,9 @@ def ensure_directories_and_files():
         (ACTIVITY_LOG_FILE, {"activity": []}),
     ]
 
+    os.makedirs(os.path.join(DATA_DIR, "backups"), exist_ok=True)
+    os.makedirs(os.path.join(DATA_DIR, "core"), exist_ok=True)
+
     for path, default in files_with_defaults:
         if not os.path.exists(path):
             with open(path, "w") as f:

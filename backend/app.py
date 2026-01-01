@@ -1,32 +1,24 @@
 from backend.socket import socketio, _app
 from backend.core.clock_system import ClockManager
 from backend.core.automation import AutomationEngine
+from backend.core.maintenance import AutoRecovery
+from modules import utils
 
 # Initialize Core Systems
 clock_manager = ClockManager(socketio)
 automation_engine = AutomationEngine(socketio)
+recovery_system = AutoRecovery()
 
-# Start background threads
-# clock_manager.start()
-# automation_engine.start()
-
-# Attach to app for route access
-_app.clock_manager = clock_manager
-from backend.socket import socketio, _app
-from backend.core.clock_system import ClockManager
-from backend.core.automation import AutomationEngine
-
-# Initialize Core Systems
-clock_manager = ClockManager(socketio)
-automation_engine = AutomationEngine(socketio)
-
-# Start background threads
-# clock_manager.start()
-# automation_engine.start()
+# Perform startup integrity checks
+print("--- Starting Integrity Check ---")
+for file_path in [utils.SUBJECTS_FILE, utils.TASKS_FILE, utils.NOTES_FILE]:
+    recovery_system.ensure_file_integrity(file_path)
+print("--- Integrity Check Complete ---")
 
 # Attach to app for route access
 _app.clock_manager = clock_manager
 _app.automation_engine = automation_engine
+_app.recovery_system = recovery_system
 
 # register blueprints
 from backend.routes.tasks_routes import bp as tasks_bp
@@ -48,4 +40,4 @@ _app.register_blueprint(clock_bp)
 _app.register_blueprint(activity_bp)
 
 # Export for manual starting
-__all__ = ['_app', 'clock_manager', 'automation_engine']
+__all__ = ['_app', 'clock_manager', 'automation_engine', 'recovery_system']
