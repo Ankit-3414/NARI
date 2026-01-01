@@ -57,6 +57,7 @@ export default function NariFrontend() {
         setNotes(n || []);
         setStudyStatus(ss || null);
         setActivity(activityLog || []);
+
         setServerOk(healthStatus.ok);
         setErrorMessage(healthStatus.ok ? null : "Failed to connect to server or load data.");
       } catch (e) {
@@ -116,8 +117,9 @@ export default function NariFrontend() {
 
     // activity
     socket.on("activity_logged", (item) => {
-      setActivity((prev) => [item, ...prev].slice(0, 200));
+      setActivity((prev) => [...prev, item].slice(-500));
     });
+
 
     return () => {
       mounted = false;

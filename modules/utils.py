@@ -134,43 +134,49 @@ def append_log(filename, message):
 # Activity Log Helper
 # -------------------------
 def log_user_activity(text):
-    """Log user activity to file and emit socket event."""
+    """Log activity with ironclad persistence and real-time emission."""
     try:
-        print(f"DEBUG: Logging activity -> {text}")
+        # 1. Prepare Entry
         entry = {
             "text": text,
-            "time": timestamp()
+            "time": datetime.now().strftime("%H:%M:%S"), # Just time for the console feel
+            "full_date": timestamp()
         }
         
-        # Load existing
-        data = load_json(ACTIVITY_LOG_FILE) or {}
+        # 2. Load and Append
+        # If file missing or corrupt, start fresh
+        data = load_json(ACTIVITY_LOG_FILE)
+        if not isinstance(data, dict): data = {"activity": []}
         logs = data.get("activity", [])
         
-        # Append new entry
         logs.append(entry)
         
-        # Limit log size to last 1000 entries
-        if len(logs) > 1000:
-            logs = logs[-1000:]
+        # 3. Trim (keep last 500 for the console)
+        if len(logs) > 500:
+            logs = logs[-500:]
             
+        # 4. Atomic Save
         save_json(ACTIVITY_LOG_FILE, {"activity": logs})
-        print(f"DEBUG: Saved activity log. Count now {len(logs)}")
         
-        # Emit
+        # 5. Live Push
         socketio.emit("activity_logged", entry, namespace=NAMESPACE)
+        
+        # 6. Terminal feedback for the user
+        print(f" LOG > {text}")
     except Exception as e:
-        print(f"ERROR in log_user_activity: {e}")
-        append_log("file_errors.log", f"Error in log_user_activity: {e}")
+        print(f" CRITICAL ERROR in logging: {e}")
+        append_log("maintenance.log", f"Logging failure: {e}")
 
 def get_activity_log():
-    """Retrieve activity log."""
+    """Retrieve activity log for initial frontend load."""
     try:
-        data = load_json(ACTIVITY_LOG_FILE) or {}
+        data = load_json(ACTIVITY_LOG_FILE)
         logs = data.get("activity", [])
-        print(f"DEBUG: Loaded {len(logs)} activity entries from {ACTIVITY_LOG_FILE}")
-        return logs[::-1]
+        # Return as-is, frontend will handle the ordering
+        return logs
     except Exception as e:
-        print(f"ERROR in get_activity_log: {e}")
+        print(f" ERROR fetching logs: {e}")
         return []
+
 
 

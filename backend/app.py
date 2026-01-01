@@ -39,5 +39,15 @@ _app.register_blueprint(study_bp)
 _app.register_blueprint(clock_bp)
 _app.register_blueprint(activity_bp)
 
+@_app.before_request
+def log_request_info():
+    # Only log API calls, skip static files or health checks if too noisy
+    if request.path.startswith('/api') and not request.path.endswith('/health') and not request.path.endswith('/activity'):
+        method = request.method
+        path = request.path
+        utils.log_user_activity(f"API: {method} {path}")
+
+from flask import request
 # Export for manual starting
+
 __all__ = ['_app', 'clock_manager', 'automation_engine', 'recovery_system']
