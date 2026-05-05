@@ -6,10 +6,10 @@ call another service directly — use the event bus instead.
 """
 
 import asyncio
-from typing import Dict, List, Callable, Any
-from datetime import datetime
-import json
+from typing import Any, Callable, Dict, List
+
 from ..core.logging import get_logger
+from ..utils.datetime_utils import utc_now
 
 logger = get_logger(__name__)
 
@@ -33,14 +33,27 @@ class EventBus:
         logger.debug(f"Subscribed to event: {event_name}")
 
     def emit(self, event_name: str, data: Dict[str, Any]) -> None:
-        """Emit an event synchronously (non-blocking)."""
-        if event_name in self._subscribers:
+        """Emit an event synchronously (non-blocking if loop exists)."""
+        if event_name not in self._subscribers:
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+            for callback in self._subscribers[event_name]:
+                loop.create_task(self._safe_call(callback, event_name, data))
+        except RuntimeError:
+            # No running event loop (common in some test environments)
+            # Fall back to synchronous execution
             for callback in self._subscribers[event_name]:
                 try:
-                    # Fire and forget - don't block on callbacks
-                    asyncio.create_task(self._safe_call(callback, event_name, data))
+                    result = callback(event_name, data)
+                    # If callback returned a coroutine, we can't really await it here
+                    # without a loop, so we just log it. But ActivityService.handle_event
+                    # is synchronous, so this should work for our current use case.
+                    if asyncio.iscoroutine(result):
+                        logger.warning(f"Async callback {callback} dropped in sync emit")
                 except Exception as e:
-                    logger.error(f"Error in event callback for {event_name}: {e}")
+                    logger.error(f"Error in sync event callback for {event_name}: {e}")
 
     async def _safe_call(self, callback: Callable, event_name: str, data: Dict[str, Any]) -> None:
         try:
@@ -72,7 +85,7 @@ class EventBus:
             "event": event,
             "entity_type": entity_type,
             "entity_id": entity_id,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now().isoformat(),
             "data": data or {},
         }
         self.emit(event, envelope)
@@ -83,3 +96,64 @@ class EventBus:
 def get_event_bus() -> EventBus:
     """Get the singleton event bus instance."""
     return EventBus()
+
+
+_listeners_setup = False
+
+
+def setup_event_listeners() -> None:
+    """Initialize all event subscribers."""
+    global _listeners_setup
+    if _listeners_setup:
+        return
+
+    from ..services.activity_service import activity_service
+    from ..websocket.events import EventNames
+    from ..websocket.manager import manager
+
+    bus = get_event_bus()
+
+    # ActivityLog subscribers
+    activity_events = [
+        EventNames.TASK_CREATED,
+        EventNames.TASK_UPDATED,
+        EventNames.TASK_COMPLETED,
+        EventNames.TASK_DELETED,
+        EventNames.TASK_REOPENED,
+        EventNames.SUBJECT_CREATED,
+        EventNames.SUBJECT_UPDATED,
+        EventNames.SUBJECT_ARCHIVED,
+        EventNames.STUDY_STARTED,
+        EventNames.STUDY_PAUSED,
+        EventNames.STUDY_RESUMED,
+        EventNames.STUDY_STOPPED,
+        EventNames.NOTE_CREATED,
+        EventNames.NOTE_UPDATED,
+        EventNames.NOTE_DELETED,
+        EventNames.REMINDER_CREATED,
+        EventNames.REMINDER_TRIGGERED,
+        EventNames.REMINDER_SNOOZED,
+        EventNames.REMINDER_DISMISSED,
+        EventNames.GOAL_CREATED,
+        EventNames.GOAL_PROGRESS_UPDATED,
+        EventNames.HABIT_COMPLETED,
+        EventNames.HABIT_STREAK_UPDATED,
+    ]
+
+    async def broadcast_handler(event_name: str, data: Dict[str, Any]):
+        """Handler to broadcast events via WebSockets."""
+        await manager.broadcast(
+            event=data.get("event", event_name),
+            entity_type=data.get("entity_type", "unknown"),
+            entity_id=data.get("entity_id", 0),
+            data=data.get("data", {})
+        )
+
+    for event in activity_events:
+        # Subscribe for Activity Logging (Sync)
+        bus.subscribe(event, activity_service.handle_event)
+        # Subscribe for WebSocket Broadcasting (Async)
+        bus.subscribe(event, broadcast_handler)
+
+    _listeners_setup = True
+    logger.info(f"Initialized {len(activity_events)} event listeners (ActivityLog + WS)")

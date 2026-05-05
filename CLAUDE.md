@@ -1,11 +1,29 @@
-# NARI v3 - Development Guide
+# NARI - Development Guide (v1.0.0-alpha.4)
 
 ## Project Context
 
-NARI (Not A Random Intelligence) is a self-hosted personal productivity platform combining task management, study tracking, notes, goals, habits, reminders, and analytics. All data lives on Server-01, never in third-party clouds.
+NARI (Not A Random Intelligence) is a self-hosted personal productivity platform. We follow Semantic Versioning (SemVer) starting from v1.0.0-alpha.x.
 
 **Hardware:** Intel i5-2400S, 8GB RAM, 500GB HDD, Ubuntu Server 24.04 LTS
 **Tech Stack:** Python 3.12 + FastAPI + SQLModel + SQLite (backend), React + Vite + Tailwind (frontend)
+
+## CLI Usage
+
+The NARI CLI can be invoked using the utility scripts at the project root:
+- **Windows (CMD):** `nari <command>`
+- **Windows (PowerShell):** `.\nari <command>`
+- **Linux:** `./nari.sh <command>`
+
+These scripts automatically use the project's virtual environment or `uv`.
+
+## Linux Setup
+
+On a fresh Linux (Ubuntu 24.04) server, run:
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+This will install `uv`, setup virtual environments, install dependencies, and run migrations.
 
 ## Build Stages (Follow Sequentially)
 
@@ -61,11 +79,11 @@ backend/app/
 
 ## Development Checklist
 
-- [ ] Stage 0: Health endpoint returns `{"ok": true}` with valid API key
-- [ ] Stage 1: Stopped using other task managers, CLI works
-- [ ] Stage 2: Every study session tracked through NARI
-- [ ] Stage 3: All notes centralized with version history
-- [ ] Stage 4: Open NARI on phone every morning
+- [x] Stage 0: Health endpoint returns `{"ok": true}` with valid API key
+- [x] Stage 1: Stopped using other task managers, CLI works
+- [x] Stage 2: Every study session tracked through NARI
+- [x] Stage 3: All notes centralized with version history
+- [x] Stage 4: Open NARI on phone every morning
 - [ ] Stage 5: Changes appear live without page refresh
 - [ ] Stage 6: Reminders trigger browser notifications
 - [ ] Stage 7: Goals and habits in daily use
@@ -84,4 +102,4 @@ backend/app/
 
 ## Current Status
 
-Starting Stage 0 - no code written yet. Begin with Python project setup, FastAPI skeleton, and Health endpoint with API key middleware.
+Stage 4 complete. Mobile-first web dashboard implemented and integrated with the backend. Tasks, Study Sessions, and Notes are now accessible via a modern web interface. Moving to Stage 5 - WebSockets for live updates.

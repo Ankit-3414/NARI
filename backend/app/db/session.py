@@ -1,19 +1,14 @@
-"""Database session and engine setup with SQLite WAL mode.
+"""Database session and engine setup with SQLite WAL mode."""
 
-All database operations go through this session. The engine is configured with
-performance-oriented pragmas suitable for Server-01 hardware.
-"""
+from pathlib import Path
 
-from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy import text
-from sqlalchemy.orm import sessionmaker
-from contextlib import contextmanager
-from .base import BaseModel
-import os
+from sqlalchemy.engine import Engine, make_url
+from sqlmodel import Session, create_engine
+
 from ..core.config import settings
 
 
-# Create engine with SQLite WAL mode and performance pragmas
 engine = create_engine(
     settings.DATABASE_URL,
     echo=settings.NARI_LOG_LEVEL == "DEBUG",
@@ -21,18 +16,45 @@ engine = create_engine(
 )
 
 
-def init_db() -> None:
-    """Initialize the database: create tables and set pragmas."""
-    SQLModel.metadata.create_all(engine)
+def ensure_sqlite_directory(database_url: str = settings.DATABASE_URL) -> None:
+    """Create the SQLite database parent directory when using a file DB."""
+    url = make_url(database_url)
+    if url.drivername != "sqlite" or not url.database:
+        return
+    if url.database in {":memory:", ""}:
+        return
 
-    # Apply SQLite pragmas for better performance on Server-01
+    Path(url.database).expanduser().parent.mkdir(parents=True, exist_ok=True)
+
+
+def apply_sqlite_pragmas(target_engine: Engine = engine) -> None:
+    """Apply SQLite pragmas used by NARI."""
+    if target_engine.dialect.name != "sqlite":
+        return
+
+    with target_engine.connect() as connection:
+        connection.execute(text("PRAGMA journal_mode=WAL"))
+        connection.execute(text("PRAGMA synchronous=NORMAL"))
+        connection.execute(text("PRAGMA cache_size=-128000"))
+        connection.execute(text("PRAGMA temp_store=MEMORY"))
+        connection.execute(text("PRAGMA mmap_size=268435456"))
+        connection.commit()
+
+
+def init_db() -> None:
+    """Initialize runtime database settings.
+
+    Alembic owns schema creation. This only prepares the SQLite file location
+    and applies connection pragmas.
+    """
+    ensure_sqlite_directory()
+    apply_sqlite_pragmas(engine)
+
+
+def check_database() -> None:
+    """Run a lightweight DB health check."""
     with Session(engine) as session:
-        session.execute(text("PRAGMA journal_mode=WAL"))
-        session.execute(text("PRAGMA synchronous=NORMAL"))
-        session.execute(text("PRAGMA cache_size=-128000"))  # 128MB cache
-        session.execute(text("PRAGMA temp_store=MEMORY"))
-        session.execute(text("PRAGMA mmap_size=268435456"))  # 256MB mmap
-        session.commit()
+        session.exec(text("SELECT 1")).one()
 
 
 def get_session():

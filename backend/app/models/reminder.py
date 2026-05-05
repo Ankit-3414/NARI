@@ -1,12 +1,15 @@
 """Reminder model with scheduler integration."""
 
-from sqlmodel import SQLModel, Field, Index
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, Index
+
 from ..core.constants import ReminderStatus
+from ..db.base import BaseModel
 
 
-class Reminder(SQLModel, table=True):
+class Reminder(BaseModel, table=True):
     """Reminder table - scheduled notifications.
 
     Supports one-time and recurring reminders (RRULE).
@@ -14,11 +17,6 @@ class Reminder(SQLModel, table=True):
     """
     __tablename__ = "reminders"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     title: str = Field(
         sa_column_kwargs={"nullable": False},
         description="Reminder title",

@@ -1,23 +1,21 @@
 """Habit model with streak tracking."""
 
-from sqlmodel import SQLModel, Field, Relationship, Index
-from typing import Optional, List
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, Index
+
 from ..core.constants import HabitFrequency
+from ..db.base import BaseModel
 
 
-class Habit(SQLModel, table=True):
+class Habit(BaseModel, table=True):
     """Habit table - tracks daily/weekly repeating habits.
 
     Streaks are calculated from habit_logs entries.
     """
     __tablename__ = "habits"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     name: str = Field(
         sa_column_kwargs={"nullable": False},
         description="Habit name",
@@ -59,26 +57,16 @@ class Habit(SQLModel, table=True):
     )
 
 
-class HabitLog(SQLModel, table=True):
+class HabitLog(BaseModel, table=True):
     """Habit log - records each habit completion.
 
     Writing to this table triggers streak recalculation in the service.
     """
     __tablename__ = "habit_logs"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     habit_id: int = Field(
         sa_column_kwargs={"nullable": False, "foreign_key": "habits.id", "index": True},
         description="Habit reference",
-    )
-    completed_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column_kwargs={"nullable": False, "index": True},
-        description="Completion timestamp",
     )
     note: Optional[str] = Field(
         default=None,

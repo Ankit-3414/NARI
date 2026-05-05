@@ -5,13 +5,16 @@ Historical interruption data CANNOT be reconstructed if these fields are added l
 Every study session tracks exactly how many times it was paused.
 """
 
-from sqlmodel import SQLModel, Field, Index
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, Index
+
 from ..core.constants import StudySessionStatus
+from ..db.base import BaseModel
 
 
-class StudySession(SQLModel, table=True):
+class StudySession(BaseModel, table=True):
     """Study session table - tracks all focused study periods.
 
     Note on interruptions: The interrupt_count and interruptions_json fields
@@ -20,11 +23,6 @@ class StudySession(SQLModel, table=True):
     """
     __tablename__ = "study_sessions"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     subject_id: int = Field(
         sa_column_kwargs={"nullable": False, "foreign_key": "subjects.id", "index": True},
         description="Subject being studied",
@@ -44,11 +42,6 @@ class StudySession(SQLModel, table=True):
         default=None,
         sa_column_kwargs={"nullable": True},
         description="Post-session notes",
-    )
-    started_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column_kwargs={"nullable": False, "index": True},
-        description="Session start timestamp",
     )
     paused_at: Optional[datetime] = Field(
         default=None,
@@ -80,6 +73,11 @@ class StudySession(SQLModel, table=True):
         sa_column_kwargs={"nullable": True},
         description="JSON array of pause/resume timestamps",
     )
+
+    @property
+    def started_at(self) -> datetime:
+        """Alias for created_at for domain clarity."""
+        return self.created_at
 
     __table_args__ = (
         Index("idx_study_subject_status", "subject_id", "status"),

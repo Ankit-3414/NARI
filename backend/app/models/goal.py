@@ -1,12 +1,15 @@
 """Goal model with hierarchical tree support."""
 
-from sqlmodel import SQLModel, Field, Index
+from datetime import date
 from typing import Optional
-from datetime import datetime, date
+
+from sqlmodel import Field, Index
+
 from ..core.constants import GoalScope, GoalStatus
+from ..db.base import BaseModel
 
 
-class Goal(SQLModel, table=True):
+class Goal(BaseModel, table=True):
     """Goal table - tracks long-term objectives with hierarchy.
 
     Supports parent/child relationships for nested goals:
@@ -14,11 +17,6 @@ class Goal(SQLModel, table=True):
     """
     __tablename__ = "goals"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     title: str = Field(
         sa_column_kwargs={"nullable": False},
         description="Goal title",

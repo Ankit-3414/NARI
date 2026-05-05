@@ -1,8 +1,8 @@
-# NARI v3 — Final Technical Architecture Document
+# NARI Technical Architecture Document
 
-**Version:** 1.0 Final  
-**Status:** Build-Ready  
-**Last Updated:** 2026-05-03  
+**Version:** v1.0.0-alpha.4  
+**Status:** In Development (Stage 5)  
+**Last Updated:** 2026-05-05  
 **Author:** Ankit (Solo Developer)  
 **System Type:** Self-hosted personal productivity and intelligence platform  
 **Primary Server:** Server-01 (Intel i5-2400S, 8GB RAM, 500GB HDD)
@@ -119,31 +119,16 @@ A self-hosted, private alternative to Notion + Todoist + Obsidian + a study trac
 | Charts | Recharts | Lightweight, composable |
 | Markdown | react-markdown | Note rendering |
 
-### Infrastructure
-
-| Component | Choice |
-|---|---|
-| Reverse Proxy | Nginx |
-| Process Supervisor | systemd |
-| Backup | Shell script + cron |
-| Remote Access | Tailscale (future) |
-
-### Explicitly Excluded (for now)
-
-- Redis, Celery, RQ, Flower
-- Local LLM — deferred to Stage 9 (Ollama reserved)
-- Plugin system (deferred to Year 3)
-- Multi-user auth (deferred to Year 4)
-- Docker (optional, not mandatory)
-
-**Note:** Framer Motion is now acceptable on Server-01 hardware. Use it sparingly and only where it genuinely improves UX.
-
 ---
 
 ## 5. Folder Structure
 
 ```
 nari/
+├── nari.bat                    # Windows CMD entry point for CLI
+├── nari.ps1                    # PowerShell entry point for CLI
+├── nari.sh                     # Linux entry point for CLI
+├── setup.sh                    # Linux initialization script
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                    # FastAPI app entry, lifespan, middleware
@@ -490,10 +475,10 @@ change_note         TEXT     -- optional user label
 id                  INTEGER  PK
 subject_id          INTEGER  FK → subjects(id) NOT NULL
 status              TEXT     NOT NULL DEFAULT 'running'  -- running|paused|completed
-goal_text           TEXT     -- what the user plans to achieve
+goal_text     TEXT     -- what the user plans to achieve
 notes               TEXT     -- post-session notes
 started_at          DATETIME NOT NULL
-paused_at           DATETIME -- last pause timestamp
+paused_at          DATETIME -- last pause timestamp
 resumed_at          DATETIME -- last resume timestamp
 ended_at            DATETIME -- NULL until stopped
 duration_seconds    INTEGER  NOT NULL DEFAULT 0  -- calculated on stop

@@ -3,20 +3,18 @@
 Schema is multi-user ready even though we're single-user now.
 """
 
-from sqlmodel import SQLModel, Field, Index
+from datetime import datetime
 from typing import Optional
-from ..core.constants import EntityType
+
+from sqlmodel import Field, Index
+
+from ..db.base import BaseModel
 
 
-class User(SQLModel, table=True):
+class User(BaseModel, table=True):
     """User table - single user for now, multi-user ready."""
     __tablename__ = "users"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     username: str = Field(
         sa_column_kwargs={"nullable": False, "unique": True},
         description="Unique username",

@@ -1,23 +1,18 @@
-"""Task model with full history tracking.
+"""Task model with full history tracking."""
 
-Every task change creates a TaskHistory entry for audit trail.
-"""
+from datetime import date, datetime
+from typing import Optional
 
-from sqlmodel import SQLModel, Field, Relationship, Index
-from typing import Optional, List
-from datetime import datetime
-from ..core.constants import TaskStatus, TaskPriority
+from sqlmodel import Field, Index, SQLModel
+
+from ..core.constants import TaskPriority, TaskStatus
+from ..db.base import BaseModel
 
 
-class Task(SQLModel, table=True):
+class Task(BaseModel, table=True):
     """Task table - main task management."""
     __tablename__ = "tasks"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     title: str = Field(
         sa_column_kwargs={"nullable": False},
         description="Task title",
@@ -38,14 +33,14 @@ class Task(SQLModel, table=True):
         sa_column_kwargs={"nullable": False, "index": True},
         description="Task status",
     )
-    due_date: Optional[datetime] = Field(
+    due_date: Optional[date] = Field(
         default=None,
         sa_column_kwargs={"nullable": True},
         description="Due date",
     )
     subject_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "subjects.id"},
+        sa_column_kwargs={"nullable": True},
         description="Associated subject",
     )
     tags_json: Optional[str] = Field(
@@ -71,7 +66,8 @@ class Task(SQLModel, table=True):
     )
     parent_task_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "tasks.id"},
+        foreign_key="tasks.id",
+        sa_column_kwargs={"nullable": True},
         description="Parent task for subtasks",
     )
     sort_index: int = Field(
@@ -93,20 +89,16 @@ class Task(SQLModel, table=True):
     )
 
 
-class TaskHistory(SQLModel, table=True):
+class TaskHistory(BaseModel, table=True):
     """Task history - full audit trail of every task change.
 
     Written on every task modification. Never deleted or updated.
     """
     __tablename__ = "task_history"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     task_id: int = Field(
-        sa_column_kwargs={"nullable": False, "foreign_key": "tasks.id", "index": True},
+        foreign_key="tasks.id",
+        sa_column_kwargs={"nullable": False, "index": True},
         description="Task reference",
     )
     action: str = Field(

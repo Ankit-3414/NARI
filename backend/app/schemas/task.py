@@ -1,19 +1,20 @@
 """Task Pydantic schemas."""
 
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
-from datetime import datetime
-from ..core.constants import TaskStatus, TaskPriority
+from datetime import date, datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from ..core.constants import TaskPriority, TaskStatus
 
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
     priority: TaskPriority = TaskPriority.NORMAL
-    status: TaskStatus = TaskStatus.PENDING
-    due_date: Optional[datetime] = None
+    due_date: Optional[date] = None
     subject_id: Optional[int] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     estimated_minutes: Optional[int] = None
     actual_minutes: Optional[int] = None
     recurrence_rule: Optional[str] = None
@@ -29,9 +30,9 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     priority: Optional[TaskPriority] = None
     status: Optional[TaskStatus] = None
-    due_date: Optional[datetime] = None
+    due_date: Optional[date] = None
     subject_id: Optional[int] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     estimated_minutes: Optional[int] = None
     actual_minutes: Optional[int] = None
     recurrence_rule: Optional[str] = None
@@ -42,6 +43,7 @@ class TaskResponse(TaskBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    status: TaskStatus
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime

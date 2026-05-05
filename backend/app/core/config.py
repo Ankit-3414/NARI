@@ -1,14 +1,18 @@
-from pydantic_settings import BaseSettings
 from typing import Optional
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
     # Core
     NARI_ENV: str = "development"
+    NARI_APP_NAME: str = "NARI"
+    NARI_VERSION: str = "0.1.0"
     NARI_SECRET_KEY: str = "changeme-use-long-random-string"
 
     # Auth
-    NARI_API_KEY: str = "changeme-your-api-key-here"
+    NARI_API_KEY: str = "nari_sk_v3_9xQ2pLmN7_F0cus"
 
     # Database
     DATABASE_URL: str = "sqlite:///./data/nari.db"
@@ -34,8 +38,5 @@ class Settings(BaseSettings):
     AI_PROVIDER: Optional[str] = None
     AI_ENABLED: bool = False
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 settings = Settings()

@@ -1,0 +1,43 @@
+"""WebSocket and internal event constants."""
+
+from enum import Enum
+
+
+class EventNames(str, Enum):
+    # Task events
+    TASK_CREATED = "task_created"
+    TASK_UPDATED = "task_updated"
+    TASK_COMPLETED = "task_completed"
+    TASK_DELETED = "task_deleted"
+    TASK_REOPENED = "task_reopened"
+
+    # Subject events
+    SUBJECT_CREATED = "subject_created"
+    SUBJECT_UPDATED = "subject_updated"
+    SUBJECT_ARCHIVED = "subject_archived"
+
+    # Study events
+    STUDY_STARTED = "study_started"
+    STUDY_PAUSED = "study_paused"
+    STUDY_RESUMED = "study_resumed"
+    STUDY_STOPPED = "study_stopped"
+
+    # Note events
+    NOTE_CREATED = "note_created"
+    NOTE_UPDATED = "note_updated"
+    NOTE_DELETED = "note_deleted"
+
+    # Reminder events
+    REMINDER_CREATED = "reminder_created"
+    REMINDER_TRIGGERED = "reminder_triggered"
+    REMINDER_SNOOZED = "reminder_snoozed"
+    REMINDER_DISMISSED = "reminder_dismissed"
+
+    # Goal & Habit events
+    GOAL_CREATED = "goal_created"
+    GOAL_PROGRESS_UPDATED = "goal_progress_updated"
+    HABIT_COMPLETED = "habit_completed"
+    HABIT_STREAK_UPDATED = "habit_streak_updated"
+
+    # System events
+    ACTIVITY_LOGGED = "activity_logged"

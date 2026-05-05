@@ -12,21 +12,18 @@ Rules (non-negotiable):
 5. ActivityLog writes must be non-blocking - use background task if slow
 """
 
-from sqlmodel import SQLModel, Field, Index
-from datetime import datetime
 from typing import Optional
+
+from sqlmodel import Field, Index
+
 from ..core.constants import EntityType
+from ..db.base import BaseModel
 
 
-class ActivityLog(SQLModel, table=True):
+class ActivityLog(BaseModel, table=True):
     """Activity log entry."""
     __tablename__ = "activity_logs"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     entity_type: EntityType = Field(
         sa_column_kwargs={"nullable": False, "index": True},
         description="Type of entity that was modified",
@@ -62,11 +59,6 @@ class ActivityLog(SQLModel, table=True):
         sa_column_kwargs={"nullable": False},
         description="Who performed the action (user|system)",
         max_length=20,
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column_kwargs={"nullable": False, "index": True},
-        description="UTC timestamp",
     )
 
     __table_args__ = (

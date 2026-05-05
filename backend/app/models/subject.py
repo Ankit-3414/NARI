@@ -1,22 +1,20 @@
 """Subject model for organizing tasks, notes, and study sessions."""
 
-from sqlmodel import SQLModel, Field, Index
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, Index
+
+from ..db.base import BaseModel
 
 
-class Subject(SQLModel, table=True):
+class Subject(BaseModel, table=True):
     """Subject table - categories for tasks, notes, and study.
 
     Uses soft delete (archived_at) instead of hard delete.
     """
     __tablename__ = "subjects"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     name: str = Field(
         sa_column_kwargs={"nullable": False, "unique": True},
         description="Subject name",

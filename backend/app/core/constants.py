@@ -50,6 +50,7 @@ class HabitFrequency(str, Enum):
 
 
 class EntityType(str, Enum):
+    SUBJECT = "subject"
     TASK = "task"
     NOTE = "note"
     STUDY_SESSION = "study_session"

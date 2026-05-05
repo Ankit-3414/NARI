@@ -3,21 +3,18 @@
 Notes are auto-versioned on every save. NoteVersion provides full history.
 """
 
-from sqlmodel import SQLModel, Field, Relationship, Index
-from typing import Optional, List
 from datetime import datetime
-from ..core.constants import EntityType
+from typing import Optional
+
+from sqlmodel import Field, Index
+
+from ..db.base import BaseModel
 
 
-class Note(SQLModel, table=True):
+class Note(BaseModel, table=True):
     """Note table - stores markdown notes with version history."""
     __tablename__ = "notes"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     title: str = Field(
         sa_column_kwargs={"nullable": False},
         description="Note title",
@@ -55,7 +52,7 @@ class Note(SQLModel, table=True):
     )
 
 
-class NoteVersion(SQLModel, table=True):
+class NoteVersion(BaseModel, table=True):
     """Note version history - snapshot on every save.
 
     Enables full version history and rollback capability.
@@ -63,11 +60,6 @@ class NoteVersion(SQLModel, table=True):
     """
     __tablename__ = "note_versions"
 
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Primary key",
-    )
     note_id: int = Field(
         sa_column_kwargs={"nullable": False, "foreign_key": "notes.id", "index": True},
         description="Parent note",
@@ -85,11 +77,6 @@ class NoteVersion(SQLModel, table=True):
         sa_column_kwargs={"nullable": True},
         description="Optional user label for this version",
         max_length=200,
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column_kwargs={"nullable": False, "index": True},
-        description="Version creation timestamp",
     )
 
     __table_args__ = (
