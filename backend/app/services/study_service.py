@@ -177,8 +177,8 @@ class StudyService:
             "updated_at": study_session.updated_at.isoformat(),
         }
 
-    def _emit_event(self, event: EventNames, study_session: StudySession) -> None:
-        get_event_bus().emit_ws_event(
+    async def _emit_event(self, event: EventNames, study_session: StudySession) -> None:
+        await get_event_bus().emit_ws_event(
             event=event.value,
             entity_type=EntityType.STUDY_SESSION.value,
             entity_id=study_session.id,

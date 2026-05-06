@@ -31,6 +31,7 @@ const MobileLayout = () => {
     if (path.startsWith('/tasks')) return 'Tasks';
     if (path.startsWith('/study')) return 'Focus';
     if (path.startsWith('/notes')) return 'Notes';
+    if (path.startsWith('/subjects')) return 'Subjects';
     return 'NARI';
   };
 
@@ -54,6 +55,7 @@ const MobileLayout = () => {
         <NavItem to="/" icon={LayoutDashboard} label="Home" />
         <NavItem to="/tasks" icon={CheckSquare} label="Tasks" />
         <NavItem to="/study" icon={BookOpen} label="Study" />
+        <NavItem to="/subjects" icon={Tag} label="Subjects" />
         <NavItem to="/notes" icon={StickyNote} label="Notes" />
       </nav>
     </div>

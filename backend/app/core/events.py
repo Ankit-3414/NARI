@@ -32,28 +32,17 @@ class EventBus:
         self._subscribers[event_name].append(callback)
         logger.debug(f"Subscribed to event: {event_name}")
 
-    def emit(self, event_name: str, data: Dict[str, Any]) -> None:
-        """Emit an event synchronously (non-blocking if loop exists)."""
+    async def emit(self, event_name: str, data: Dict[str, Any]) -> None:
+        """Emit an event and await all subscribers."""
         if event_name not in self._subscribers:
             return
 
-        try:
-            loop = asyncio.get_running_loop()
-            for callback in self._subscribers[event_name]:
-                loop.create_task(self._safe_call(callback, event_name, data))
-        except RuntimeError:
-            # No running event loop (common in some test environments)
-            # Fall back to synchronous execution
-            for callback in self._subscribers[event_name]:
-                try:
-                    result = callback(event_name, data)
-                    # If callback returned a coroutine, we can't really await it here
-                    # without a loop, so we just log it. But ActivityService.handle_event
-                    # is synchronous, so this should work for our current use case.
-                    if asyncio.iscoroutine(result):
-                        logger.warning(f"Async callback {callback} dropped in sync emit")
-                except Exception as e:
-                    logger.error(f"Error in sync event callback for {event_name}: {e}")
+        tasks = []
+        for callback in self._subscribers[event_name]:
+            tasks.append(self._safe_call(callback, event_name, data))
+        
+        if tasks:
+            await asyncio.gather(*tasks)
 
     async def _safe_call(self, callback: Callable, event_name: str, data: Dict[str, Any]) -> None:
         try:
@@ -63,24 +52,14 @@ class EventBus:
         except Exception as e:
             logger.error(f"Error in event callback {event_name}: {e}")
 
-    def emit_ws_event(
+    async def emit_ws_event(
         self,
         event: str,
         entity_type: str,
         entity_id: int,
         data: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """Emit a standardized WebSocket event.
-
-        This creates the event envelope that WebSocket clients expect:
-        {
-            "event": "task_created",
-            "entity_type": "task",
-            "entity_id": 12,
-            "timestamp": "2026-04-28T10:00:00Z",
-            "data": {}
-        }
-        """
+        """Emit a standardized WebSocket event and await broadcast."""
         envelope = {
             "event": event,
             "entity_type": entity_type,
@@ -88,7 +67,7 @@ class EventBus:
             "timestamp": utc_now().isoformat(),
             "data": data or {},
         }
-        self.emit(event, envelope)
+        await self.emit(event, envelope)
         logger.debug(f"WS event emitted: {event} for {entity_type}:{entity_id}")
         return envelope
 

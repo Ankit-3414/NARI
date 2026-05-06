@@ -208,7 +208,7 @@ class TaskService:
         event: EventNames,
         task: Task,
     ) -> None:
-        get_event_bus().emit_ws_event(
+        await get_event_bus().emit_ws_event(
             event=event.value,
             entity_type=EntityType.TASK.value,
             entity_id=task.id,

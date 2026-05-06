@@ -8,6 +8,7 @@ from .notes import router as notes_router
 from .subjects import router as subjects_router
 from .study import router as study_router
 from .tasks import router as tasks_router
+from .reminders import router as reminders_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -15,4 +16,5 @@ api_router.include_router(subjects_router)
 api_router.include_router(study_router)
 api_router.include_router(notes_router)
 api_router.include_router(tasks_router)
+api_router.include_router(reminders_router)
 api_router.include_router(activity_router)

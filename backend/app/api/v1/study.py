@@ -28,11 +28,11 @@ def list_study_sessions(
 
 
 @router.post("/start")
-def start_study_session(
+async def start_study_session(
     payload: StudySessionCreate,
     session: Session = Depends(get_session),
 ):
-    study_session = study_service.start(session, payload)
+    study_session = await study_service.start(session, payload)
     return success_response(study_service.to_data(study_session))
 
 
@@ -45,29 +45,29 @@ def get_active_session(session: Session = Depends(get_session)):
 
 
 @router.post("/active/pause")
-def pause_active_session(session: Session = Depends(get_session)):
+async def pause_active_session(session: Session = Depends(get_session)):
     active = study_service.get_active(session)
     if not active:
         from ...core.errors import NariError
         raise NariError("NO_ACTIVE_SESSION", "No active study session to pause", 404)
     
-    study_session = study_service.pause(session, active.id)
+    study_session = await study_service.pause(session, active.id)
     return success_response(study_service.to_data(study_session))
 
 
 @router.post("/active/resume")
-def resume_active_session(session: Session = Depends(get_session)):
+async def resume_active_session(session: Session = Depends(get_session)):
     active = study_service.get_active(session)
     if not active:
         from ...core.errors import NariError
         raise NariError("NO_ACTIVE_SESSION", "No active study session to resume", 404)
     
-    study_session = study_service.resume(session, active.id)
+    study_session = await study_service.resume(session, active.id)
     return success_response(study_service.to_data(study_session))
 
 
 @router.post("/active/stop")
-def stop_active_session(
+async def stop_active_session(
     notes: Optional[str] = None,
     session: Session = Depends(get_session)
 ):
@@ -76,7 +76,7 @@ def stop_active_session(
         from ...core.errors import NariError
         raise NariError("NO_ACTIVE_SESSION", "No active study session to stop", 404)
     
-    study_session = study_service.stop(session, active.id, notes=notes)
+    study_session = await study_service.stop(session, active.id, notes=notes)
     return success_response(study_service.to_data(study_session))
 
 

@@ -20,7 +20,7 @@ from ..websocket.events import EventNames
 class SubjectService:
     """Business logic for subject management."""
 
-    def create(self, session: Session, payload: SubjectCreate) -> Subject:
+    async def create(self, session: Session, payload: SubjectCreate) -> Subject:
         data = payload.model_dump()
         tags = data.pop("tags", None)
         subject = Subject(**data, tags_json=self._encode_tags(tags))
@@ -28,7 +28,7 @@ class SubjectService:
         session.add(subject)
         session.commit()
         session.refresh(subject)
-        self._emit_event(EventNames.SUBJECT_CREATED, subject)
+        await self._emit_event(EventNames.SUBJECT_CREATED, subject)
         return subject
 
     def get(self, session: Session, subject_id: int) -> Subject:
@@ -53,7 +53,7 @@ class SubjectService:
         statement = statement.order_by(Subject.priority.desc(), Subject.name)
         return list(session.exec(statement).all())
 
-    def update(self, session: Session, subject_id: int, payload: SubjectUpdate) -> Subject:
+    async def update(self, session: Session, subject_id: int, payload: SubjectUpdate) -> Subject:
         subject = self.get(session, subject_id)
         updates = payload.model_dump(exclude_unset=True)
 
@@ -66,10 +66,10 @@ class SubjectService:
         session.add(subject)
         session.commit()
         session.refresh(subject)
-        self._emit_event(EventNames.SUBJECT_UPDATED, subject)
+        await self._emit_event(EventNames.SUBJECT_UPDATED, subject)
         return subject
 
-    def delete(self, session: Session, subject_id: int) -> Subject:
+    async def delete(self, session: Session, subject_id: int) -> Subject:
         """Soft delete (archive) a subject."""
         subject = self.get(session, subject_id)
         subject.archived_at = utc_now()
@@ -78,7 +78,7 @@ class SubjectService:
         session.add(subject)
         session.commit()
         session.refresh(subject)
-        self._emit_event(EventNames.SUBJECT_ARCHIVED, subject)
+        await self._emit_event(EventNames.SUBJECT_ARCHIVED, subject)
         return subject
 
     def to_data(self, subject: Subject) -> dict[str, Any]:
@@ -99,12 +99,12 @@ class SubjectService:
             "updated_at": subject.updated_at.isoformat(),
         }
 
-    def _emit_event(
+    async def _emit_event(
         self,
         event: EventNames,
         subject: Subject,
     ) -> None:
-        get_event_bus().emit_ws_event(
+        await get_event_bus().emit_ws_event(
             event=event.value,
             entity_type=EntityType.SUBJECT.value,
             entity_id=subject.id,

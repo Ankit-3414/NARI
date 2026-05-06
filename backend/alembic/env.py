@@ -7,7 +7,7 @@ from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from app.core.config import settings
-from app.models.activity_log import ActivityLog
+from app.models import *  # Ensure all models are loaded into SQLModel.metadata
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
@@ -40,7 +40,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=True,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

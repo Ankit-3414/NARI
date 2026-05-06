@@ -26,11 +26,11 @@ def list_subjects(
 
 
 @router.post("")
-def create_subject(
+async def create_subject(
     payload: SubjectCreate,
     session: Session = Depends(get_session),
 ):
-    subject = subject_service.create(session, payload)
+    subject = await subject_service.create(session, payload)
     return success_response(subject_service.to_data(subject))
 
 
@@ -41,16 +41,16 @@ def get_subject(subject_id: int, session: Session = Depends(get_session)):
 
 
 @router.patch("/{subject_id}")
-def update_subject(
+async def update_subject(
     subject_id: int,
     payload: SubjectUpdate,
     session: Session = Depends(get_session),
 ):
-    subject = subject_service.update(session, subject_id, payload)
+    subject = await subject_service.update(session, subject_id, payload)
     return success_response(subject_service.to_data(subject))
 
 
 @router.delete("/{subject_id}")
-def delete_subject(subject_id: int, session: Session = Depends(get_session)):
-    subject = subject_service.delete(session, subject_id)
+async def delete_subject(subject_id: int, session: Session = Depends(get_session)):
+    subject = await subject_service.delete(session, subject_id)
     return success_response(subject_service.to_data(subject))

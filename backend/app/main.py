@@ -15,6 +15,7 @@ from .core.events import setup_event_listeners
 from .core.logging import get_logger, setup_logging
 from .db.session import init_db
 from .schemas.common import error_response
+from .scheduler.manager import scheduler_manager
 
 logger = get_logger(__name__)
 
@@ -25,8 +26,10 @@ async def lifespan(app: FastAPI):
     setup_logging()
     init_db()
     setup_event_listeners()
+    scheduler_manager.start()
     logger.info("NARI backend started")
     yield
+    scheduler_manager.stop()
     logger.info("NARI backend stopped")
 
 
