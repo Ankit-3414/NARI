@@ -34,6 +34,32 @@ export const useCreateTask = () => {
   });
 };
 
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const response = await client.patch(`/tasks/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+};
+
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.delete(`/tasks/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+};
+
 export const useCompleteTask = () => {
   const queryClient = useQueryClient();
 

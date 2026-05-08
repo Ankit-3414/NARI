@@ -55,13 +55,15 @@ function AppContent() {
 }
 
 function App() {
-  const [showEntrance, setShowEntrance] = useState(true);
+  const [showEntrance, setShowEntrance] = useState(false);
+  const [initChecked, setInitChecked] = useState(false);
 
   useEffect(() => {
     const hasSeenEntrance = localStorage.getItem('nari_entrance_seen');
-    if (hasSeenEntrance === 'true') {
-      setShowEntrance(false);
+    if (hasSeenEntrance !== 'true') {
+      setShowEntrance(true);
     }
+    setInitChecked(true);
   }, []);
 
   const handleEntranceComplete = () => {
@@ -69,31 +71,21 @@ function App() {
     setShowEntrance(false);
   };
 
-  // Allow clearing entrance animation for testing: ?intro=true or window.clearIntro()
-  useEffect(() => {
-    if (window) {
-      window.clearIntro = () => {
-        localStorage.removeItem('nari_entrance_seen');
-        setShowEntrance(true);
-      };
-    }
-    if (new URLSearchParams(window.location.search).get('intro') === 'true') {
-      localStorage.removeItem('nari_entrance_seen');
-      setShowEntrance(true);
-    }
-  }, []);
+  if (!initChecked) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AnimatePresence>
-        {showEntrance && (
+      <AnimatePresence mode="wait">
+        {showEntrance ? (
           <EntranceAnimation
+            key="entrance"
             userName="Ankit"
             onComplete={handleEntranceComplete}
           />
+        ) : (
+          <AppContent key="content" />
         )}
       </AnimatePresence>
-      <AppContent />
     </QueryClientProvider>
   );
 }

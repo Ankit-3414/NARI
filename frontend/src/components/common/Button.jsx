@@ -1,47 +1,46 @@
 import React from 'react';
 import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
-
-const Button = React.forwardRef(({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
+const Button = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  className, 
+  loading,
+  disabled,
+  ...props 
+}) => {
   const variants = {
-    primary: 'bg-primary hover:bg-blue-600 text-white',
-    secondary: 'bg-surface border border-slate-700 text-slate-200 hover:bg-slate-700',
-    ghost: 'bg-transparent hover:bg-slate-800 text-secondary hover:text-slate-100',
-    danger: 'bg-danger hover:bg-red-600 text-white',
-    success: 'bg-success hover:bg-green-600 text-white',
+    primary: 'bg-primary text-black hover:shadow-glow-primary shadow-primary/20',
+    secondary: 'bg-surface-light text-slate-100 border border-white/5 hover:border-white/10',
+    danger: 'bg-danger/10 text-danger border border-danger/20 hover:bg-danger hover:text-black',
+    ghost: 'bg-transparent text-secondary hover:text-primary hover:bg-primary/5',
+    outline: 'bg-transparent border border-primary/30 text-primary hover:bg-primary hover:text-black'
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
-    icon: 'p-2',
+    sm: 'px-3 py-1.5 text-[10px]',
+    md: 'px-6 py-2.5 text-xs',
+    lg: 'px-8 py-4 text-sm'
   };
 
   return (
     <button
-      ref={ref}
-      disabled={disabled || isLoading}
-      className={cn(
-        'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed',
+      className={clsx(
+        'relative inline-flex items-center justify-center font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none overflow-hidden',
         variants[variant],
         sizes[size],
         className
       )}
+      disabled={disabled || loading}
       {...props}
     >
-      {isLoading ? (
-        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
+      {loading ? (
+        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
       ) : null}
-      {children}
+      <span className="relative z-10">{children}</span>
     </button>
   );
-});
-
-Button.displayName = 'Button';
+};
 
 export default Button;

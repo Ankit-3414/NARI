@@ -22,6 +22,28 @@ export const useCreateGoal = () => {
   });
 };
 
+export const useUpdateGoal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const response = await client.patch(`/goals/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),
+  });
+};
+
+export const useDeleteGoal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.delete(`/goals/${id}`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),
+  });
+};
+
 export const useUpdateGoalProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({

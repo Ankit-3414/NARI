@@ -22,6 +22,14 @@ export const useReminderActions = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const response = await client.patch(`/reminders/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] }),
+  });
+
   const snoozeMutation = useMutation({
     mutationFn: async ({ id, minutes }) => {
       const response = await client.post(`/reminders/${id}/snooze`, null, { params: { minutes } });
@@ -48,8 +56,11 @@ export const useReminderActions = () => {
 
   return {
     create: createMutation.mutate,
+    update: updateMutation.mutate,
     snooze: snoozeMutation.mutate,
     dismiss: dismissMutation.mutate,
     remove: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
   };
 };

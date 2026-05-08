@@ -22,11 +22,34 @@ export const useCreateSubject = () => {
   });
 };
 
+export const useUpdateSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const response = await client.patch(`/subjects/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+  });
+};
+
+export const useDeleteSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.delete(`/subjects/${id}`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+  });
+};
+
 export const useArchiveSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id) => {
-      const response = await client.post(`/subjects/${id}/archive`);
+      // If there is no dedicated archive endpoint, we use update
+      const response = await client.patch(`/subjects/${id}`, { is_archived: true });
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),

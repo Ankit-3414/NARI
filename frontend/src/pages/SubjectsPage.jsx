@@ -1,98 +1,236 @@
 import React, { useState } from 'react';
-import { useSubjects, useArchiveSubject } from '../hooks/useStudy';
-import Button from '../components/common/Button';
-import Card from '../components/common/Card';
+import { useSubjects, useDeleteSubject, useArchiveSubject } from '../hooks/useStudy';
+import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/common/Modal';
 import SubjectForm from '../components/study/SubjectForm';
-import { Plus, Archive, BarChart3, Calendar, Tag, BookOpen } from 'lucide-react';
+import { 
+  Plus, Archive, BarChart3, Calendar, Tag, BookOpen, 
+  Trash2, Edit3, ChevronRight, Activity, Search
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { clsx } from 'clsx';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
+const SubjectCard = ({ subject, onEdit, onDelete }) => (
+  <motion.div 
+    variants={item}
+    layout
+    className="group relative glass-card p-6 md:p-8 rounded-[2rem] border-white/5 hover:border-white/10 transition-all duration-500 flex flex-col h-full overflow-hidden"
+  >
+    {/* Background Glow */}
+    <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 blur-[60px] rounded-full group-hover:bg-primary/10 transition-colors duration-700" />
+    
+    <div className="flex justify-between items-start mb-6 z-10">
+      <div className="flex-1 min-w-0">
+        <h3 className="font-black text-2xl text-white tracking-tighter uppercase italic truncate group-hover:text-primary transition-colors">
+          {subject.name}
+        </h3>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          <span className="text-[10px] font-mono text-secondary uppercase tracking-[0.2em]">Active Sector</span>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <motion.button 
+          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => onEdit(subject)}
+          className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-white transition-colors border border-white/5"
+        >
+          <Edit3 size={16} />
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,0,85,0.1)' }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => onDelete(subject.id)}
+          className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-danger transition-colors border border-white/5"
+        >
+          <Trash2 size={16} />
+        </motion.button>
+      </div>
+    </div>
+    
+    {subject.description ? (
+      <p className="text-secondary text-sm font-medium mb-8 line-clamp-2 z-10 flex-grow leading-relaxed">
+        {subject.description}
+      </p>
+    ) : (
+      <div className="flex-grow mb-8 italic text-slate-700 text-xs">No mission parameters defined.</div>
+    )}
+    
+    <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-white/5 z-10">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-white/5">
+        <BarChart3 size={12} className="text-accent" />
+        <span className="text-[10px] font-black text-secondary uppercase tracking-widest">
+          LVL {subject.difficulty}
+        </span>
+      </div>
+      
+      {subject.exam_date && (
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-white/5">
+          <Calendar size={12} className="text-primary" />
+          <span className="text-[10px] font-black text-secondary uppercase tracking-widest">
+            {format(parseISO(subject.exam_date), 'MMM d, yyyy').toUpperCase()}
+          </span>
+        </div>
+      )}
+      
+      <div className="flex flex-wrap gap-1.5">
+        {subject.tags?.map(tag => (
+          <span key={tag} className="text-[9px] font-bold bg-white/5 text-slate-400 px-2 py-0.5 rounded-lg border border-white/5 uppercase tracking-tighter">
+            #{tag}
+          </span>
+        ))}
+      </div>
+    </div>
+  </motion.div>
+);
 
 const SubjectsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const { data: subjects, isLoading, error } = useSubjects();
-  const archiveSubject = useArchiveSubject();
+  const deleteSubject = useDeleteSubject();
 
-  if (isLoading) return <div className="p-8 text-center text-secondary">Loading subjects...</div>;
-  if (error) return <div className="p-8 text-center text-danger">Failed to load subjects.</div>;
+  const handleEdit = (subject) => {
+    setEditingSubject(subject);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to terminate this subject? All associated data will be purged.')) {
+      deleteSubject.mutate(id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingSubject(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 max-w-5xl mx-auto space-y-6">
+        <div className="h-20 bg-white/5 animate-pulse rounded-[2rem]" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-white/5 animate-pulse rounded-[2rem]" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) return <div className="p-8 text-center text-danger font-mono uppercase tracking-[0.3em]">Critical Error: Failed to load sectors.</div>;
+
+  const filteredSubjects = subjects?.filter(s => 
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+  ) || [];
 
   return (
-    <div className="p-4 max-w-4xl mx-auto pb-24 relative min-h-[calc(100vh-8rem)]">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">Subjects</h1>
-          <p className="text-secondary text-sm">Manage your learning areas</p>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto pb-32">
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.2)]">
+              <BookOpen size={24} />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">Knowledge Hub</h1>
+          </div>
+          <p className="text-secondary font-mono text-xs tracking-[0.3em] ml-16">Active Subjects: {subjects?.length || 0}</p>
         </div>
-      </header>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative group w-full sm:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-primary transition-colors" size={18} />
+            <input 
+              type="text"
+              placeholder="Filter sectors..."
+              className="w-full bg-surface/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-700"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-3.5 rounded-2xl bg-primary text-black font-black uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(0,242,255,0.4)] transition-all"
+          >
+            <Plus size={20} /> Initialize New
+          </motion.button>
+        </div>
+      </motion.header>
 
-      {subjects?.length === 0 ? (
-        <div className="text-center py-12 bg-surface rounded-xl border border-slate-800 border-dashed">
-          <BookOpen size={48} className="mx-auto text-slate-700 mb-4" />
-          <p className="text-secondary italic">No subjects added yet.</p>
-          <Button 
+      {filteredSubjects.length === 0 ? (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-24 glass-card rounded-[3rem] border border-dashed border-white/10"
+        >
+          <Activity size={64} className="mx-auto text-primary/20 mb-6 animate-pulse" />
+          <p className="text-xl font-bold text-white mb-2">No matching sectors found.</p>
+          <p className="text-secondary text-sm font-medium">Ready to initialize new learning parameters?</p>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             variant="outline" 
-            size="sm" 
-            className="mt-4"
+            className="mt-8 px-8 py-3 rounded-xl border border-primary text-primary font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-black transition-all"
             onClick={() => setIsModalOpen(true)}
           >
-            <Plus size={18} className="mr-2" />
-            Add your first subject
-          </Button>
-        </div>
+            Initialize First Subject
+          </motion.button>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {subjects.map(subject => (
-            <Card key={subject.id} className="group relative">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-lg text-slate-100 group-hover:text-primary transition-colors">
-                  {subject.name}
-                </h3>
-                <button 
-                  onClick={() => archiveSubject.mutate(subject.id)}
-                  className="text-slate-600 hover:text-danger p-1 transition-colors"
-                  title="Archive Subject"
-                >
-                  <Archive size={16} />
-                </button>
-              </div>
-              
-              {subject.description && (
-                <p className="text-sm text-secondary mb-4 line-clamp-2">{subject.description}</p>
-              )}
-              
-              <div className="flex flex-wrap gap-3 mt-auto pt-2 border-t border-slate-800/50">
-                <div className="flex items-center gap-1 text-[10px] text-secondary uppercase font-bold tracking-wider">
-                  <BarChart3 size={12} className="text-accent" />
-                  Diff: {subject.difficulty}/5
-                </div>
-                {subject.exam_date && (
-                  <div className="flex items-center gap-1 text-[10px] text-secondary uppercase font-bold tracking-wider">
-                    <Calendar size={12} className="text-primary" />
-                    {format(parseISO(subject.exam_date), 'MMM d')}
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-1">
-                  {subject.tags?.map(tag => (
-                    <span key={tag} className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredSubjects.map(subject => (
+              <SubjectCard 
+                key={subject.id} 
+                subject={subject} 
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
 
-      {/* Floating Action Button */}
-      <button
+      {/* Mobile Floating Action Button */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-10"
+        className="md:hidden fixed bottom-24 right-6 w-16 h-16 bg-primary text-black rounded-[1.5rem] shadow-[0_0_40px_rgba(0,242,255,0.5)] flex items-center justify-center z-50 border border-white/20"
       >
         <Plus size={32} />
-      </button>
+      </motion.button>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <SubjectForm onClose={() => setIsModalOpen(false)} />
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <SubjectForm onClose={handleCloseModal} initialData={editingSubject} />
       </Modal>
     </div>
   );

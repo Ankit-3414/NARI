@@ -18,9 +18,40 @@ from ..models.study_session import StudySession
 
 logger = get_logger(__name__)
 
+SENSITIVE_FIELDS = {
+    "title",
+    "description",
+    "content_markdown",
+    "notes",
+    "goal_text",
+    "summary",
+    "message",
+    "payload",
+}
+
 
 class ActivityService:
     """Append-only writer for the NARI ActivityLog."""
+
+    def _redact_pii(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Recursively redact sensitive fields from a dictionary."""
+        if not isinstance(data, dict):
+            return data
+        
+        redacted = {}
+        for key, value in data.items():
+            if key in SENSITIVE_FIELDS and isinstance(value, str):
+                redacted[key] = f"[REDACTED:{len(value)} chars]"
+            elif isinstance(value, dict):
+                redacted[key] = self._redact_pii(value)
+            elif isinstance(value, list):
+                redacted[key] = [
+                    self._redact_pii(item) if isinstance(item, dict) else item 
+                    for item in value
+                ]
+            else:
+                redacted[key] = value
+        return redacted
 
     def get_system_stats(self, session: Session) -> dict[str, int]:
         """Get the total row count for all main system tables."""
@@ -92,12 +123,15 @@ class ActivityService:
         Call this after the main service operation has committed.
         """
         try:
+            # Redact PII from payload before logging
+            redacted_payload = self._redact_pii(payload) if payload is not None else None
+
             entry = ActivityLog(
                 entity_type=entity_type,
                 entity_id=entity_id,
                 action=action,
                 message=message,
-                payload_json=json.dumps(payload) if payload is not None else None,
+                payload_json=json.dumps(redacted_payload) if redacted_payload is not None else None,
                 source=source,
                 actor=actor,
             )

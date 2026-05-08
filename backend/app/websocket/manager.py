@@ -38,7 +38,6 @@ class ConnectionManager:
             "entity_type": entity_type,
             "entity_id": entity_id,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "data": data or {}
         }
 
         message = json.dumps(payload)

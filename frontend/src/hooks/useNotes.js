@@ -44,10 +44,22 @@ export const useNoteActions = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const response = await client.delete(`/notes/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+  });
+
   return {
     create: createMutation.mutate,
     update: updateMutation.mutate,
+    remove: deleteMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
+    isRemoving: deleteMutation.isPending,
   };
 };

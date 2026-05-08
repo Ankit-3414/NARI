@@ -178,7 +178,8 @@ def study_resume(args: argparse.Namespace) -> None:
 
 
 def study_stop(args: argparse.Namespace) -> None:
-    suffix = f"?notes={args.notes}" if args.notes else ""
+    from urllib.parse import urlencode
+    suffix = f"?{urlencode({'notes': args.notes})}" if args.notes else ""
     data = ensure_ok(request("POST", f"/study/active/stop{suffix}"))
     print(f"Stopped session #{data['id']}. Final duration: {data['duration_seconds']}s")
     if data["notes"]:

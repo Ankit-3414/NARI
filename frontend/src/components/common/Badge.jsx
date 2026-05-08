@@ -1,30 +1,25 @@
 import React from 'react';
 import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
-
-const Badge = ({ className, variant = 'default', children, ...props }) => {
+const Badge = ({ children, variant = 'primary', className }) => {
   const variants = {
-    default: 'bg-slate-700 text-slate-200',
-    primary: 'bg-primary/20 text-primary border border-primary/30',
-    success: 'bg-success/20 text-success border border-success/30',
-    danger: 'bg-danger/20 text-danger border border-danger/30',
-    warning: 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30',
-    accent: 'bg-accent/20 text-accent border border-accent/30',
+    primary: 'bg-primary/10 text-primary',
+    secondary: 'bg-white/5 text-secondary',
+    success: 'bg-success/10 text-success',
+    danger: 'bg-danger/10 text-danger',
+    warning: 'bg-warning/10 text-warning',
+    low: 'bg-success/10 text-success',
+    normal: 'bg-primary/10 text-primary',
+    high: 'bg-warning/10 text-warning',
+    urgent: 'bg-danger/10 text-danger shadow-[0_0_10px_rgba(255,0,85,0.2)] animate-pulse'
   };
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
-        variants[variant],
-        className
-      )}
-      {...props}
-    >
+    <span className={clsx(
+      'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5',
+      variants[variant] || variants.primary,
+      className
+    )}>
       {children}
     </span>
   );

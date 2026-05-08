@@ -16,9 +16,20 @@ from ..schemas.task import TaskCreate, TaskUpdate
 from ..utils.datetime_utils import utc_now
 from ..websocket.events import EventNames
 
+SENSITIVE_FIELDS = {"title", "description", "tags"}
+
 
 class TaskService:
     """Business logic for task management."""
+
+    def _redact_snapshot(self, data: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Redact sensitive fields from a task snapshot."""
+        if data is None:
+            return None
+        return {
+            key: (f"[REDACTED:{len(str(value))} chars]" if key in SENSITIVE_FIELDS and value else value)
+            for key, value in data.items()
+        }
 
     async def create(self, session: Session, payload: TaskCreate) -> Task:
         data = payload.model_dump()
@@ -194,12 +205,15 @@ class TaskService:
         old_data: dict[str, Any] | None,
         new_data: dict[str, Any],
     ) -> None:
+        redacted_old = self._redact_snapshot(old_data)
+        redacted_new = self._redact_snapshot(new_data)
+        
         session.add(
             TaskHistory(
                 task_id=task.id,
                 action=action,
-                old_data_json=json.dumps(old_data) if old_data is not None else None,
-                new_data_json=json.dumps(new_data),
+                old_data_json=json.dumps(redacted_old) if redacted_old is not None else None,
+                new_data_json=json.dumps(redacted_new),
             )
         )
 

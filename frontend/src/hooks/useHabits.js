@@ -22,6 +22,28 @@ export const useCreateHabit = () => {
   });
 };
 
+export const useUpdateHabit = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const response = await client.patch(`/habits/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['habits'] }),
+  });
+};
+
+export const useDeleteHabit = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.delete(`/habits/${id}`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['habits'] }),
+  });
+};
+
 export const useCompleteHabit = () => {
   const queryClient = useQueryClient();
 
