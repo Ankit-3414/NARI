@@ -1,7 +1,7 @@
 # 🌌 NARI (Not A Random Intelligence)
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
-[![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
 [![Platform](https://img.shields.io/badge/Platform-Self--Hosted-purple.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
 
 **NARI** is a local-first, privacy-centric "Personal Operating System" designed to centralize your productivity, study habits, and behavioral analytics. It's built for those who want a high-fidelity dashboard for their life without sacrificing their data to the cloud.
@@ -92,7 +92,8 @@ NARI is designed to be self-hosted. It uses Master API Key authentication to ens
 ---
 
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Proprietary / All Rights Reserved**.  
+This project is private and intended for personal use only. No permission is granted to copy, distribute, or modify the code for public or commercial use.
 
 ---
 
