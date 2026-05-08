@@ -84,7 +84,7 @@ backend/app/
 - [x] Stage 2: Every study session tracked through NARI
 - [x] Stage 3: All notes centralized with version history
 - [x] Stage 4: Open NARI on phone every morning
-- [ ] Stage 5: Changes appear live without page refresh
+- [x] Stage 5: Changes appear live without page refresh
 - [ ] Stage 6: Reminders trigger browser notifications
 - [ ] Stage 7: Goals and habits in daily use
 - [ ] Stage 8: Analytics show meaningful patterns (2+ months data)
@@ -102,4 +102,4 @@ backend/app/
 
 ## Current Status
 
-Stage 4 complete. Mobile-first web dashboard implemented and integrated with the backend. Tasks, Study Sessions, and Notes are now accessible via a modern web interface. Moving to Stage 5 - WebSockets for live updates.
+Stage 5 complete. WebSockets implemented for real-time sync across Tasks, Study, Notes, Goals, and Habits. UI updates instantly on backend changes. Moving to Stage 6 - Reminders (Browser Notifications & Scheduler).

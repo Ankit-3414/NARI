@@ -6,13 +6,16 @@ async def test_ws():
     uri = "ws://localhost:8000/ws?token=nari_sk_v3_9xQ2pLmN7_F0cus"
     try:
         async with websockets.connect(uri) as websocket:
-            print("Connected to WS")
-            # The server might send a welcome message or we can just wait a bit
-            try:
-                message = await asyncio.wait_for(websocket.recv(), timeout=2.0)
-                print(f"Received: {message}")
-            except asyncio.TimeoutError:
-                print("No message received (timeout), but connected.")
+            print("Connected to WS. Waiting for events...")
+            while True:
+                try:
+                    message = await asyncio.wait_for(websocket.recv(), timeout=30.0)
+                    print(f"Received Event: {json.loads(message)}")
+                except asyncio.TimeoutError:
+                    print("Still waiting...")
+                except websockets.exceptions.ConnectionClosed:
+                    print("Connection closed")
+                    break
     except Exception as e:
         print(f"Failed to connect: {e}")
 

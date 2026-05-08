@@ -1,17 +1,17 @@
-# Current Technical State (v1.0.0-alpha.4)
+# Current Technical State (v1.0.0-alpha.5)
     - **Backend Architecture:** FastAPI, SQLModel, SQLite (WAL mode), with a fully functional event-driven architecture
       (EventBus) for decoupled service communication and ActivityLogging.
-    - **Core Services:** Tasks, Subjects + Study Sessions, and Notes with auto-versioning are complete and stable.
+    - **Core Services:** Tasks, Subjects, Study Sessions, Notes, Goals, Habits, and Reminders are complete and stable.
     - **Frontend:** Stage 4 complete. React SPA (Vite + Tailwind) is functional.
-    - **Stage 5 (WebSockets):** Starting implementation for real-time updates.
+    - **Stage 5 (WebSockets):** COMPLETED. Real-time updates for all major entities are working.
 
  # Last 3 Changes Made
-     1. Adopted Semantic Versioning protocol (v1.0.0-alpha.4) and updated documentation (`CLAUDE.md`, `NARI_Architecture.md`).
-     2. Renamed `NARI_v3_Architecture.md` to `NARI_Architecture.md` to align with new versioning.
-     3. Verified backend environment (venv/uvicorn) is functional and starts correctly.
+     1. Updated `useWebSocket` hook to handle all entity types (Habits, Goals, Reminders) and invalidate analytics.
+     2. Verified WebSocket broadcast-listen loop with a live backend test.
+     3. Updated documentation (`CLAUDE.md`, `SYSTEM_CHECKLIST.md`) to reflect Stage 5 completion.
 
  # Pending Tasks
-   1. Implement `backend/app/websocket/manager.py` for connection handling.
-   2. Create `/ws` endpoint in FastAPI and wire it to the `ConnectionManager`.
-   3. Update `core/events.py` to broadcast events to connected WebSocket clients.
-   4. Configure `frontend/src/api/client.js` and hooks to handle live updates.
+   1. Implement Stage 6: Reminders (Browser Notifications & Scheduler).
+   2. Configure APScheduler to trigger WebSocket events for upcoming reminders.
+   3. Implement browser notification permission request and display logic.
+   4. Wire reminder snooze/dismiss actions in the frontend.

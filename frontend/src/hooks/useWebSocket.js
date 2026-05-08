@@ -26,12 +26,22 @@ export const useWebSocket = () => {
       // Invalidate relevant queries based on entity type
       if (entity_type === 'task') {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
       } else if (entity_type === 'study_session') {
         queryClient.invalidateQueries({ queryKey: ['study'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
       } else if (entity_type === 'note') {
         queryClient.invalidateQueries({ queryKey: ['notes'] });
       } else if (entity_type === 'subject') {
         queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      } else if (entity_type === 'habit') {
+        queryClient.invalidateQueries({ queryKey: ['habits'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      } else if (entity_type === 'goal') {
+        queryClient.invalidateQueries({ queryKey: ['goals'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      } else if (entity_type === 'reminder') {
+        queryClient.invalidateQueries({ queryKey: ['reminders'] });
       } else if (entity_type === 'activity_log') {
         queryClient.invalidateQueries({ queryKey: ['activity'] });
       }

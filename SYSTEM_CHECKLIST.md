@@ -51,7 +51,7 @@
 - [ ] **Reminders:** Notification dot and list view work.
 
 ### Global Features
-- [x] **WebSocket Sync:** UI updates instantly (verified backend emitting logic).
+- [x] **WebSocket Sync:** UI updates instantly (verified backend emitting logic and frontend cache invalidation).
 - [x] **Auth Gate:** LoginPage appears if API key is missing (verified security middleware).
 - [x] **Responsiveness:** Layout works on mobile-sized viewports (verified `MobileLayout.jsx` logic).
 
