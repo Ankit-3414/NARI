@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { wsClient } from '../api/websocket';
+import { useAuthStore } from '../store/authStore';
 
 /**
  * Hook to manage WebSocket connection and react to events.
@@ -8,11 +9,12 @@ import { wsClient } from '../api/websocket';
  */
 export const useWebSocket = () => {
   const queryClient = useQueryClient();
+  const apiKey = useAuthStore((state) => state.apiKey);
 
   useEffect(() => {
+    if (!apiKey) return;
+
     // Connect to WebSocket on mount
-    // In development, the URL is likely ws://localhost:8000/ws
-    // In production, it might be relative or different
     wsClient.connect('/ws');
 
     // Subscribe to events
@@ -40,7 +42,7 @@ export const useWebSocket = () => {
       // We might want to keep the socket open across page navigations,
       // so we don't necessarily disconnect here unless the whole app unmounts.
     };
-  }, [queryClient]);
+  }, [queryClient, apiKey]);
 
   return wsClient;
 };

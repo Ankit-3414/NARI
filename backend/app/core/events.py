@@ -115,6 +115,8 @@ def setup_event_listeners() -> None:
         EventNames.REMINDER_DISMISSED,
         EventNames.GOAL_CREATED,
         EventNames.GOAL_PROGRESS_UPDATED,
+        EventNames.HABIT_CREATED,
+        EventNames.HABIT_UPDATED,
         EventNames.HABIT_COMPLETED,
         EventNames.HABIT_STREAK_UPDATED,
     ]

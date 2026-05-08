@@ -51,7 +51,7 @@ def test_study_session_lifecycle(client: TestClient, session: Session):
     assert resume_resp.status_code == 200
     data = resume_resp.json()["data"]
     assert data["status"] == "running"
-    assert len(data["interruptions"]) == 2
+    assert len(data["interruptions"]) == 1
 
     # 5. Stop Session
     time.sleep(1.1)

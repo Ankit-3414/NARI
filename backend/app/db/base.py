@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
-from ..utils.datetime_utils import utc_now
+from ..utils.datetime_utils import utc_naive
 
 
 class TimestampMixin(SQLModel):
@@ -14,12 +14,12 @@ class TimestampMixin(SQLModel):
     All models inherit from this to ensure time-aware records from day one.
     """
     created_at: Optional[datetime] = Field(
-        default_factory=utc_now,
+        default_factory=utc_naive,
         nullable=False,
         description="UTC timestamp when the record was created",
     )
     updated_at: Optional[datetime] = Field(
-        default_factory=utc_now,
+        default_factory=utc_naive,
         nullable=False,
         description="UTC timestamp when the record was last updated",
     )

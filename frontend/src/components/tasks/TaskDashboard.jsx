@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTasks, useCompleteTask } from '../../hooks/useTasks';
-import { CheckCircle2, Circle, Clock, Tag } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Tag, Plus } from 'lucide-react';
 import { format, isToday, isPast, parseISO } from 'date-fns';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
+import TaskForm from './TaskForm';
 
 const TaskItem = ({ task }) => {
   const completeMutation = useCompleteTask();
@@ -44,6 +47,7 @@ const TaskItem = ({ task }) => {
 };
 
 const TaskDashboard = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: tasks, isLoading, error } = useTasks();
 
   if (isLoading) return <div className="p-8 text-center text-secondary">Loading your day...</div>;
@@ -54,7 +58,7 @@ const TaskDashboard = () => {
   const otherTasks = pendingTasks.filter(t => !t.due_date || !isToday(parseISO(t.due_date)));
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
+    <div className="p-4 max-w-lg mx-auto relative min-h-[calc(100vh-8rem)]">
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3 px-1">
           <h2 className="text-sm font-bold uppercase tracking-wider text-secondary">Today</h2>
@@ -77,6 +81,18 @@ const TaskDashboard = () => {
           otherTasks.map(task => <TaskItem key={task.id} task={task} />)
         )}
       </section>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-10"
+      >
+        <Plus size={32} />
+      </button>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <TaskForm onClose={() => setIsModalOpen(false)} />
+      </Modal>
     </div>
   );
 };

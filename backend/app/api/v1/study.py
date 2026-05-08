@@ -44,6 +44,12 @@ def get_active_session(session: Session = Depends(get_session)):
     return success_response(study_service.to_data(active))
 
 
+@router.get("/today")
+def get_today_study_stats(session: Session = Depends(get_session)):
+    stats = study_service.get_today_stats(session)
+    return success_response(stats)
+
+
 @router.post("/active/pause")
 async def pause_active_session(session: Session = Depends(get_session)):
     active = study_service.get_active(session)

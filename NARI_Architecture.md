@@ -1412,11 +1412,6 @@ Server-01's 8GB RAM runs Llama 3.1 8B comfortably via Ollama. This was impossibl
 - Model returns a response
 - Response is displayed to user — never written to DB directly
 
-**To install Ollama when ready (Stage 9):**
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1:8b
-```
 
 **AI model this replaces:** Fine-tuning on a laptop is not recommended. The ActivityLog data NARI accumulates is behavioral event data, not instruction-response pairs needed for fine-tuning. RAG over real personal data via Ollama will outperform any fine-tuned model for NARI's use cases — and it runs entirely on Server-01 for free.
 

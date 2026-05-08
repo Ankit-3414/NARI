@@ -11,6 +11,29 @@ export const useTasks = (filters = {}) => {
   });
 };
 
+export const useTodayTasks = () => {
+  return useQuery({
+    queryKey: ['tasks', 'today'],
+    queryFn: async () => {
+      const response = await client.get('/tasks/today');
+      return response.data;
+    },
+  });
+};
+
+export const useCreateTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload) => {
+      const response = await client.post('/tasks', payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+};
+
 export const useCompleteTask = () => {
   const queryClient = useQueryClient();
 

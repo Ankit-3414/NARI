@@ -36,6 +36,8 @@ class EventNames(str, Enum):
     # Goal & Habit events
     GOAL_CREATED = "goal_created"
     GOAL_PROGRESS_UPDATED = "goal_progress_updated"
+    HABIT_CREATED = "habit_created"
+    HABIT_UPDATED = "habit_updated"
     HABIT_COMPLETED = "habit_completed"
     HABIT_STREAK_UPDATED = "habit_streak_updated"
 

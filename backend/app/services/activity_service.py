@@ -2,18 +2,38 @@
 import json
 from typing import Any
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 
 from ..core.constants import EntityType
 from ..core.logging import get_logger
 from ..db import session as db_session
 from ..models.activity_log import ActivityLog
+from ..models.task import Task
+from ..models.note import Note
+from ..models.subject import Subject
+from ..models.habit import Habit
+from ..models.goal import Goal
+from ..models.reminder import Reminder
+from ..models.study_session import StudySession
 
 logger = get_logger(__name__)
 
 
 class ActivityService:
     """Append-only writer for the NARI ActivityLog."""
+
+    def get_system_stats(self, session: Session) -> dict[str, int]:
+        """Get the total row count for all main system tables."""
+        return {
+            "tasks": session.exec(select(func.count(Task.id))).first() or 0,
+            "notes": session.exec(select(func.count(Note.id))).first() or 0,
+            "subjects": session.exec(select(func.count(Subject.id))).first() or 0,
+            "habits": session.exec(select(func.count(Habit.id))).first() or 0,
+            "goals": session.exec(select(func.count(Goal.id))).first() or 0,
+            "reminders": session.exec(select(func.count(Reminder.id))).first() or 0,
+            "study_sessions": session.exec(select(func.count(StudySession.id))).first() or 0,
+            "logs": session.exec(select(func.count(ActivityLog.id))).first() or 0,
+        }
 
     def handle_event(self, event_name: str, payload: dict[str, Any]) -> None:
         """Handle an event from the EventBus by logging it."""

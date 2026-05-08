@@ -8,7 +8,12 @@ import TasksPage from '../pages/TasksPage';
 import StudyPage from '../pages/StudyPage';
 import NotesPage from '../pages/NotesPage';
 import SubjectsPage from '../pages/SubjectsPage';
+import RemindersPage from '../pages/RemindersPage';
+import AnalyticsPage from '../pages/AnalyticsPage';
+import ActivityPage from '../pages/ActivityPage';
+import LoginPage from '../pages/LoginPage';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useAuthStore } from '../store/authStore';
 import EntranceAnimation from '../components/ui/EntranceAnimation';
 
 const queryClient = new QueryClient({
@@ -21,8 +26,14 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  // Initialize WebSocket connection
+  const apiKey = useAuthStore((state) => state.apiKey);
+
+  // Initialize WebSocket connection only if we have an API key
   useWebSocket();
+
+  if (!apiKey) {
+    return <LoginPage />;
+  }
 
   return (
     <BrowserRouter>
@@ -33,6 +44,9 @@ function AppContent() {
           <Route path="study" element={<StudyPage />} />
           <Route path="notes" element={<NotesPage />} />
           <Route path="subjects" element={<SubjectsPage />} />
+          <Route path="reminders" element={<RemindersPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="activity" element={<ActivityPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

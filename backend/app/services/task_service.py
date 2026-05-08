@@ -6,7 +6,7 @@ import json
 from datetime import date
 from typing import Any
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 
 from ..core.constants import EntityType, TaskPriority, TaskStatus
 from ..core.errors import NariError
@@ -156,7 +156,7 @@ class TaskService:
             select(Task)
             .where(Task.status != TaskStatus.DONE)
             .where(Task.status != TaskStatus.CANCELLED)
-            .where(Task.due_date <= today)
+            .where(or_(Task.due_date <= today, Task.due_date == None))
             .order_by(Task.due_date, Task.priority, Task.id)
         )
         return list(session.exec(statement).all())

@@ -16,6 +16,12 @@ router = APIRouter(
 )
 
 
+@router.get("/stats")
+def get_activity_stats(session: Session = Depends(get_session)):
+    stats = activity_service.get_system_stats(session)
+    return success_response(stats)
+
+
 @router.get("")
 def list_activity(
     entity_type: EntityType | None = None,

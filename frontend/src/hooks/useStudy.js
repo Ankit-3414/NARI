@@ -11,6 +11,28 @@ export const useSubjects = (includeArchived = false) => {
   });
 };
 
+export const useCreateSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload) => {
+      const response = await client.post('/subjects', payload);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+  });
+};
+
+export const useArchiveSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.post(`/subjects/${id}/archive`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+  });
+};
+
 export const useActiveSession = () => {
   return useQuery({
     queryKey: ['study', 'active'],
@@ -19,6 +41,17 @@ export const useActiveSession = () => {
       return response.data && Object.keys(response.data).length > 0 ? response.data : null;
     },
     refetchInterval: 5000, // Check for status updates every 5s
+  });
+};
+
+export const useTodayStudyStats = () => {
+  return useQuery({
+    queryKey: ['study', 'today'],
+    queryFn: async () => {
+      const response = await client.get('/study/today');
+      return response.data;
+    },
+    refetchInterval: 30000, // Refresh every 30s
   });
 };
 

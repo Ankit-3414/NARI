@@ -2,6 +2,8 @@
  * WebSocket client for real-time updates.
  */
 
+import { useUiStore } from '../store/uiStore';
+
 class WebSocketClient {
   constructor() {
     this.socket = null;
@@ -23,10 +25,12 @@ class WebSocketClient {
     }
 
     console.log('Connecting to WebSocket:', wsUrl.toString());
+    useUiStore.getState().setWsStatus('connecting');
     this.socket = new WebSocket(wsUrl.toString());
 
     this.socket.onopen = () => {
       console.log('WebSocket connected');
+      useUiStore.getState().setWsStatus('connected');
       this.reconnectAttempts = 0;
     };
 
@@ -41,11 +45,13 @@ class WebSocketClient {
 
     this.socket.onclose = (event) => {
       console.log('WebSocket disconnected', event.code, event.reason);
+      useUiStore.getState().setWsStatus('disconnected');
       this.attemptReconnect();
     };
 
     this.socket.onerror = (error) => {
       console.error('WebSocket error:', error);
+      // onerror is usually followed by onclose, status will be handled there
     };
   }
 

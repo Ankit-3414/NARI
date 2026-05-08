@@ -275,9 +275,88 @@ def note_version(args: argparse.Namespace) -> None:
     print(v["content_markdown"])
 
 
+# Goal commands
+def goal_add(args: argparse.Namespace) -> None:
+    payload = {
+        "title": args.title,
+        "description": args.description,
+        "scope": args.scope,
+        "target_value": args.target,
+        "due_date": normalize_due_date(args.due),
+    }
+    data = ensure_ok(request("POST", "/goals", clean(payload)))
+    print(f"Added goal #{data['id']}: {data['title']}")
+
+
+def goal_list(args: argparse.Namespace) -> None:
+    suffix = query_suffix(args, "status", "scope")
+    goals = ensure_ok(request("GET", f"/goals{suffix}"))
+    if not goals:
+        print("No goals.")
+        return
+    for g in goals:
+        progress = f"({g['current_value']}/{g['target_value']})" if g['target_value'] else ""
+        print(f"#{g['id']} [{g['status']}] {g['title']} {progress}")
+
+
+def goal_progress(args: argparse.Namespace) -> None:
+    data = ensure_ok(request("POST", f"/goals/{args.id}/progress?increment={args.inc}"))
+    print(f"Updated goal #{data['id']} progress: {data['current_value']}/{data['target_value']}")
+
+
+# Habit commands
+def habit_add(args: argparse.Namespace) -> None:
+    payload = {
+        "name": args.name,
+        "description": args.description,
+        "frequency": args.frequency,
+        "target_count": args.target,
+    }
+    data = ensure_ok(request("POST", "/habits", clean(payload)))
+    print(f"Added habit #{data['id']}: {data['name']}")
+
+
+def habit_list(args: argparse.Namespace) -> None:
+    habits = ensure_ok(request("GET", "/habits"))
+    if not habits:
+        print("No habits.")
+        return
+    for h in habits:
+        print(f"#{h['id']} {h['name']} - Streak: {h['current_streak']} days")
+
+
+def habit_done(args: argparse.Namespace) -> None:
+    payload = {"note": args.note}
+    data = ensure_ok(request("POST", f"/habits/{args.id}/complete", clean(payload)))
+    print(f"Logged habit #{data['id']}: {data['name']}. Current streak: {data['current_streak']}")
+
+
+# Reminder commands
+def reminder_list(args: argparse.Namespace) -> None:
+    suffix = query_suffix(args, "status")
+    reminders = ensure_ok(request("GET", f"/reminders{suffix}"))
+    if not reminders:
+        print("No reminders.")
+        return
+    for r in reminders:
+        print(f"#{r['id']} [{r['status']}] {r['title']} - {r['due_at']}")
+
+
+def reminder_snooze(args: argparse.Namespace) -> None:
+    data = ensure_ok(request("POST", f"/reminders/{args.id}/snooze?minutes={args.min}"))
+    print(f"Snoozed reminder #{data['id']} until {data['snoozed_until']}")
+
+
+def reminder_dismiss(args: argparse.Namespace) -> None:
+    data = ensure_ok(request("POST", f"/reminders/{args.id}/dismiss"))
+    print(f"Dismissed reminder #{data['id']}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="nari")
     sub = parser.add_subparsers(dest="command", required=True)
+    
+    # ... (rest of existing commands)
 
     add = sub.add_parser("add")
     add.add_argument("title")
@@ -432,6 +511,55 @@ def build_parser() -> argparse.ArgumentParser:
     not_version.add_argument("id", type=int)
     not_version.add_argument("v", type=int, help="Version number")
     not_version.set_defaults(func=note_version)
+
+    # Goal parsers
+    g_add = sub.add_parser("goal-add")
+    g_add.add_argument("title")
+    g_add.add_argument("--description")
+    g_add.add_argument("--scope", choices=["daily", "weekly", "monthly", "quarterly", "yearly"], default="weekly")
+    g_add.add_argument("--target", type=int)
+    g_add.add_argument("--due")
+    g_add.set_defaults(func=goal_add)
+
+    g_list = sub.add_parser("goal-list")
+    g_list.add_argument("--status")
+    g_list.add_argument("--scope")
+    g_list.set_defaults(func=goal_list)
+
+    g_prog = sub.add_parser("goal-inc")
+    g_prog.add_argument("id", type=int)
+    g_prog.add_argument("--inc", type=int, default=1)
+    g_prog.set_defaults(func=goal_progress)
+
+    # Habit parsers
+    h_add = sub.add_parser("habit-add")
+    h_add.add_argument("name")
+    h_add.add_argument("--description")
+    h_add.add_argument("--frequency", choices=["daily", "weekly"], default="daily")
+    h_add.add_argument("--target", type=int, default=1)
+    h_add.set_defaults(func=habit_add)
+
+    h_list = sub.add_parser("habit-list")
+    h_list.set_defaults(func=habit_list)
+
+    h_done = sub.add_parser("habit-done")
+    h_done.add_argument("id", type=int)
+    h_done.add_argument("--note")
+    h_done.set_defaults(func=habit_done)
+
+    # Reminder parsers
+    r_list = sub.add_parser("rem-list")
+    r_list.add_argument("--status")
+    r_list.set_defaults(func=reminder_list)
+
+    r_snooze = sub.add_parser("rem-snooze")
+    r_snooze.add_argument("id", type=int)
+    r_snooze.add_argument("--min", type=int, default=15)
+    r_snooze.set_defaults(func=reminder_snooze)
+
+    r_dismiss = sub.add_parser("rem-done")
+    r_dismiss.add_argument("id", type=int)
+    r_dismiss.set_defaults(func=reminder_dismiss)
 
     return parser
 
