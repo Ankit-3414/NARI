@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO, isPast } from 'date-fns';
 import Modal from '../components/common/Modal';
+import ReminderForm from '../components/reminders/ReminderForm';
 import { clsx } from 'clsx';
 
 const container = {
@@ -19,98 +20,9 @@ const item = {
   show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
-const ReminderForm = ({ onClose, initialData = null }) => {
-  const isEditing = !!initialData;
-  const actions = useReminderActions();
-  const [text, setText] = useState(initialData?.remind_text || '');
-  const [remindAt, setRemindAt] = useState(initialData?.remind_at ? initialData.remind_at.split('.')[0] : '');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!text.trim() || !remindAt) return;
-
-    const payload = {
-      remind_text: text.trim(),
-      remind_at: remindAt,
-    };
-
-    if (isEditing) {
-      actions.update({ id: initialData.id, ...payload });
-    } else {
-      actions.create(payload);
-    }
-    onClose();
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="bg-background border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full relative"
-    >
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-danger to-transparent" />
-      
-      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-surface/30 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-danger/10 rounded-xl text-danger border border-danger/20">
-            <Bell size={20} />
-          </div>
-          <h2 className="text-xl font-black text-white uppercase tracking-tighter">
-            {isEditing ? 'Modify Alert' : 'New Alert'}
-          </h2>
-        </div>
-        <button onClick={onClose} className="text-secondary hover:text-white p-2 bg-white/5 rounded-xl transition-colors">
-          <X size={20} />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-8 space-y-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-danger uppercase tracking-[0.2em] ml-1">Alert Payload</label>
-          <input
-            autoFocus
-            type="text"
-            required
-            placeholder="e.g. SYSTEM_CHECK_REQUIRED"
-            className="w-full bg-surface/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-danger/50 focus:border-transparent transition-all font-bold uppercase tracking-tight"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
-            <Clock size={12} className="text-primary" /> Trigger Timestamp
-          </label>
-          <input
-            type="datetime-local"
-            required
-            className="w-full bg-surface/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono font-bold color-scheme-dark"
-            value={remindAt}
-            onChange={(e) => setRemindAt(e.target.value)}
-          />
-        </div>
-
-        <div className="pt-4 flex gap-4">
-          <button type="button" onClick={onClose} className="flex-1 py-4 rounded-2xl border border-white/10 text-secondary font-bold uppercase tracking-widest text-xs hover:bg-white/5 transition-all">
-            Abort
-          </button>
-          <button 
-            type="submit" 
-            className="flex-1 py-4 rounded-2xl bg-danger text-black font-black uppercase tracking-widest text-xs hover:shadow-[0_0_20px_rgba(255,0,85,0.4)] transition-all flex items-center justify-center gap-2"
-          >
-            {isEditing ? <Save size={16} /> : <Plus size={16} />}
-            {isEditing ? 'Update Signal' : 'Arm Signal'}
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  );
-};
-
 const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
   const isTriggered = reminder.status === 'triggered';
-  const isExpired = isPast(parseISO(reminder.remind_at)) && reminder.status === 'pending';
+  const isExpired = isPast(parseISO(reminder.due_at)) && reminder.status === 'scheduled';
 
   return (
     <motion.div 
@@ -134,7 +46,7 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
               "font-black uppercase tracking-tight truncate transition-colors",
               isTriggered ? "text-danger" : "text-white group-hover:text-primary"
             )}>
-              {reminder.remind_text}
+              {reminder.title}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
               <span className={clsx(
@@ -144,7 +56,7 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
                 {reminder.status}
               </span>
               <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
-                <Clock size={10} /> {format(parseISO(reminder.remind_at), 'MMM d, HH:mm')}
+                <Clock size={10} /> {format(parseISO(reminder.due_at), 'MMM d, HH:mm')}
               </span>
             </div>
           </div>
@@ -215,7 +127,7 @@ const RemindersPage = () => {
     }
   };
 
-  const pending = reminders?.filter(r => r.status === 'pending') || [];
+  const scheduled = reminders?.filter(r => r.status === 'scheduled' || r.status === 'snoozed') || [];
   const triggered = reminders?.filter(r => r.status === 'triggered') || [];
 
   return (
@@ -274,7 +186,7 @@ const RemindersPage = () => {
           </AnimatePresence>
         </section>
 
-        {/* Pending Section */}
+        {/* Scheduled Section */}
         <section className="lg:col-span-8 space-y-6">
           <div className="flex items-center gap-3 px-2">
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-secondary">Queue</h2>
@@ -283,13 +195,13 @@ const RemindersPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence mode="popLayout">
-              {pending.length === 0 ? (
+              {scheduled.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-16 text-center">
                   <Activity size={48} className="mx-auto text-slate-800 mb-4" />
                   <p className="text-slate-600 font-mono text-xs uppercase tracking-widest">Signal queue empty.</p>
                 </motion.div>
               ) : (
-                pending.map(r => (
+                scheduled.map(r => (
                   <ReminderCard 
                     key={r.id} 
                     reminder={r} 

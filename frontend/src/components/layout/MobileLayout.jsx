@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, BookOpen, StickyNote, Cpu, Activity, Bell, Settings, Layers } from 'lucide-react';
+import { 
+  LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
+  Cpu, Activity, Bell, Settings, Layers, X, 
+  Trash2, Edit3, Plus, Clock 
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUiStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
+import { useReminders, useReminderActions } from '../../hooks/useReminders';
+import { useAlarm } from '../../hooks/useAlarm';
+import { alarmService } from '../../utils/alarmService';
+import ReminderForm from '../reminders/ReminderForm';
+import Modal from '../common/Modal';
+import { format, parseISO } from 'date-fns';
 import NariLogo from '../common/NariLogo';
 
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -56,6 +66,15 @@ const MobileLayout = () => {
   const wsStatus = useUiStore((state) => state.wsStatus);
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [isRemindersOpen, setIsRemindersOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState(null);
+
+  // Initialize Neural Alarms
+  const { isAlarming } = useAlarm();
+  const { data: reminders } = useReminders();
+  const actions = useReminderActions();
+  const triggeredReminders = reminders?.filter(r => r.status === 'triggered') || [];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -63,9 +82,34 @@ const MobileLayout = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Ensure AudioContext is resumed on user interaction
+  const handleUserInteraction = () => {
+    alarmService.init();
+  };
+
+  const handleEdit = (reminder) => {
+    setEditingReminder(reminder);
+    setIsAddModalOpen(true);
+  };
+
   return (
-    <div className="min-h-screen bg-background relative selection:bg-primary selection:text-background font-mono">
+    <div 
+      className="min-h-screen bg-background relative selection:bg-primary selection:text-background font-mono"
+      onClick={handleUserInteraction}
+    >
       <AnimatedBackground />
+
+      {/* Alarm Overlay for Critical Status */}
+      <AnimatePresence>
+        {isAlarming && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] pointer-events-none border-[10px] border-danger/30 shadow-[inset_0_0_100px_rgba(255,0,85,0.2)]"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Top Header / HUD */}
       <header className={clsx(
@@ -102,12 +146,130 @@ const MobileLayout = () => {
           <motion.button 
             whileHover={{ scale: 1.1, color: '#00F2FF' }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 border border-white/10 text-secondary transition-colors"
+            onClick={() => setIsRemindersOpen(!isRemindersOpen)}
+            className={clsx(
+              "p-2 border transition-all relative rounded-xl",
+              triggeredReminders.length > 0 ? "border-danger text-danger bg-danger/10 shadow-[0_0_15px_rgba(255,0,85,0.3)] animate-pulse" : "border-white/10 text-secondary"
+            )}
           >
             <Bell size={20} />
+            {triggeredReminders.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-danger text-black text-[10px] font-black flex items-center justify-center rounded-sm">
+                {triggeredReminders.length}
+              </span>
+            )}
           </motion.button>
         </div>
       </header>
+
+      {/* Reminders Slide-over Panel */}
+      <AnimatePresence>
+        {isRemindersOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsRemindersOpen(false)}
+              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-[50]"
+            />
+            <motion.aside
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-surface/90 backdrop-blur-2xl border-l border-white/10 z-[60] p-6 shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-danger/10 text-danger rounded-xl">
+                    <Bell size={20} />
+                  </div>
+                  <h2 className="text-xl font-black uppercase tracking-tighter text-white">Signals</h2>
+                </div>
+                <button onClick={() => setIsRemindersOpen(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-secondary">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Active Signals</span>
+                  <button 
+                    onClick={() => { setEditingReminder(null); setIsAddModalOpen(true); }}
+                    className="p-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-black transition-all"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                {reminders?.length === 0 ? (
+                  <div className="py-12 text-center border border-dashed border-white/10 rounded-2xl bg-surface/30">
+                    <p className="text-slate-600 font-mono text-[10px] uppercase tracking-widest">No signals in queue.</p>
+                  </div>
+                ) : (
+                  reminders?.map(reminder => (
+                    <div 
+                      key={reminder.id}
+                      className={clsx(
+                        "p-4 rounded-2xl border transition-all group",
+                        reminder.status === 'triggered' ? "bg-danger/5 border-danger/20" : "bg-white/5 border-white/5 hover:border-white/10"
+                      )}
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className={clsx(
+                            "font-bold uppercase tracking-tight truncate",
+                            reminder.status === 'triggered' ? "text-danger" : "text-white"
+                          )}>
+                            {reminder.title}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Clock size={10} className="text-secondary" />
+                            <span className="text-[9px] font-mono text-secondary uppercase">
+                              {format(parseISO(reminder.due_at), 'MMM d, HH:mm')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => handleEdit(reminder)} className="p-1 text-secondary hover:text-white">
+                            <Edit3 size={12} />
+                          </button>
+                          <button onClick={() => { if(window.confirm('Purge signal?')) actions.remove(reminder.id) }} className="p-1 text-secondary hover:text-danger">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {reminder.status === 'triggered' && (
+                        <button 
+                          onClick={() => actions.dismiss(reminder.id)}
+                          className="w-full mt-3 py-1.5 bg-danger text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-white transition-colors"
+                        >
+                          Acknowledge
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-white/5">
+                <button 
+                  onClick={() => { setEditingReminder(null); setIsAddModalOpen(true); }}
+                  className="w-full py-4 bg-surface border border-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/5 transition-all"
+                >
+                  Configure New Signal
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <Modal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingReminder(null); }}>
+        <ReminderForm onClose={() => { setIsAddModalOpen(false); setEditingReminder(null); }} initialData={editingReminder} />
+      </Modal>
 
       {/* Main Content Area */}
       <main className="relative z-10 pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto min-h-screen flex flex-col">

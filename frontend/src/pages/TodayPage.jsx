@@ -5,6 +5,7 @@ import { useActiveSession, useTodayStudyStats, useStudyActions } from '../hooks/
 import { useDashboardSummary } from '../hooks/useAnalytics';
 import { useReminders } from '../hooks/useReminders';
 import { useGoals, useUpdateGoalProgress, useDeleteGoal } from '../hooks/useGoals';
+import RealTimeClock from '../components/common/RealTimeClock';
 import HabitWidget from '../components/habits/HabitWidget';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
@@ -98,27 +99,34 @@ const TodayPage = () => {
       animate="show"
     >
       {/* Dynamic Welcome Header */}
-      <motion.header variants={item} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-[2px] w-10 bg-gradient-to-r from-primary to-transparent" />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-primary">Overview</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-white leading-none">
-            Hello, <span className="cyber-gradient-text italic pr-2">Ankit</span>
+      <motion.header 
+        variants={item}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12"
+      >
+        <div className="space-y-1">
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase italic glitch-text">
+            Operational Overview
           </h1>
-          <p className="text-secondary font-medium tracking-wide">
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#00F2FF]" />
+            <p className="text-secondary font-mono text-[10px] tracking-[0.4em] uppercase">
+              System Health: Optimal // Neural Link Established
+            </p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2 bg-surface/50 backdrop-blur-md border border-white/5 rounded-2xl p-2 pr-4 self-start md:self-auto">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Activity size={20} className="text-primary" />
+        <div className="flex items-center gap-6">
+          <div className="hidden sm:block">
+            <RealTimeClock />
           </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-white leading-tight">System Status</span>
-            <span className="text-[10px] text-success uppercase tracking-wider font-mono">Optimal</span>
+          <div className="flex items-center gap-3 bg-surface/50 backdrop-blur-md border border-white/5 rounded-2xl p-2 pr-6">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Activity size={24} className="text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono text-primary/60 uppercase tracking-widest leading-tight">System Status</span>
+              <span className="text-sm font-black text-success uppercase tracking-tighter font-mono">OPTIMAL</span>
+            </div>
           </div>
         </div>
       </motion.header>
