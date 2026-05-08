@@ -26,6 +26,23 @@ A real-time, append-only memory stream of every database transaction. Complete t
 
 ---
 
+## 🚀 Quick Start
+
+### ⚡ One-Click Local Setup (Linux/macOS)
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+### 🌍 24/7 Server Deployment (192.168.1.240)
+If you are hosting NARI on a dedicated home server:
+```bash
+chmod +x setup_server.sh
+sudo ./setup_server.sh
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Backend:** Python 3.12 + FastAPI + SQLModel (SQLAlchemy + Pydantic)
