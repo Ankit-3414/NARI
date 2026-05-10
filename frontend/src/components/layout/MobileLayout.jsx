@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
-  Trash2, Edit3, Plus, Clock 
+  Trash2, Edit3, Plus, Clock, Target, Zap
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useReminders, useReminderActions } from '../../hooks/useReminders';
 import { useAlarm } from '../../hooks/useAlarm';
 import { alarmService } from '../../utils/alarmService';
+import { notificationService } from '../../utils/notificationService';
 import ReminderForm from '../reminders/ReminderForm';
 import Modal from '../common/Modal';
 import { format, parseISO } from 'date-fns';
@@ -82,9 +83,12 @@ const MobileLayout = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Ensure AudioContext is resumed on user interaction
+  // Ensure AudioContext and Notifications are initialized on user interaction
   const handleUserInteraction = () => {
     alarmService.init();
+    if (Notification.permission === 'default') {
+      notificationService.requestPermission();
+    }
   };
 
   const handleEdit = (reminder) => {
@@ -288,7 +292,7 @@ const MobileLayout = () => {
       </main>
 
       {/* Floating Dock Navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 pointer-events-none">
         <motion.nav 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
@@ -298,6 +302,8 @@ const MobileLayout = () => {
           <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
           <NavItem to="/tasks" icon={CheckSquare} label="Tasks" />
           <NavItem to="/study" icon={BookOpen} label="Focus" />
+          <NavItem to="/goals" icon={Target} label="Goals" />
+          <NavItem to="/habits" icon={Zap} label="Habits" />
           <NavItem to="/subjects" icon={Layers} label="Hub" />
           <NavItem to="/notes" icon={StickyNote} label="Vault" />
           <NavItem to="/activity" icon={Activity} label="Activity" />

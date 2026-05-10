@@ -34,3 +34,27 @@ def get_study_trends(
 def get_task_stats(session: Session = Depends(get_session)):
     stats = analytics_service.get_task_completion_rate(session)
     return success_response(stats)
+
+
+@router.get("/temporal-performance")
+def get_temporal_performance(
+    days: int = Query(default=30, ge=1, le=90),
+    session: Session = Depends(get_session)
+):
+    perf = analytics_service.get_temporal_performance(session, days=days)
+    return success_response(perf)
+
+
+@router.get("/neural-heatmap")
+def get_neural_heatmap(
+    days: int = Query(default=365, ge=1, le=730),
+    session: Session = Depends(get_session)
+):
+    heatmap = analytics_service.get_neural_heatmap(session, days=days)
+    return success_response(heatmap)
+
+
+@router.get("/distribution")
+def get_distribution(session: Session = Depends(get_session)):
+    dist = analytics_service.get_subject_distribution(session)
+    return success_response(dist)

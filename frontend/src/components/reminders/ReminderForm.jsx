@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReminderActions } from '../../hooks/useReminders';
-import { Bell, Clock, X, Save, Plus, Calendar as CalendarIcon, Zap } from 'lucide-react';
+import { useTodayTasks } from '../../hooks/useTasks';
+import { useSubjects } from '../../hooks/useSubjects';
+import { Bell, Clock, X, Save, Plus, Calendar as CalendarIcon, Zap, Layers, CheckSquare } from 'lucide-react';
 import { format, addMinutes, addHours, addDays, parseISO, isValid } from 'date-fns';
 import { clsx } from 'clsx';
 
 const ReminderForm = ({ onClose, initialData = null }) => {
   const isEditing = !!initialData;
   const actions = useReminderActions();
+  const { data: tasks } = useTodayTasks();
+  const { data: subjects } = useSubjects();
   
   // State for raw datetime string
   const [remindAt, setRemindAt] = useState(
@@ -17,6 +21,9 @@ const ReminderForm = ({ onClose, initialData = null }) => {
   );
   
   const [text, setText] = useState(initialData?.title || '');
+  const [repeatRule, setRepeatRule] = useState(initialData?.repeat_rule || '');
+  const [taskId, setTaskId] = useState(initialData?.task_id || '');
+  const [subjectId, setSubjectId] = useState(initialData?.subject_id || '');
 
   const applyPreset = (minutes) => {
     const newDate = addMinutes(new Date(), minutes);
@@ -36,6 +43,9 @@ const ReminderForm = ({ onClose, initialData = null }) => {
     const payload = {
       title: text.trim(),
       due_at: remindAt,
+      repeat_rule: repeatRule || null,
+      task_id: taskId ? parseInt(taskId) : null,
+      subject_id: subjectId ? parseInt(subjectId) : null,
     };
 
     if (isEditing) {
@@ -158,6 +168,56 @@ const ReminderForm = ({ onClose, initialData = null }) => {
             >
               8AM
             </button>
+          </div>
+        </div>
+
+        {/* Recurrence Calibration */}
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+            <Zap size={10} className="text-warning" /> Recurrence Protocol
+          </label>
+          <select
+            className="w-full bg-surface/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-warning/50 transition-all font-mono font-bold appearance-none cursor-pointer"
+            value={repeatRule}
+            onChange={(e) => setRepeatRule(e.target.value)}
+          >
+            <option value="">One-Time Directive</option>
+            <option value="FREQ=DAILY">Daily Cycle</option>
+            <option value="FREQ=WEEKLY">Weekly Cycle</option>
+          </select>
+        </div>
+
+        {/* Tactical Links */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+              <CheckSquare size={10} className="text-primary" /> Linked Task
+            </label>
+            <select
+              className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-mono appearance-none cursor-pointer"
+              value={taskId}
+              onChange={(e) => setTaskId(e.target.value)}
+            >
+              <option value="">None</option>
+              {tasks?.map(t => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+              <Layers size={10} className="text-accent" /> Neural Hub
+            </label>
+            <select
+              className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:ring-1 focus:ring-accent/50 transition-all font-mono appearance-none cursor-pointer"
+              value={subjectId}
+              onChange={(e) => setSubjectId(e.target.value)}
+            >
+              <option value="">None</option>
+              {subjects?.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 

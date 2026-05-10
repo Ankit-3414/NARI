@@ -121,10 +121,30 @@ class ReminderService:
         return reminder
 
     async def dismiss(self, session: Session, reminder_id: int) -> Reminder:
-        """Dismiss a reminder."""
+        """Dismiss a reminder and reschedule if recurring."""
+        from dateutil.rrule import rrulestr
+        
         reminder = self.get(session, reminder_id)
         reminder.status = ReminderStatus.DISMISSED
         reminder.updated_at = utc_now()
+        
+        # Handle Recurrence
+        if reminder.repeat_rule:
+            try:
+                # Calculate next occurrence based on the ORIGINAL due_at
+                rule = rrulestr(reminder.repeat_rule, dtstart=reminder.due_at)
+                next_occurrence = rule.after(reminder.due_at)
+                
+                if next_occurrence:
+                    # Reset current reminder to next occurrence
+                    reminder.due_at = next_occurrence
+                    reminder.status = ReminderStatus.SCHEDULED
+                    reminder.triggered_at = None
+                    reminder.snoozed_until = None
+                    reminder.updated_at = utc_now()
+            except Exception as e:
+                # Log error but don't fail dismissal
+                print(f"Error calculating next occurrence: {e}")
         
         session.add(reminder)
         session.commit()

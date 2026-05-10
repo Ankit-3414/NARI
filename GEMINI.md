@@ -61,4 +61,4 @@ The project has completed **Stage 4 (Web Dashboard)**.
 - **Next Stage:** Stage 5 (WebSockets for live updates).
 - **Pending:** Stage 7 (Goals & Habits) and Stage 9 (AI Layer).
 
-Refer to `CLAUDE.md` for the development checklist and `NARI_Architecture.md` for full technical specifications.
+Refer to `docs/CLAUDE.md` for the development checklist and `docs/NARI_Architecture.md` for full technical specifications.

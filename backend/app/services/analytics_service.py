@@ -87,5 +87,85 @@ class AnalyticsService:
             "completion_rate": round((done / total * 100), 1) if total > 0 else 0
         }
 
+    def get_temporal_performance(self, session: Session, days: int = 30) -> list[dict[str, Any]]:
+        """Map activity intensity by hour of day."""
+        since = datetime.now() - timedelta(days=days)
+        
+        # We'll use ActivityLog to track all "completed" or "started" events
+        statement = select(ActivityLog).where(
+            ActivityLog.created_at >= since,
+            or_(
+                ActivityLog.action == "completed",
+                ActivityLog.action == "started",
+                ActivityLog.action == "created"
+            )
+        )
+        logs = session.exec(statement).all()
+        
+        # Initialize buckets for 24 hours
+        buckets = {h: 0 for h in range(24)}
+        for log in logs:
+            hour = log.created_at.hour
+            buckets[hour] += 1
+            
+        return [
+            {"hour": h, "intensity": count}
+            for h, count in buckets.items()
+        ]
+
+    def get_neural_heatmap(self, session: Session, days: int = 365) -> list[dict[str, Any]]:
+        """Get activity intensity per day for the heatmap."""
+        since = date.today() - timedelta(days=days)
+        
+        # Aggregate logs by date
+        # Note: In SQLite, we use date(created_at)
+        statement = select(
+            func.date(ActivityLog.created_at).label("day"),
+            func.count(ActivityLog.id).label("count")
+        ).where(
+            ActivityLog.created_at >= datetime.combine(since, datetime.min.time())
+        ).group_by("day")
+        
+        results = session.exec(statement).all()
+        return [{"date": r.day, "value": r.count} for r in results]
+
+    def get_subject_distribution(self, session: Session) -> list[dict[str, Any]]:
+        """Calculate energy distribution across subjects based on tasks and study time."""
+        from ..models.subject import Subject
+        
+        subjects = session.exec(select(Subject)).all()
+        distribution = []
+        
+        for sub in subjects:
+            # Count completed tasks
+            task_count = session.exec(
+                select(func.count(Task.id)).where(
+                    Task.subject_id == sub.id,
+                    Task.status == "done"
+                )
+            ).first() or 0
+            
+            # Total study seconds
+            study_seconds = session.exec(
+                select(func.sum(StudySession.duration_seconds)).where(
+                    StudySession.subject_id == sub.id,
+                    StudySession.status == StudySessionStatus.COMPLETED
+                )
+            ).first() or 0
+            
+            # Weighted score: 1 task = 15 mins of study (900s)
+            score = task_count + (study_seconds / 900)
+            
+            if score > 0:
+                distribution.append({
+                    "subject": sub.name,
+                    "color": sub.color,
+                    "score": round(score, 2),
+                    "tasks": task_count,
+                    "study_hours": round(study_seconds / 3600, 1)
+                })
+                
+        return sorted(distribution, key=lambda x: x["score"], reverse=True)
+
 
 analytics_service = AnalyticsService()

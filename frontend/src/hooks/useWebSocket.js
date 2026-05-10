@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { wsClient } from '../api/websocket';
 import { useAuthStore } from '../store/authStore';
+import { notificationService } from '../utils/notificationService';
 
 /**
  * Hook to manage WebSocket connection and react to events.
- * Primarily used for React Query cache invalidation.
  */
 export const useWebSocket = () => {
   const queryClient = useQueryClient();
@@ -19,12 +19,18 @@ export const useWebSocket = () => {
 
     // Subscribe to events
     const unsubscribe = wsClient.subscribe((payload) => {
-      console.log('WS Event Received:', payload);
-      
-      const { event, entity_type } = payload;
+      const { event, entity_type, data } = payload;
 
       // Every event should refresh the activity log
       queryClient.invalidateQueries({ queryKey: ['activity'] });
+
+      // Handle Reminders specifically for browser alerts
+      if (event === 'reminder_triggered' && data) {
+        notificationService.show(`NARI: ${data.title}`, {
+          body: data.message || 'Signal triggered.',
+          tag: `reminder-${data.id}`,
+        });
+      }
 
       // Invalidate relevant queries based on entity type
       if (entity_type === 'task') {

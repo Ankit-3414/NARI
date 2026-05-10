@@ -33,3 +33,33 @@ export const useTaskStats = () => {
     },
   });
 };
+
+export const useTemporalPerformance = (days = 30) => {
+  return useQuery({
+    queryKey: ['analytics', 'temporal', days],
+    queryFn: async () => {
+      const response = await client.get('/analytics/temporal-performance', { params: { days } });
+      return response.data;
+    },
+  });
+};
+
+export const useNeuralHeatmap = (days = 365) => {
+  return useQuery({
+    queryKey: ['analytics', 'heatmap', days],
+    queryFn: async () => {
+      const response = await client.get('/analytics/neural-heatmap', { params: { days } });
+      return response.data;
+    },
+  });
+};
+
+export const useSubjectDistribution = () => {
+  return useQuery({
+    queryKey: ['analytics', 'distribution'],
+    queryFn: async () => {
+      const response = await client.get('/analytics/distribution');
+      return response.data;
+    },
+  });
+};

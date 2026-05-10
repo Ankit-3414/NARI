@@ -47,8 +47,10 @@ export const useDeleteGoal = () => {
 export const useUpdateGoalProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, increment }) => {
-      const response = await client.post(`/goals/${id}/progress`, { increment });
+    mutationFn: async ({ id, increment = 1 }) => {
+      const response = await client.post(`/goals/${id}/progress`, null, { 
+        params: { increment } 
+      });
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['goals'] }),

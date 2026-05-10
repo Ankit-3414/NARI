@@ -6,7 +6,7 @@ from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_, and_
 
 from ..core.constants import ReminderStatus
 from ..core.logging import get_logger
@@ -53,26 +53,25 @@ class SchedulerManager:
         
         # We need a new session for each check
         with Session(engine) as session:
+            # Check for scheduled OR snoozed reminders that are due
             statement = select(Reminder).where(
-                Reminder.status == ReminderStatus.SCHEDULED,
-                Reminder.due_at <= now
+                or_(
+                    and_(
+                        Reminder.status == ReminderStatus.SCHEDULED,
+                        Reminder.due_at <= now
+                    ),
+                    and_(
+                        Reminder.status == ReminderStatus.SNOOZED,
+                        Reminder.snoozed_until <= now
+                    )
+                )
             )
             due_reminders = session.exec(statement).all()
             
-            if not due_reminders:
-                # Also check snoozed ones
-                statement = select(Reminder).where(
-                    Reminder.status == ReminderStatus.SNOOZED,
-                    Reminder.snoozed_until <= now
-                )
-                due_reminders = session.exec(statement).all()
-
             for reminder in due_reminders:
                 logger.info(f"Triggering reminder: {reminder.title} (ID: {reminder.id})")
                 try:
                     await reminder_service.trigger(session, reminder.id)
-                    # After triggering, if it's recurring, we should schedule the next one
-                    # For now, we just mark as triggered
                 except Exception as e:
                     logger.error(f"Failed to trigger reminder {reminder.id}: {e}")
 
