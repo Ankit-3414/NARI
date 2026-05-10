@@ -11,10 +11,12 @@ import SubjectsPage from '../pages/SubjectsPage';
 import RemindersPage from '../pages/RemindersPage';
 import AnalyticsPage from '../pages/AnalyticsPage';
 import ActivityPage from '../pages/ActivityPage';
+import GoalsPage from '../pages/GoalsPage';
+import HabitsPage from '../pages/HabitsPage';
 import LoginPage from '../pages/LoginPage';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuthStore } from '../store/authStore';
-import EntranceAnimation from '../components/ui/EntranceAnimation';
+import NeuralEntrance from '../components/ui/NeuralEntrance';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +49,8 @@ function AppContent() {
           <Route path="reminders" element={<RemindersPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="activity" element={<ActivityPage />} />
+          <Route path="goals" element={<GoalsPage />} />
+          <Route path="habits" element={<HabitsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -59,15 +63,17 @@ function App() {
   const [initChecked, setInitChecked] = useState(false);
 
   useEffect(() => {
-    const hasSeenEntrance = localStorage.getItem('nari_entrance_seen');
-    if (hasSeenEntrance !== 'true') {
+    // sessionStorage persists across reloads but clears when tab/window is closed
+    const hasBootedInSession = sessionStorage.getItem('nari_session_booted');
+    
+    if (hasBootedInSession !== 'true') {
       setShowEntrance(true);
     }
     setInitChecked(true);
   }, []);
 
   const handleEntranceComplete = () => {
-    localStorage.setItem('nari_entrance_seen', 'true');
+    sessionStorage.setItem('nari_session_booted', 'true');
     setShowEntrance(false);
   };
 
@@ -77,9 +83,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AnimatePresence mode="wait">
         {showEntrance ? (
-          <EntranceAnimation
+          <NeuralEntrance
             key="entrance"
-            userName="Ankit"
             onComplete={handleEntranceComplete}
           />
         ) : (
