@@ -16,7 +16,9 @@ class WebSocketClient {
 
   connect(url) {
     this.url = url;
-    const apiKey = localStorage.getItem('NARI_API_KEY') || import.meta.env.VITE_NARI_API_KEY;
+    const apiKey = localStorage.getItem('NARI_API_KEY') || 
+                   import.meta.env.VITE_NARI_API_KEY || 
+                   'neural_link_established';
     
     // Construct WebSocket URL with token
     const wsUrl = new URL(url, window.location.origin.replace('http', 'ws'));

@@ -9,13 +9,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 API_URL = os.getenv("NARI_API_URL", "http://127.0.0.1:8000/api/v1")
-API_KEY = os.getenv("NARI_API_KEY")
-
-if not API_KEY:
-    print("Error: NARI_API_KEY environment variable is not set.", file=sys.stderr)
-    print("Please set it using: export NARI_API_KEY='your_key_here' (Linux/macOS)", file=sys.stderr)
-    print("or: $env:NARI_API_KEY='your_key_here' (PowerShell)", file=sys.stderr)
-    sys.exit(1)
+API_KEY = os.getenv("NARI_API_KEY", "neural_link_established")
 
 
 def request(method: str, path: str, payload: dict | None = None) -> dict:

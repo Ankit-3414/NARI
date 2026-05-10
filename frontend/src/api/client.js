@@ -9,7 +9,9 @@ const client = axios.create({
 
 // Attach API key from local storage or environment
 client.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('NARI_API_KEY') || import.meta.env.VITE_NARI_API_KEY;
+  const apiKey = localStorage.getItem('NARI_API_KEY') || 
+                 import.meta.env.VITE_NARI_API_KEY || 
+                 'neural_link_established';
   if (apiKey) {
     config.headers.Authorization = `Bearer ${apiKey}`;
   }

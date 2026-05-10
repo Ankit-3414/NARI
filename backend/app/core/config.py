@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     NARI_ENV: str = "development"
     NARI_APP_NAME: str = "NARI"
     NARI_VERSION: str = "0.1.0"
-    NARI_SECRET_KEY: str
-    NARI_API_KEY: str
+    NARI_SECRET_KEY: str = "neural_link_secret_key_2026"
+    NARI_API_KEY: str = "neural_link_established"
 
     # Database
     DATABASE_URL: str = "sqlite:///./data/nari.db"
