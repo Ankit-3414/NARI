@@ -29,15 +29,20 @@ class EventNames(str, Enum):
 
     # Reminder events
     REMINDER_CREATED = "reminder_created"
+    REMINDER_UPDATED = "reminder_updated"
+    REMINDER_DELETED = "reminder_deleted"
     REMINDER_TRIGGERED = "reminder_triggered"
     REMINDER_SNOOZED = "reminder_snoozed"
     REMINDER_DISMISSED = "reminder_dismissed"
 
     # Goal & Habit events
     GOAL_CREATED = "goal_created"
+    GOAL_UPDATED = "goal_updated"
+    GOAL_DELETED = "goal_deleted"
     GOAL_PROGRESS_UPDATED = "goal_progress_updated"
     HABIT_CREATED = "habit_created"
     HABIT_UPDATED = "habit_updated"
+    HABIT_DELETED = "habit_deleted"
     HABIT_COMPLETED = "habit_completed"
     HABIT_STREAK_UPDATED = "habit_streak_updated"
 

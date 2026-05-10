@@ -37,6 +37,7 @@ class ConnectionManager:
             "event": event,
             "entity_type": entity_type,
             "entity_id": entity_id,
+            "data": data or {},
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 

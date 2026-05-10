@@ -23,6 +23,9 @@ export const useWebSocket = () => {
       
       const { event, entity_type } = payload;
 
+      // Every event should refresh the activity log
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
+
       // Invalidate relevant queries based on entity type
       if (entity_type === 'task') {
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -42,8 +45,6 @@ export const useWebSocket = () => {
         queryClient.invalidateQueries({ queryKey: ['analytics'] });
       } else if (entity_type === 'reminder') {
         queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      } else if (entity_type === 'activity_log') {
-        queryClient.invalidateQueries({ queryKey: ['activity'] });
       }
     });
 

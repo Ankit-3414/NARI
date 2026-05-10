@@ -56,11 +56,13 @@ class HabitService:
         await self._emit_event(EventNames.HABIT_UPDATED, habit)
         return habit
 
-    async def delete(self, session: Session, habit_id: int) -> None:
+    async def delete(self, session: Session, habit_id: int) -> Habit:
         """Delete a habit."""
         habit = self.get(session, habit_id)
         session.delete(habit)
         session.commit()
+        await self._emit_event(EventNames.HABIT_DELETED, habit)
+        return habit
 
     async def complete(self, session: Session, habit_id: int, payload: HabitLogCreate) -> Habit:
         """Log a habit completion and update streak."""

@@ -83,14 +83,13 @@ class ReminderService:
         # TODO: Trigger scheduler update
         return reminder
 
-    async def delete(self, session: Session, reminder_id: int) -> None:
+    async def delete(self, session: Session, reminder_id: int) -> Reminder:
         """Delete a reminder."""
         reminder = self.get(session, reminder_id)
         session.delete(reminder)
         session.commit()
-        # We don't have a specific REMINDER_DELETED event in EventNames yet, 
-        # but we should probably add it if needed. 
-        # For now, just deleting is fine for the POC.
+        await self._emit_event(EventNames.REMINDER_DELETED, reminder)
+        return reminder
 
     async def trigger(self, session: Session, reminder_id: int) -> Reminder:
         """Mark a reminder as triggered."""

@@ -67,14 +67,16 @@ class GoalService:
         session.commit()
         session.refresh(goal)
         
-        await self._emit_event(EventNames.GOAL_PROGRESS_UPDATED, goal)
+        await self._emit_event(EventNames.GOAL_UPDATED, goal)
         return goal
 
-    async def delete(self, session: Session, goal_id: int) -> None:
+    async def delete(self, session: Session, goal_id: int) -> Goal:
         """Delete a goal."""
         goal = self.get(session, goal_id)
         session.delete(goal)
         session.commit()
+        await self._emit_event(EventNames.GOAL_DELETED, goal)
+        return goal
 
     async def update_progress(self, session: Session, goal_id: int, increment: int = 1) -> Goal:
         """Increment goal progress."""
