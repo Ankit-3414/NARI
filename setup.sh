@@ -51,7 +51,8 @@ if [ ! -f .env ]; then
     echo -e "${GREEN}Created backend .env from template.${NC}"
 fi
 mkdir -p data
-# Ensure the root project directory is accessible to Nginx (read/execute)
+# Ensure the home directory and root project directory are accessible to Nginx (read/execute)
+chmod a+x "$HOME_DIR"
 chmod 755 "$PROJECT_ROOT"
 chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
 
