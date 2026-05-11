@@ -33,7 +33,7 @@ Health check:
 
 ```powershell
 Invoke-RestMethod `
-  -Uri http://127.0.0.1:8000/api/v1/health `
+  -Uri http://192.168.1.100:8000/api/v1/health `
   -Headers @{ Authorization = 'Bearer changeme-your-api-key-here' }
 ```
 

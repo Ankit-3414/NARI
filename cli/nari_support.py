@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-API_URL = os.getenv("NARI_API_URL", "http://127.0.0.1:8000/api/v1")
+API_URL = os.getenv("NARI_API_URL", "http://192.168.1.100:8000/api/v1")
 API_KEY = os.getenv("NARI_API_KEY", "neural_link_established")
 
 

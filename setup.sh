@@ -27,13 +27,14 @@ echo -e "${GREEN}        🌌 NARI MASTER INSTALLER v1.0       ${NC}"
 echo -e "${BLUE}==============================================${NC}"
 
 # 1. System Dependencies
-echo -e "${BLUE}[1/6] Installing System Core...${NC}"
+echo -e "${BLUE}[1/6] Installing System Core (Non-Interactive)...${NC}"
+export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential
 
 # Install uv for the original user
 echo -e "${BLUE}[2/6] Configuring Python Environment (uv)...${NC}"
-if ! command -v uv &> /dev/null; then
+if ! sudo -u "$ORIGINAL_USER" [ -f "$HOME_DIR/.local/bin/uv" ]; then
     curl -LsSf https://astral.sh/uv/install.sh | sudo -u "$ORIGINAL_USER" sh
 fi
 # Add uv to path for this session
@@ -44,10 +45,17 @@ echo -e "${BLUE}[3/6] Initializing Neural Core...${NC}"
 cd "$PROJECT_ROOT/backend"
 if [ ! -f .env ]; then
     sudo -u "$ORIGINAL_USER" cp .env.example .env
-    echo "Using default Neural Link credentials."
+    # Force 0.0.0.0 for network resilience and set the default neural key
+    sed -i "s/NARI_HOST=.*/NARI_HOST=0.0.0.0/" .env
+    sed -i "s/NARI_API_KEY=.*/NARI_API_KEY=neural_link_established/" .env
+    echo -e "${GREEN}Created backend .env from template.${NC}"
 fi
 mkdir -p data
-chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" .
+# Ensure the root project directory is accessible to Nginx (read/execute)
+chmod 755 "$PROJECT_ROOT"
+chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
+
+echo -e "Installing Python dependencies..."
 sudo -u "$ORIGINAL_USER" PATH="$PATH" uv sync
 echo -e "${GREEN}Applying database migrations...${NC}"
 sudo -u "$ORIGINAL_USER" PATH="$PATH" uv run alembic upgrade head
@@ -56,11 +64,15 @@ sudo -u "$ORIGINAL_USER" PATH="$PATH" uv run alembic upgrade head
 echo -e "${BLUE}[4/6] Building Dashboard...${NC}"
 cd "$PROJECT_ROOT/frontend"
 if [ ! -f .env ]; then
-    sudo -u "$ORIGINAL_USER" cp .env.example .env
+    # Ensure Vite knows it's talking to the static IP during build if necessary
+    echo "VITE_NARI_API_KEY=neural_link_established" | sudo -u "$ORIGINAL_USER" tee .env > /dev/null
+    echo -e "${GREEN}Created frontend .env.${NC}"
 fi
 chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" .
 sudo -u "$ORIGINAL_USER" npm install
 sudo -u "$ORIGINAL_USER" npm run build
+# Ensure dist is readable by Nginx
+chmod -R 755 dist
 echo -e "${GREEN}Frontend build optimized for production.${NC}"
 
 # 4. Nginx Configuration
@@ -68,7 +80,7 @@ echo -e "${BLUE}[5/6] Deploying Nginx Web Server...${NC}"
 NGINX_CONF="
 server {
     listen 80;
-    server_name _; # Responds to all IPs
+    server_name 192.168.1.100;
 
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;
@@ -82,6 +94,8 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location /ws {
@@ -90,7 +104,16 @@ server {
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection \"Upgrade\";
         proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
     }
+
+    location /assets {
+        expires 1y;
+        add_header Cache-Control \"public, immutable\";
+    }
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml;
 }"
 
 echo "$NGINX_CONF" | tee /etc/nginx/sites-available/nari > /dev/null

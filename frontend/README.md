@@ -11,7 +11,7 @@ Mobile-first web dashboard for NARI (Not A Random Intelligence).
 ## Development
 1.  Install dependencies: `npm install`
 2.  Start the dev server: `npm run dev`
-3.  The frontend will proxy `/api` requests to `http://localhost:8000`. Ensure the backend is running.
+3.  The frontend will proxy `/api` requests to `http://127.0.0.1:8000`. Ensure the backend is running.
 
 ## Features
 *   **Mobile-First Design:** Optimized for phone screens with a bottom navigation bar.

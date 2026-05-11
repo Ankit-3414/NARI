@@ -29,7 +29,7 @@ class ReminderService:
         session.refresh(reminder)
         
         await self._emit_event(EventNames.REMINDER_CREATED, reminder)
-        # TODO: Trigger scheduler update
+
         return reminder
 
     def get(self, session: Session, reminder_id: int) -> Reminder:
@@ -80,7 +80,7 @@ class ReminderService:
         session.refresh(reminder)
         
         await self._emit_event(EventNames.REMINDER_UPDATED, reminder)
-        # TODO: Trigger scheduler update
+
         return reminder
 
     async def delete(self, session: Session, reminder_id: int) -> Reminder:
@@ -117,7 +117,7 @@ class ReminderService:
         session.refresh(reminder)
         
         await self._emit_event(EventNames.REMINDER_SNOOZED, reminder)
-        # TODO: Trigger scheduler update
+
         return reminder
 
     async def dismiss(self, session: Session, reminder_id: int) -> Reminder:
