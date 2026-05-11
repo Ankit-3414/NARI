@@ -31,7 +31,7 @@ This will install `uv`, setup virtual environments, install dependencies, and ru
 2. **Stage 1 - Tasks** (7-10 days): CLI task management - stop using other tools
 3. **Stage 2 - Subjects + Study** (7-10 days): Study session tracking with interruptions
 4. **Stage 3 - Notes** (7-10 days): Versioned notes with full-text search
-5. **Stage 4 - Web Dashboard** (2 weeks): Mobile-first React interface
+5. **Stage 4 - Web Dashboard** (2 weeks): Desktop-focused React interface
 6. **Stage 5 - WebSockets** (5-7 days): Live updates without refresh
 7. **Stage 6 - Reminders** (5-7 days): Browser notifications and scheduler
 8. **Stage 7 - Goals + Habits** (1-2 weeks): Long-term vision tracking
@@ -51,7 +51,6 @@ This will install `uv`, setup virtual environments, install dependencies, and ru
 7. **All timestamps are stored as UTC** - Timezone conversion at presentation layer
 8. **Never hard-delete subjects or notes** - Use archived_at. Tasks use status=cancelled
 9. **Schema changes require an Alembic migration** - Never modify DB directly in production
-10. **Build for mobile-first** - Every UI decision tested on phone screen first
 
 ## File Structure Rules
 
@@ -83,11 +82,11 @@ backend/app/
 - [x] Stage 1: Stopped using other task managers, CLI works
 - [x] Stage 2: Every study session tracked through NARI
 - [x] Stage 3: All notes centralized with version history
-- [x] Stage 4: Open NARI on phone every morning
+- [x] Stage 4: Web dashboard responsive on desktop
 - [x] Stage 5: Changes appear live without page refresh
-- [ ] Stage 6: Reminders trigger browser notifications
-- [ ] Stage 7: Goals and habits in daily use
-- [ ] Stage 8: Analytics show meaningful patterns (2+ months data)
+- [x] Stage 6: Reminders trigger browser notifications
+- [x] Stage 7: Goals and habits in daily use
+- [x] Stage 8: Analytics show meaningful patterns
 - [ ] Stage 9: AI provides useful suggestions
 
 ## Response Contract (Always Use)
@@ -102,4 +101,4 @@ backend/app/
 
 ## Current Status
 
-Stage 5 complete. WebSockets implemented for real-time sync across Tasks, Study, Notes, Goals, and Habits. UI updates instantly on backend changes. Moving to Stage 6 - Reminders (Browser Notifications & Scheduler).
+Stage 8 complete. Behavioral Analytics Engine implemented with high-fidelity visual HUD. Moving to Stage 9 - AI Layer (Ollama Integration).

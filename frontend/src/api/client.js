@@ -7,11 +7,29 @@ const client = axios.create({
   },
 });
 
+// Force the high-fidelity protocol key
+const SYSTEM_KEY = 'neural_link_established';
+
 // Attach API key from local storage or environment
 client.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('NARI_API_KEY') || 
-                 import.meta.env.VITE_NARI_API_KEY || 
-                 'neural_link_established';
+  let apiKey = localStorage.getItem('NARI_API_KEY');
+  
+  // PURGE LEGACY TOKEN: If the stored key is old, force it to the new standard
+  if (apiKey && apiKey.startsWith('nari_sk_v3')) {
+    console.log('[NeuralHandshake] Purging legacy token...');
+    localStorage.removeItem('NARI_API_KEY');
+    apiKey = SYSTEM_KEY;
+  }
+  
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+    apiKey = import.meta.env.VITE_NARI_API_KEY || SYSTEM_KEY;
+  }
+                 
+  // Log the handshake for debugging (Visible in Browser Console)
+  if (import.meta.env.DEV) {
+    console.log(`[NeuralHandshake] Signal Established: ${apiKey.substring(0, 5)}***`);
+  }
+
   if (apiKey) {
     config.headers.Authorization = `Bearer ${apiKey}`;
   }
@@ -24,6 +42,7 @@ client.interceptors.response.use(
     return response.data; // Returns {ok, data, error}
   },
   (error) => {
+    console.error('[API_FAILURE]', error.message);
     if (error.response?.data) {
       return Promise.reject(error.response.data.error || error.response.data);
     }

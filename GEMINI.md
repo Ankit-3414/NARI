@@ -6,7 +6,7 @@ This document serves as the primary instructional context for Gemini CLI in the 
 **NARI (Not A Random Intelligence)** is a self-hosted, local-first personal productivity platform. It integrates task management, study tracking, notes, goals, habits, and behavioral analytics into a single "personal operating system" designed for a single user.
 
 - **Philosophy:** AI-ready but AI-deferred. Every action is logged (`ActivityLog`) from day one to build a behavioral dataset for future local AI integration (Ollama/Llama 3.1).
-- **Architecture:** API-first with a thin Python CLI and a mobile-first React web dashboard.
+- **Architecture:** API-first with a thin Python CLI and a React web dashboard.
 
 ## Tech Stack
 - **Backend:** Python 3.12, FastAPI, SQLModel (SQLAlchemy + Pydantic), SQLite (WAL mode), Alembic (migrations), APScheduler.
@@ -24,8 +24,7 @@ This document serves as the primary instructional context for Gemini CLI in the 
 7.  **Time Management:** All timestamps are stored as **UTC**. Conversion to local time happens only in the UI/CLI.
 8.  **Data Integrity:** Never hard-delete subjects or notes (use `archived_at`). Tasks use `status='cancelled'`.
 9.  **Migrations:** All schema changes require an Alembic migration.
-10. **Mobile-First:** Every UI decision must be tested and optimized for a phone screen first.
-11. **Response Contract:** All API responses must follow: `{"ok": boolean, "data": object|null, "error": {"code": string, "message": string}|null}`.
+10. **Response Contract:** All API responses must follow: `{"ok": boolean, "data": object|null, "error": {"code": string, "message": string}|null}`.
 
 ## Building and Running
 
@@ -57,8 +56,7 @@ This document serves as the primary instructional context for Gemini CLI in the 
 - `cli/`: Standalone Python CLI logic.
 
 ## Current Roadmap
-The project has completed **Stage 4 (Web Dashboard)**.
-- **Next Stage:** Stage 5 (WebSockets for live updates).
-- **Pending:** Stage 7 (Goals & Habits) and Stage 9 (AI Layer).
+The project has completed **Stage 8 (Analytics)**.
+- **Next Stage:** Stage 9 (AI Layer).
 
 Refer to `docs/CLAUDE.md` for the development checklist and `docs/NARI_Architecture.md` for full technical specifications.

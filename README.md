@@ -60,8 +60,7 @@ sudo ./setup_server.sh
 | **Stage 0-4** | Core Infrastructure, Backend API, CLI & Web Dashboard | ✅ |
 | **Stage 5** | WebSocket Integration & Live Updates | ✅ |
 | **Stage 7-8** | Goals, Habits & Behavioral Analytics | ✅ |
-| **Stage 9** | **AI Layer Activation (Ollama/Groq Integration)** | ⏳ *Coming Soon* |
-| **Stage 10** | Mobile Native Wrapper (PWA/Capacitor) | 📅 *Planned* |
+| Stage 9 | **AI Layer Activation (Ollama/Groq Integration)** | ⏳ *Coming Soon* |
 
 ---
 

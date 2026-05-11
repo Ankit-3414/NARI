@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, date, timedelta
 from typing import Any
 
-from sqlmodel import Session, select, func, and_
+from sqlmodel import Session, select, func, and_, or_
 
 from ..models.study_session import StudySession, StudySessionStatus
 from ..models.task import Task
@@ -159,7 +159,7 @@ class AnalyticsService:
             if score > 0:
                 distribution.append({
                     "subject": sub.name,
-                    "color": sub.color,
+                    "color": getattr(sub, "color", "#00F2FF"),
                     "score": round(score, 2),
                     "tasks": task_count,
                     "study_hours": round(study_seconds / 3600, 1)

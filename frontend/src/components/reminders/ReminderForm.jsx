@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReminderActions } from '../../hooks/useReminders';
 import { useTodayTasks } from '../../hooks/useTasks';
-import { useSubjects } from '../../hooks/useSubjects';
+import { useSubjects } from '../../hooks/useStudy';
 import { Bell, Clock, X, Save, Plus, Calendar as CalendarIcon, Zap, Layers, CheckSquare } from 'lucide-react';
 import { format, addMinutes, addHours, addDays, parseISO, isValid } from 'date-fns';
 import { clsx } from 'clsx';

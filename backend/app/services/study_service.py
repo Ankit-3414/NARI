@@ -171,16 +171,21 @@ class StudyService:
         }
 
     def to_data(self, study_session: StudySession) -> dict[str, Any]:
+        def ensure_utc(dt):
+            if not dt: return None
+            s = dt.isoformat()
+            return s if s.endswith('Z') else f"{s}Z"
+
         return {
             "id": study_session.id,
             "subject_id": study_session.subject_id,
             "status": study_session.status.value,
             "goal_text": study_session.goal_text,
             "notes": study_session.notes,
-            "created_at": study_session.created_at.isoformat(),
-            "paused_at": study_session.paused_at.isoformat() if study_session.paused_at else None,
-            "resumed_at": study_session.resumed_at.isoformat() if study_session.resumed_at else None,
-            "ended_at": study_session.ended_at.isoformat() if study_session.ended_at else None,
+            "created_at": ensure_utc(study_session.created_at),
+            "paused_at": ensure_utc(study_session.paused_at),
+            "resumed_at": ensure_utc(study_session.resumed_at),
+            "ended_at": ensure_utc(study_session.ended_at),
             "duration_seconds": study_session.duration_seconds,
             "interrupt_count": study_session.interrupt_count,
             "interruptions": json.loads(study_session.interruptions_json or "[]"),
