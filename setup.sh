@@ -56,9 +56,9 @@ chmod 755 "$PROJECT_ROOT"
 chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
 
 echo -e "Installing Python dependencies..."
-sudo -u "$ORIGINAL_USER" PATH="$PATH" uv sync
+sudo -u "$ORIGINAL_USER" "$HOME_DIR/.local/bin/uv" sync
 echo -e "${GREEN}Applying database migrations...${NC}"
-sudo -u "$ORIGINAL_USER" PATH="$PATH" uv run alembic upgrade head
+sudo -u "$ORIGINAL_USER" "$HOME_DIR/.local/bin/uv" run alembic upgrade head
 
 # 3. Frontend Build
 echo -e "${BLUE}[4/6] Building Dashboard...${NC}"
