@@ -1,116 +1,107 @@
 # 🌌 NARI (Not A Random Intelligence)
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
-[![Platform](https://img.shields.io/badge/Platform-Self--Hosted-purple.svg?style=for-the-badge)](https://github.com/Ankit-3414/NARI)
+**NARI** is a local-first, self-hosted personal productivity platform designed to be your private "Personal Operating System." It integrates task management, study tracking, notes, goals, habits, and behavioral analytics into a single, cohesive intelligence layer.
 
-**NARI** is a local-first, privacy-centric "Personal Operating System" designed to centralize your productivity, study habits, and behavioral analytics. It's built for those who want a high-fidelity dashboard for their life without sacrificing their data to the cloud.
-
-> "AI-ready but AI-deferred. Every action is a data point for your future local intelligence."
+> **Philosophy:** AI-ready but AI-deferred. NARI logs every meaningful action to build a rich behavioral dataset, preparing for local AI integration (Stage 9) while remaining fully functional without it.
 
 ---
 
-## ✨ Core Pillars
+## 🚀 Key Features
 
-### 📋 Task Architecture
-Beyond simple to-dos. NARI features a priority-driven inbox, automated "Today" view, and deep history tracking for every task transaction.
-
-### 📚 Focus Engine
-Integrated study session tracking with interruption logging, subject-specific focus time, and real-time session management.
-
-### 🧠 Behavioral Analytics
-Live data visualization of your productivity trends. Monitor task completion rates, study streaks, and habit consistency through a premium glassmorphism interface.
-
-### 🛡️ System Audit Vault
-A real-time, append-only memory stream of every database transaction. Complete transparency into how your data is being managed and updated.
+*   **Task Intelligence:** Advanced task management with history tracking, priorities, and smart "Today" views.
+*   **Study Core:** Deep focus timer with subject-specific tracking, interruption logging, and session analytics.
+*   **Neural Notes:** Markdown-based note-taking with automatic version history and full-text search.
+*   **Vision Tracking:** Integrated Goals and Habits with streak management and progress HUDs.
+*   **Behavioral HUD:** Real-time analytics engine that visualizes your productivity patterns.
+*   **Neural Link:** Standardized API-first architecture with WebSocket-driven real-time UI updates.
 
 ---
 
-## 🚀 Quick Start
+## 🛠 Tech Stack
 
-### ⚡ One-Click Local Setup (Linux/macOS)
+*   **Backend:** Python 3.12, FastAPI, SQLModel (SQLAlchemy + Pydantic), SQLite (WAL Mode).
+*   **Frontend:** React (Vite), Tailwind CSS, TanStack Query, Zustand, Lucide Icons.
+*   **CLI:** Thin Python HTTP client for power-user interaction.
+*   **Infrastructure:** Nginx (Reverse Proxy), Systemd (Service management), `uv` (Fast dependency management).
+
+---
+
+## 📦 Installation & Deployment
+
+### One-Click Setup (Ubuntu 24.04 / Debian)
+Port the codebase to your server and run the master deployment engine:
+
 ```bash
-chmod +x setup.sh
-./setup.sh
+sudo chmod +x setup.sh
+sudo ./setup.sh
 ```
 
-### 🌍 24/7 Server Deployment (192.168.1.240)
-If you are hosting NARI on a dedicated home server:
-```bash
-chmod +x setup_server.sh
-sudo ./setup_server.sh
-```
+**This script automates:**
+1.  System dependency installation (Python, Node, Nginx, SQLite).
+2.  Python environment isolation using `uv`.
+3.  Database initialization and schema migrations.
+4.  Production frontend compilation.
+5.  Nginx reverse proxy configuration for static IP `192.168.1.100`.
+6.  Systemd service creation for 24/7 "Background Pulse."
 
 ---
 
-## 🛠️ Tech Stack
+## ⌨️ CLI Usage
 
-- **Backend:** Python 3.12 + FastAPI + SQLModel (SQLAlchemy + Pydantic)
-- **Frontend:** React (Vite) + Tailwind CSS + Framer Motion + Lucide Icons
-- **Database:** SQLite (WAL Mode) for local-first speed and reliability
-- **State Management:** Zustand (UI) & React Query (Server State)
-- **Automation:** APScheduler for intelligent reminder polling
+NARI includes a powerful CLI for terminal-based control:
 
----
-
-## 🗺️ Roadmap & Timeline
-
-| Phase | Milestone | Status |
-| :--- | :--- | :--- |
-| **Stage 0-4** | Core Infrastructure, Backend API, CLI & Web Dashboard | ✅ |
-| **Stage 5** | WebSocket Integration & Live Updates | ✅ |
-| **Stage 7-8** | Goals, Habits & Behavioral Analytics | ✅ |
-| Stage 9 | **AI Layer Activation (Ollama/Groq Integration)** | ⏳ *Coming Soon* |
+*   **Add Task:** `./nari.sh add "Finish Research" --priority high`
+*   **Today's View:** `./nari.sh today`
+*   **Study Start:** `./nari.sh study-start <subject_id> --goal "Neural Calibration"`
+*   **Activity Log:** `./nari.sh activity --limit 10`
 
 ---
 
-## 🚀 Installation & Setup
+## 🛰 API Response Contract
 
-### 📋 Prerequisites
-- Python 3.12+
-- Node.js 18+
-- [uv](https://github.com/astral-sh/uv) (Python package manager)
+All API responses follow a strict high-fidelity contract:
 
-### 🔧 Backend Setup
-```bash
-cd backend
-uv venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-uv pip install -e .
-alembic upgrade head
-python run.py
-```
-
-### 💻 Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 🛠️ CLI Usage
-Access NARI from your terminal:
-```powershell
-./nari.ps1 task list
-./nari.ps1 habit complete 1
+```json
+{
+  "ok": true,
+  "data": { ... },
+  "error": null
+}
 ```
 
 ---
 
-## 🎨 Design Philosophy
-NARI utilizes a **Deep Dark Glassmorphism** theme (`#0D0D0D`) with backdrop blur effects and high-fidelity spring animations. Every interaction is designed to feel tactile, responsive, and professional.
+## 🗺 Roadmap & Version History
+
+### **Phase 1: Foundation (v0.1.0 - v0.5.0) - DONE**
+*   [x] **Stage 0:** Neural Core, ActivityLog, and Health monitoring.
+*   [x] **Stage 1:** CLI Task Management.
+*   [x] **Stage 2:** Subjects & Study tracking.
+*   [x] **Stage 3:** Versioned Neural Notes.
+*   [x] **Stage 4:** Mobile-first Web Dashboard.
+
+### **Phase 2: Intelligence (v0.6.0 - v1.0.0) - CURRENT**
+*   [x] **Stage 5:** WebSocket Real-time Sync.
+*   [x] **Stage 6:** Scheduler & Browser Reminders.
+*   [x] **Stage 7:** Vision layer (Goals & Habits).
+*   [x] **Stage 8:** Behavioral Analytics HUD.
+*   [ ] **Stage 9:** **AI Layer (Ollama + Llama 3.1 8B Integration)** - *Next Objective*
+
+### **Phase 3: Expansion (v1.1.0+) - FUTURE**
+*   [ ] Plugin system for community extensions.
+*   [ ] Advanced Desktop Management & Voice Input.
+*   [ ] Multi-device sync orchestration.
 
 ---
 
-## 🔐 Security
-NARI is designed to be self-hosted. It uses Master API Key authentication to ensure that only you can access your Personal OS. Your data stays on your machine, always.
+## 🛡 Security & Privacy
+
+*   **100% Local:** Your data never leaves your server. No cloud dependencies.
+*   **PII Redaction:** Sensitive data is proactively masked in logs to ensure privacy-safe behavioral history.
+*   **Neural Handshake:** All client-server communication requires a valid API Key/Token handshake.
 
 ---
 
 ## 📄 License
-**Proprietary / All Rights Reserved**.  
-This project is private and intended for personal use only. No permission is granted to copy, distribute, or modify the code for public or commercial use.
-
----
-
-*Built with ❤️ by [Ankit Upadhyay](https://github.com/Ankit-3414)*
+Private & Personal Use only.
+Developed by **Ankit Upadhyay**.
