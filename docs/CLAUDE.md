@@ -1,4 +1,4 @@
-# NARI - Development Guide (v1.0.0-alpha.4)
+# NARI - Development Guide (v1.0.0-alpha.6)
 
 ## Project Context
 

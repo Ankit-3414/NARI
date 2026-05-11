@@ -1,6 +1,6 @@
 # NARI Technical Architecture Document
 
-**Version:** v1.0.0-alpha.5  
+**Version:** v1.0.0-alpha.6  
 **Status:** In Development (Stage 8)  
 **Last Updated:** 2026-05-10  
 **Author:** Ankit (Solo Developer)  

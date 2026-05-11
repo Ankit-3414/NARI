@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # Core
     NARI_ENV: str = "development"
     NARI_APP_NAME: str = "NARI"
-    NARI_VERSION: str = "0.1.0"
+    NARI_VERSION: str = "1.0.0-alpha.6"
     NARI_SECRET_KEY: str = "neural_link_secret_key_2026"
     NARI_API_KEY: str = "neural_link_established"
 
