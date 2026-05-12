@@ -13,6 +13,7 @@
 *   **Neural Notes:** Markdown-based note-taking with automatic version history and full-text search.
 *   **Vision Tracking:** Integrated Goals and Habits with streak management and progress HUDs.
 *   **Behavioral HUD:** Real-time analytics engine that visualizes your productivity patterns.
+*   **Context Stream:** Frictionless, unstructured daily logging to build your behavioral dataset.
 *   **Neural Link:** Standardized API-first architecture with WebSocket-driven real-time UI updates.
 
 ---
@@ -50,6 +51,7 @@ sudo ./setup.sh
 
 NARI includes a powerful CLI for terminal-based control:
 
+*   **Log Context:** `./nari.sh tell "Just finished a deep focus block"`
 *   **Add Task:** `./nari.sh add "Finish Research" --priority high`
 *   **Today's View:** `./nari.sh today`
 *   **Study Start:** `./nari.sh study-start <subject_id> --goal "Neural Calibration"`
