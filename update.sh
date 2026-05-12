@@ -12,9 +12,10 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 
 echo "🌌 [NARI] Initiating System Upgrade..."
 
-# 1. Pull latest code
+# 1. Pull latest code (Force sync to match GitHub source)
 echo "📦 [1/5] Synchronizing Neural Repository..."
-git pull origin main
+git fetch --all
+git reset --hard origin/main
 
 # 2. Update Backend Dependencies and Migrations
 echo "🧠 [2/5] Recalibrating Backend & Database..."
