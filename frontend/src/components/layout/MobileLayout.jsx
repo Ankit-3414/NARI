@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
@@ -120,30 +120,30 @@ const MobileLayout = () => {
         "fixed top-0 left-0 right-0 z-40 transition-all duration-500 px-6 h-20 flex items-center justify-between",
         scrolled ? "bg-background/90 backdrop-blur-md border-b border-primary/20" : "bg-transparent"
       )}>
-        <div className="flex items-center gap-4">
+        <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity group">
           <NariLogo size={44} />
           <div className="flex flex-col">
-            <span className="font-black text-2xl tracking-tighter text-white leading-none uppercase italic glitch-text">NARI</span>
+            <span className="font-black text-2xl tracking-tighter text-white leading-none uppercase italic glitch-text group-hover:text-primary transition-colors">NARI</span>
             <div className="flex items-center gap-2">
               <span className="text-[8px] font-mono text-primary/60 uppercase tracking-[0.4em]">Personal_OS</span>
-              <span className="text-[8px] font-mono text-accent animate-pulse">[v1.0.4_BETA]</span>
+              <span className="text-[8px] font-mono text-accent animate-pulse">[v1.0.0-alpha.7]</span>
             </div>
           </div>
-        </div>
+        </Link>
         
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 md:gap-5">
           {/* Status Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 bg-surface/50 border border-primary/20">
+          <div className="flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none">
             <motion.div 
               animate={wsStatus === 'connected' ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
               className={clsx(
-                "w-1.5 h-1.5",
-                wsStatus === 'connected' ? 'bg-success shadow-[0_0_8px_#00FF94]' : 'bg-danger'
+                "w-1.5 h-1.5 rounded-full",
+                wsStatus === 'connected' ? 'bg-success shadow-[0_0_8px_#00FF94]' : 'bg-danger shadow-[0_0_8px_#FF0055]'
               )} 
             />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-secondary">
-              {wsStatus === 'connected' ? 'SYST_ONLINE' : 'SYST_OFFLINE'}
+            <span className="text-[8px] md:text-[10px] font-mono font-bold uppercase tracking-widest text-secondary">
+              {wsStatus === 'connected' ? 'ONLINE' : 'OFFLINE'}
             </span>
           </div>
           

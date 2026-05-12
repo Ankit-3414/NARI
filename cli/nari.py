@@ -353,11 +353,18 @@ def reminder_dismiss(args: argparse.Namespace) -> None:
     print(f"Dismissed reminder #{data['id']}")
 
 
+def tell_context(args: argparse.Namespace) -> None:
+    ensure_ok(request("POST", "/context", {"text": args.text}))
+    print("NARI: Logged.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="nari")
     sub = parser.add_subparsers(dest="command", required=True)
     
-    # ... (rest of existing commands)
+    tell = sub.add_parser("tell")
+    tell.add_argument("text")
+    tell.set_defaults(func=tell_context)
 
     add = sub.add_parser("add")
     add.add_argument("title")

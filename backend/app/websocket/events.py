@@ -48,3 +48,4 @@ class EventNames(str, Enum):
 
     # System events
     ACTIVITY_LOGGED = "activity_logged"
+    CONTEXT_LOGGED = "context_logged"

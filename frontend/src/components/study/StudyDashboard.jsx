@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSubjects, useActiveSession, useStudyActions } from '../../hooks/useStudy';
-import { Play, Pause, Square, Clock, AlertCircle, Zap, Fingerprint, Activity } from 'lucide-react';
+import { 
+  Play, Pause, Square, Clock, AlertCircle, Zap, Fingerprint, 
+  Activity, Target, ChevronRight, Hash, Shield, Box
+} from 'lucide-react';
 import { clsx } from 'clsx';
 
 const formatSeconds = (seconds) => {
@@ -10,6 +13,110 @@ const formatSeconds = (seconds) => {
   const s = seconds % 60;
   return [h, m, s].map(v => v.toString().padStart(2, '0'));
 };
+
+const HUDCircle = ({ progress, active }) => (
+  <div className="relative w-64 h-64 md:w-80 md:h-80 mx-auto mb-12">
+    {/* Background Glow */}
+    <div className={clsx(
+      "absolute inset-0 rounded-full blur-3xl transition-opacity duration-1000",
+      active ? "bg-primary/20 opacity-100" : "bg-warning/10 opacity-50"
+    )} />
+    
+    {/* SVG HUD Layers */}
+    <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+      {/* Outer Static Ring */}
+      <circle
+        cx="50" cy="50" r="48"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.5"
+        className="text-white/5"
+      />
+      
+      {/* Dotted Inner Ring */}
+      <circle
+        cx="50" cy="50" r="42"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeDasharray="1 4"
+        className="text-white/10"
+      />
+
+      {/* Primary Progress Ring */}
+      <motion.circle
+        cx="50" cy="50" r="45"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeDasharray="283"
+        initial={{ strokeDashoffset: 283 }}
+        animate={{ strokeDashoffset: 283 - (283 * (progress % 60) / 60) }}
+        transition={{ type: "spring", stiffness: 50, damping: 20 }}
+        className={clsx("transition-colors duration-500", active ? "text-primary" : "text-warning")}
+      />
+
+      {/* Rotating Detail Rings */}
+      {active && (
+        <motion.circle
+          cx="50" cy="50" r="46.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="0.5"
+          strokeDasharray="10 80"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="text-primary/40"
+        />
+      )}
+    </svg>
+
+    {/* Center Icon/Visual */}
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className={clsx(
+        "w-48 h-48 rounded-full border border-white/5 flex flex-col items-center justify-center backdrop-blur-md relative overflow-hidden",
+        active ? "bg-primary/5" : "bg-warning/5"
+      )}>
+        <motion.div 
+          animate={active ? { y: [0, -4, 0] } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          {active ? <Activity size={32} className="text-primary" /> : <Shield size={32} className="text-warning" />}
+        </motion.div>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] mt-4 text-secondary">
+          {active ? 'Analyzing' : 'Ready'}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+const SubjectCard = ({ subject, selected, onClick }) => (
+  <motion.button
+    whileHover={{ scale: 1.02, y: -2 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className={clsx(
+      "relative p-5 rounded-3xl border transition-all duration-300 text-left group overflow-hidden",
+      selected 
+        ? "bg-primary/10 border-primary shadow-[0_0_20px_rgba(0,242,255,0.1)]" 
+        : "bg-surface/40 border-white/5 hover:border-white/20"
+    )}
+  >
+    {selected && (
+      <div className="absolute top-0 right-0 p-3">
+        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+      </div>
+    )}
+    <Hash size={16} className={clsx("mb-3 transition-colors", selected ? "text-primary" : "text-secondary")} />
+    <h4 className="font-black text-white uppercase tracking-tight truncate">{subject.name}</h4>
+    <div className="flex items-center gap-2 mt-2">
+      <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+        Difficulty: {subject.difficulty || 'Normal'}
+      </span>
+    </div>
+  </motion.button>
+);
 
 const StudyDashboard = () => {
   const { data: subjects, isLoading: loadingSubjects } = useSubjects();
@@ -20,19 +127,16 @@ const StudyDashboard = () => {
   const [goal, setGoal] = useState('');
   const [elapsed, setElapsed] = useState(0);
 
-  // Live timer logic
   useEffect(() => {
     let interval;
     if (activeSession && activeSession.status === 'running') {
       const baseSeconds = activeSession.duration_seconds;
       const startTime = new Date(activeSession.resumed_at || activeSession.created_at);
-      
       const updateTimer = () => {
         const now = new Date();
         const diff = Math.floor((now - startTime) / 1000);
         setElapsed(baseSeconds + diff);
       };
-      
       updateTimer();
       interval = setInterval(updateTimer, 1000);
     } else if (activeSession && activeSession.status === 'paused') {
@@ -63,181 +167,192 @@ const StudyDashboard = () => {
   const [h, m, s] = formatSeconds(elapsed);
 
   return (
-    <div className="p-4 max-w-2xl mx-auto flex flex-col items-center min-h-[calc(100vh-8rem)] pt-12 pb-32">
-      
+    <div className="p-4 max-w-4xl mx-auto min-h-[calc(100vh-8rem)] pt-8 pb-32">
       <AnimatePresence mode="wait">
         {!activeSession ? (
           <motion.div 
             key="setup"
-            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-            className="w-full space-y-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-12"
           >
-            <div className="text-center space-y-4 mb-12">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_30px_rgba(0,242,255,0.2)] mb-6">
-                <Fingerprint size={40} className="text-primary" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase">Initiate Focus</h2>
-              <p className="text-secondary font-mono text-xs uppercase tracking-widest">Select parameters for optimal cognitive state.</p>
-            </div>
-
-            <div className="glass-card p-6 md:p-8 rounded-[2.5rem] space-y-6">
+            {/* Header */}
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-4">Subject Directive</label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-primary/20 rounded-2xl blur group-hover:blur-md transition-all duration-300 opacity-0 group-hover:opacity-100" />
-                  <select 
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="relative w-full bg-background/50 border border-white/10 rounded-2xl p-4 md:p-5 text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none backdrop-blur-xl font-bold"
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary border border-primary/20">
+                    <Zap size={24} />
+                  </div>
+                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Mission_Control</h2>
+                </div>
+                <p className="text-secondary font-mono text-[10px] uppercase tracking-[0.3em] ml-2">Initialize cognitive focus session.</p>
+              </div>
+              <div className="bg-surface/50 backdrop-blur-md border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                <Shield size={20} className="text-primary/60" />
+                <span className="text-[10px] font-mono text-secondary uppercase tracking-widest leading-none">Security Protocol: Active</span>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              {/* Left Side: Subject Selection */}
+              <div className="lg:col-span-7 space-y-8">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                    <Target size={14} /> Available Sectors
+                  </h3>
+                  <span className="text-[10px] font-mono text-secondary">{subjects?.length || 0} DEPLOYABLE</span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {subjects?.map(s => (
+                    <SubjectCard 
+                      key={s.id} 
+                      subject={s} 
+                      selected={selectedSubject === s.id.toString()}
+                      onClick={() => setSelectedSubject(s.id.toString())}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side: Configuration */}
+              <div className="lg:col-span-5 space-y-8">
+                <div className="space-y-6 glass-card p-8 rounded-[2.5rem] border-white/5 bg-surface/30">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-accent flex items-center gap-2">
+                      <Box size={14} /> Objective_Scope
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="Specify mission outcome..."
+                      value={goal}
+                      onChange={(e) => setGoal(e.target.value)}
+                      className="w-full bg-background/50 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-accent outline-none font-bold placeholder:text-slate-600 transition-all"
+                    />
+                  </div>
+
+                  <motion.button 
+                    whileHover={{ scale: selectedSubject ? 1.02 : 1 }}
+                    whileTap={{ scale: selectedSubject ? 0.98 : 1 }}
+                    onClick={handleStart}
+                    disabled={!selectedSubject || study.isStarting}
+                    className={clsx(
+                      "w-full py-6 rounded-[2rem] flex flex-col items-center justify-center gap-2 transition-all duration-500 overflow-hidden group",
+                      selectedSubject 
+                        ? "bg-primary text-black shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:shadow-primary/40" 
+                        : "bg-surface/50 text-secondary border border-white/5 cursor-not-allowed opacity-50"
+                    )}
                   >
-                    <option value="" className="text-slate-500">Select target sector...</option>
-                    {subjects?.map(s => (
-                      <option key={s.id} value={s.id} className="bg-background">{s.name}</option>
-                    ))}
-                  </select>
+                    <Zap fill={selectedSubject ? "currentColor" : "none"} size={28} className="group-hover:scale-110 transition-transform" />
+                    <span className="font-black uppercase tracking-[0.2em] text-[10px]">Execute_Link</span>
+                  </motion.button>
+                </div>
+
+                <div className="p-6 border border-dashed border-white/10 rounded-3xl opacity-50">
+                  <div className="flex items-start gap-4 text-secondary">
+                    <AlertCircle size={16} className="shrink-0 mt-1" />
+                    <p className="text-[10px] font-mono leading-relaxed uppercase">
+                      Attention: Focus session will be logged to NARI core memory. Ensure optimal environmental variables.
+                    </p>
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-accent ml-4">Micro-Goal (Optional)</label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-accent/20 rounded-2xl blur group-hover:blur-md transition-all duration-300 opacity-0 group-hover:opacity-100" />
-                  <input 
-                    type="text"
-                    placeholder="Specific outcome expected..."
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    className="relative w-full bg-background/50 border border-white/10 rounded-2xl p-4 md:p-5 text-white focus:ring-2 focus:ring-accent focus:border-transparent outline-none backdrop-blur-xl font-bold placeholder:text-slate-600"
-                  />
-                </div>
-              </div>
-
-              <motion.button 
-                whileHover={{ scale: selectedSubject && !study.isStarting ? 1.02 : 1 }}
-                whileTap={{ scale: selectedSubject && !study.isStarting ? 0.98 : 1 }}
-                onClick={handleStart}
-                disabled={!selectedSubject || study.isStarting}
-                className={clsx(
-                  "w-full py-5 md:py-6 rounded-[2rem] flex items-center justify-center gap-3 text-lg font-black uppercase tracking-widest transition-all duration-500 relative overflow-hidden",
-                  selectedSubject 
-                    ? "bg-primary text-black hover:shadow-[0_0_40px_rgba(0,242,255,0.6)] hover:bg-white" 
-                    : "bg-surface text-secondary border border-white/5 cursor-not-allowed"
-                )}
-              >
-                {selectedSubject && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]" />
-                )}
-                <Zap fill={selectedSubject ? "currentColor" : "none"} size={24} /> 
-                {study.isStarting ? 'Engaging...' : 'Engage Link'}
-              </motion.button>
             </div>
           </motion.div>
         ) : (
           <motion.div 
             key="running"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full text-center relative"
+            className="flex flex-col items-center"
           >
-            {/* Animated Rings Background */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] md:w-[80vw] aspect-square pointer-events-none -z-10">
-              {activeSession.status === 'running' && (
-                <>
-                  <motion.div 
-                    animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} 
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeOut" }} 
-                    className="absolute inset-0 rounded-full border border-primary/30"
-                  />
-                  <motion.div 
-                    animate={{ scale: [1, 2], opacity: [0.3, 0] }} 
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeOut", delay: 1 }} 
-                    className="absolute inset-0 rounded-full border border-accent/20"
-                  />
-                  <motion.div 
-                    animate={{ rotate: 360 }} 
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }} 
-                    className="absolute inset-10 rounded-full border-t border-r border-primary/20 border-dashed"
-                  />
-                </>
-              )}
-            </div>
-
-            <div className="space-y-4 mb-16 relative z-10 glass-card inline-block px-8 py-4 rounded-3xl mx-auto border-white/5 backdrop-blur-2xl">
-              <div className="flex items-center justify-center gap-3">
-                <span className={clsx(
-                  "w-3 h-3 rounded-full shadow-lg",
-                  activeSession.status === 'running' ? "bg-success animate-pulse shadow-success/50" : "bg-warning shadow-warning/50"
-                )} />
-                <span className={clsx(
-                  "text-[10px] font-black uppercase tracking-[0.3em]",
-                  activeSession.status === 'running' ? "text-success" : "text-warning"
-                )}>
-                  {activeSession.status === 'running' ? 'Neural Link Active' : 'System Suspended'}
-                </span>
+            {/* HUD Header */}
+            <div className="flex items-center gap-12 mb-12">
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-secondary mb-1">Target Sector</p>
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter">
+                  {subjects?.find(s => s.id === activeSession.subject_id)?.name || 'Unknown'}
+                </h3>
               </div>
-              <h2 className="text-3xl font-black text-white uppercase tracking-wider">
-                {subjects?.find(s => s.id === activeSession.subject_id)?.name || 'Unknown Sector'}
-              </h2>
-              {activeSession.goal_text && (
-                <p className="text-primary font-mono text-sm uppercase">"{activeSession.goal_text}"</p>
-              )}
-            </div>
-
-            {/* Timer Display */}
-            <div className="relative z-10 flex items-baseline justify-center font-black tabular-nums tracking-tighter mb-20 drop-shadow-[0_0_30px_rgba(0,242,255,0.3)]">
-              <span className="text-[6rem] md:text-[9rem] text-white leading-none">{h}</span>
-              <span className="text-[4rem] md:text-[6rem] text-primary/50 mx-1 md:mx-4">:</span>
-              <span className="text-[6rem] md:text-[9rem] text-white leading-none">{m}</span>
-              <span className="text-[4rem] md:text-[6rem] text-primary/50 mx-1 md:mx-4">:</span>
-              <span className="text-[6rem] md:text-[9rem] text-primary leading-none">{s}</span>
-            </div>
-
-            {/* Controls */}
-            <div className="grid grid-cols-2 gap-6 w-full max-w-md mx-auto relative z-10">
-              {activeSession.status === 'running' ? (
-                <motion.button 
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  onClick={() => study.pause()}
-                  className="glass-card bg-warning/10 hover:bg-warning text-warning hover:text-black py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-colors border border-warning/20 shadow-[0_0_20px_rgba(255,184,0,0.1)] group"
-                >
-                  <Pause fill="currentColor" size={32} className="group-hover:scale-110 transition-transform" />
-                  <span className="font-black uppercase tracking-widest text-xs">Suspend</span>
-                </motion.button>
-              ) : (
-                <motion.button 
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  onClick={() => study.resume()}
-                  className="glass-card bg-success/10 hover:bg-success text-success hover:text-black py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-colors border border-success/20 shadow-[0_0_20px_rgba(0,255,148,0.1)] group"
-                >
-                  <Play fill="currentColor" size={32} className="group-hover:scale-110 transition-transform" />
-                  <span className="font-black uppercase tracking-widest text-xs">Resume</span>
-                </motion.button>
-              )}
-              
-              <motion.button 
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                onClick={() => study.stop()}
-                className="glass-card bg-danger/10 hover:bg-danger text-danger hover:text-black py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-colors border border-danger/20 shadow-[0_0_20px_rgba(255,0,85,0.1)] group"
-              >
-                <Square fill="currentColor" size={32} className="group-hover:scale-110 transition-transform" />
-                <span className="font-black uppercase tracking-widest text-xs">Terminate</span>
-              </motion.button>
-            </div>
-
-            <div className="flex items-center justify-center gap-8 mt-12 px-6 py-4 glass-card rounded-full max-w-sm mx-auto border-white/5">
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-[9px] text-secondary font-black uppercase tracking-[0.2em]">Net Time</span>
-                <div className="flex items-center gap-2 text-white font-mono text-sm">
-                  <Activity size={14} className="text-primary" /> {formatSeconds(activeSession.duration_seconds).join(':')}
+              <div className="w-[1px] h-10 bg-white/10" />
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-secondary mb-1">Status</p>
+                <div className="flex items-center gap-2">
+                  <div className={clsx("w-2 h-2 rounded-full animate-pulse", activeSession.status === 'running' ? 'bg-success' : 'bg-warning')} />
+                  <span className={clsx("text-xs font-black uppercase tracking-widest", activeSession.status === 'running' ? 'text-success' : 'text-warning')}>
+                    {activeSession.status === 'running' ? 'Active' : 'Suspended'}
+                  </span>
                 </div>
               </div>
-              <div className="w-[1px] h-8 bg-white/10" />
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-[9px] text-secondary font-black uppercase tracking-[0.2em]">Interrupts</span>
-                <div className="flex items-center gap-2 text-white font-mono text-sm">
-                  <AlertCircle size={14} className="text-warning" /> {activeSession.interrupt_count}
+            </div>
+
+            {/* Circular HUD Timer */}
+            <HUDCircle progress={elapsed} active={activeSession.status === 'running'} />
+
+            {/* Main Timer Display */}
+            <div className="flex items-baseline justify-center font-black tabular-nums tracking-tighter mb-16">
+              <span className="text-6xl sm:text-7xl md:text-9xl text-white leading-none">{h}</span>
+              <span className="text-3xl sm:text-4xl md:text-6xl text-primary/40 mx-2 md:mx-4">:</span>
+              <span className="text-6xl sm:text-7xl md:text-9xl text-white leading-none">{m}</span>
+              <span className="text-3xl sm:text-4xl md:text-6xl text-primary/40 mx-2 md:mx-4">:</span>
+              <span className="text-6xl sm:text-7xl md:text-9xl text-primary leading-none shadow-[0_0_20px_rgba(0,242,255,0.3)]">{s}</span>
+            </div>
+
+            {/* Tactical Controls */}
+            <div className="flex items-center gap-8 w-full max-w-lg">
+              <div className="flex-1">
+                {activeSession.status === 'running' ? (
+                  <motion.button 
+                    whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => study.pause()}
+                    className="w-full bg-warning/10 hover:bg-warning text-warning hover:text-black py-8 rounded-[2.5rem] flex flex-col items-center gap-3 border border-warning/20 transition-all group"
+                  >
+                    <Pause fill="currentColor" size={32} />
+                    <span className="font-black uppercase tracking-[0.2em] text-[10px]">Suspend_Link</span>
+                  </motion.button>
+                ) : (
+                  <motion.button 
+                    whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => study.resume()}
+                    className="w-full bg-success/10 hover:bg-success text-success hover:text-black py-8 rounded-[2.5rem] flex flex-col items-center gap-3 border border-success/20 transition-all group"
+                  >
+                    <Play fill="currentColor" size={32} />
+                    <span className="font-black uppercase tracking-[0.2em] text-[10px]">Resume_Link</span>
+                  </motion.button>
+                )}
+              </div>
+              
+              <div className="flex-1">
+                <motion.button 
+                  whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => study.stop()}
+                  className="w-full bg-danger/10 hover:bg-danger text-danger hover:text-black py-8 rounded-[2.5rem] flex flex-col items-center gap-3 border border-danger/20 transition-all group"
+                >
+                  <Square fill="currentColor" size={32} />
+                  <span className="font-black uppercase tracking-[0.2em] text-[10px]">Terminate_Link</span>
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Session Stats HUD */}
+            <div className="grid grid-cols-2 gap-8 mt-16 w-full max-w-sm">
+              <div className="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-secondary uppercase tracking-widest">Net_Time</p>
+                  <p className="text-sm font-bold text-white font-mono">{formatSeconds(activeSession.duration_seconds).join(':')}</p>
+                </div>
+              </div>
+              <div className="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-secondary uppercase tracking-widest">Interrupts</p>
+                  <p className="text-sm font-bold text-white font-mono">{activeSession.interrupt_count}</p>
                 </div>
               </div>
             </div>

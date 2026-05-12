@@ -17,6 +17,7 @@ const ActivityPage = () => {
       case 'habit': return <ActivityIcon size={14} className="text-success" />;
       case 'goal': return <ActivityIcon size={14} className="text-accent" />;
       case 'reminder': return <Clock size={14} className="text-danger" />;
+      case 'context': return <Terminal size={14} className="text-primary animate-pulse" />;
       default: return <HardDrive size={14} className="text-secondary" />;
     }
   };

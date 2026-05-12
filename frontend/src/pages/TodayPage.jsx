@@ -6,6 +6,7 @@ import { useDashboardSummary } from '../hooks/useAnalytics';
 import { useReminders } from '../hooks/useReminders';
 import { useGoals, useUpdateGoalProgress, useDeleteGoal } from '../hooks/useGoals';
 import RealTimeClock from '../components/common/RealTimeClock';
+import ContextInput from '../components/common/ContextInput';
 import HabitWidget from '../components/habits/HabitWidget';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
@@ -49,8 +50,8 @@ const StatCard = ({ icon: Icon, label, value, colorClass, shadowClass, gradientC
       </div>
       
       <div>
-        <p className="text-4xl font-black text-white tabular-nums tracking-tighter">{value}</p>
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-secondary mt-1">{label}</p>
+        <p className="text-3xl md:text-4xl font-black text-white tabular-nums tracking-tighter">{value}</p>
+        <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-secondary mt-1">{label}</p>
       </div>
     </div>
   </motion.div>
@@ -115,8 +116,8 @@ const TodayPage = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="hidden sm:block">
+        <div className="flex flex-wrap items-center gap-3 md:gap-6">
+          <div className="flex-1 sm:flex-none">
             <RealTimeClock />
           </div>
           <div className="flex items-center gap-3 bg-surface/50 backdrop-blur-md border border-white/5 rounded-2xl p-2 pr-6">
@@ -130,6 +131,11 @@ const TodayPage = () => {
           </div>
         </div>
       </motion.header>
+
+      {/* Context Input Stream */}
+      <motion.section variants={item}>
+        <ContextInput />
+      </motion.section>
 
       {/* Grid Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

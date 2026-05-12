@@ -16,6 +16,45 @@ The NARI CLI can be invoked using the utility scripts at the project root:
 
 These scripts automatically use the project's virtual environment or `uv`.
 
+## Developer Commands
+
+### Backend
+- **Setup:**
+  ```powershell
+  $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
+  uv sync
+  Copy-Item .env.example .env
+  # Edit .env to set NARI_API_KEY
+  ```
+- **Database Migrations:**
+  ```powershell
+  $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
+  uv run alembic upgrade head
+  ```
+- **Run Server:**
+  ```powershell
+  $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
+  uv run python run.py
+  ```
+- **Health Check:**
+  ```powershell
+  Invoke-RestMethod `
+    -Uri http://192.168.1.100:8000/api/v1/health `
+    -Headers @{ Authorization = 'Bearer <your-api-key>' }
+  ```
+- **Run Tests:**
+  ```powershell
+  $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
+  uv run pytest
+  ```
+
+### Frontend (from `frontend` directory)
+- **Install Dependencies:** `npm install` (if needed)
+- **Development Server:** `npm run dev`
+- **Build for Production:** `npm run build`
+- **Lint:** `npm run lint`
+- **Preview:** `npm run preview`
+
 ## Build Stages (Follow Sequentially)
 
 1. **Stage 0 - Skeleton** (3-5 days): Backend foundation, health endpoint, ActivityLog
@@ -93,4 +132,4 @@ backend/app/
 
 ## Current Status
 
-Stage 4 complete. Mobile-first web dashboard implemented and integrated with the backend. Tasks, Study Sessions, and Notes are now accessible via a modern web interface. Moving to Stage 5 - WebSockets for live updates.
+Stage 8 complete. Behavioral Analytics HUD implemented. Moving to Stage 9 - AI Layer (Ollama + Llama 3.1 8B Integration).

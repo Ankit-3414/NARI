@@ -124,6 +124,7 @@ def setup_event_listeners() -> None:
         EventNames.HABIT_DELETED,
         EventNames.HABIT_COMPLETED,
         EventNames.HABIT_STREAK_UPDATED,
+        EventNames.CONTEXT_LOGGED,
     ]
 
     async def broadcast_handler(event_name: str, data: Dict[str, Any]):

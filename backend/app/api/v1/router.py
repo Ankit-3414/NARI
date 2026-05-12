@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .activity import router as activity_router
+from .context import router as context_router
 from .health import router as health_router
 from .notes import router as notes_router
 from .subjects import router as subjects_router
@@ -24,3 +25,4 @@ api_router.include_router(goals_router)
 api_router.include_router(habits_router)
 api_router.include_router(analytics_router)
 api_router.include_router(activity_router)
+api_router.include_router(context_router, prefix="/context", tags=["Context"])
