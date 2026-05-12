@@ -38,9 +38,8 @@ npm run build
 
 # 4. Restart System Services
 echo "⚡ [4/5] Pulsing System Services..."
-# We assume the service names from the setup.sh/systemd config
-sudo systemctl restart nari-backend
-sudo systemctl restart nari-frontend || true # If frontend is served via nginx, this might not be needed
+# The service is named 'nari' as per setup.sh
+sudo systemctl restart nari
 sudo systemctl reload nginx
 
 # 5. Verification
