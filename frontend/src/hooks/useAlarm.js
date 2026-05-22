@@ -6,7 +6,7 @@ import { alarmService } from '../utils/alarmService';
  * Hook to monitor triggered reminders and handle the audible alarm.
  */
 export const useAlarm = () => {
-  const { data: reminders } = useReminders();
+  const { data: reminders } = useReminders({ include_triggered: true });
   
   useEffect(() => {
     if (!reminders) return;

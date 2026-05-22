@@ -115,9 +115,9 @@ backend/app/
 - [ ] Stage 3: All notes centralized with version history
 - [ ] Stage 4: Open NARI on phone every morning
 - [ ] Stage 5: Changes appear live without page refresh
-- [ ] Stage 6: Reminders trigger browser notifications
+- [x] Stage 6: Reminders trigger browser notifications
 - [ ] Stage 7: Goals and habits in daily use
-- [ ] Stage 8: Analytics show meaningful patterns (2+ months data)
+- [x] Stage 8: Analytics HUD implemented
 - [ ] Stage 9: AI provides useful suggestions
 
 ## Response Contract (Always Use)

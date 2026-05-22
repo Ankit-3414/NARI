@@ -15,11 +15,6 @@ client.interceptors.request.use((config) => {
     apiKey = import.meta.env.VITE_NARI_API_KEY;
   }
                  
-  // Log the handshake for debugging (Visible in Browser Console)
-  if (import.meta.env.DEV && apiKey) {
-    console.log(`[NeuralHandshake] Signal Established: ${apiKey.substring(0, 5)}***`);
-  }
-
   if (apiKey) {
     config.headers.Authorization = `Bearer ${apiKey}`;
   }

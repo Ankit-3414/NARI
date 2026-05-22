@@ -24,7 +24,8 @@ class StudySession(BaseModel, table=True):
     __tablename__ = "study_sessions"
 
     subject_id: int = Field(
-        sa_column_kwargs={"nullable": False, "foreign_key": "subjects.id", "index": True},
+        foreign_key="subjects.id",
+        sa_column_kwargs={"nullable": False, "index": True},
         description="Subject being studied",
     )
     status: StudySessionStatus = Field(

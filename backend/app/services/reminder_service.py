@@ -2,20 +2,21 @@
 
 from __future__ import annotations
 
-import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any, Optional
 
 from sqlmodel import Session, select, and_, or_
 
-from ..core.constants import ACTIVITY_ACTIONS, EntityType, ReminderStatus
+from ..core.constants import EntityType, ReminderStatus
 from ..core.errors import NariError
 from ..core.events import get_event_bus
+from ..core.logging import get_logger
 from ..models.reminder import Reminder
 from ..schemas.reminder import ReminderCreate, ReminderUpdate
 from ..utils.datetime_utils import utc_now
 from ..websocket.events import EventNames
-from .activity_service import activity_service
+
+logger = get_logger(__name__)
 
 
 class ReminderService:
@@ -23,25 +24,7 @@ class ReminderService:
 
     async def create(self, session: Session, payload: ReminderCreate) -> Reminder:
         """Create a new reminder and schedule it."""
-        reminder_data = payload.model_dump()
-        is_task_synced = reminder_data.pop('is_task_synced', False)
-        
-        reminder = Reminder(**reminder_data)
-        
-        # If sync requested, create a task first
-        if is_task_synced:
-            from .task_service import task_service
-            from ..schemas.task import TaskCreate
-            
-            task_payload = TaskCreate(
-                title=reminder.title,
-                description=reminder.message or f"Linked to reminder: {reminder.title}",
-                priority="medium",
-                status="todo",
-                due_at=reminder.due_at
-            )
-            task = await task_service.create(session, task_payload)
-            reminder.task_id = task.id
+        reminder = Reminder(**payload.model_dump())
         
         session.add(reminder)
         session.commit()
@@ -189,8 +172,8 @@ class ReminderService:
                 task = task_service.get(session, reminder.task_id)
                 if task.status != TaskStatus.DONE:
                     await task_service.update(session, reminder.task_id, TaskUpdate(status=TaskStatus.DONE))
-            except:
-                pass
+            except NariError:
+                logger.warning("Linked task %s was not found while dismissing reminder %s", reminder.task_id, reminder.id)
 
         # Handle Recurrence
         if reminder.repeat_rule:
@@ -210,8 +193,7 @@ class ReminderService:
                     reminder.locked_in_at = None
                     reminder.updated_at = utc_now()
             except Exception as e:
-                # Log error but don't fail dismissal
-                print(f"Error calculating next occurrence: {e}")
+                logger.warning("Failed to calculate next reminder occurrence for %s: %s", reminder.id, e)
         
         session.add(reminder)
         session.commit()

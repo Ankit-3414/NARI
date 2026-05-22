@@ -1,12 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
+import { db, queueSync } from '../db/db';
 
 export const useNotes = (filters = {}) => {
   return useQuery({
     queryKey: ['notes', filters],
     queryFn: async () => {
-      const response = await client.get('/notes', { params: filters });
-      return response.data;
+      try {
+        const response = await client.get('/notes', { params: filters });
+        const notes = response.data;
+        
+        await db.notes.clear();
+        await db.notes.bulkAdd(notes);
+        
+        return notes;
+      } catch (error) {
+        if (!navigator.onLine) {
+          return await db.notes.toArray();
+        }
+        throw error;
+      }
     },
   });
 };
@@ -15,8 +28,15 @@ export const useNote = (noteId) => {
   return useQuery({
     queryKey: ['notes', noteId],
     queryFn: async () => {
-      const response = await client.get(`/notes/${noteId}`);
-      return response.data;
+      try {
+        const response = await client.get(`/notes/${noteId}`);
+        return response.data;
+      } catch (error) {
+        if (!navigator.onLine) {
+          return await db.notes.get(parseInt(noteId));
+        }
+        throw error;
+      }
     },
     enabled: !!noteId,
   });
@@ -27,6 +47,11 @@ export const useNoteActions = () => {
 
   const createMutation = useMutation({
     mutationFn: async (payload) => {
+      if (!navigator.onLine) {
+        const id = await db.notes.add({ ...payload, created_at: new Date().toISOString() });
+        await queueSync('CREATE', 'notes', { ...payload, tempId: id });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.post('/notes', payload);
       return response.data;
     },
@@ -35,6 +60,11 @@ export const useNoteActions = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...payload }) => {
+      if (!navigator.onLine) {
+        await db.notes.update(id, payload);
+        await queueSync('UPDATE', 'notes', { id, ...payload });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.patch(`/notes/${id}`, payload);
       return response.data;
     },
@@ -46,6 +76,11 @@ export const useNoteActions = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.notes.delete(id);
+        await queueSync('DELETE', 'notes', { id });
+        return { id, _offline: true };
+      }
       const response = await client.delete(`/notes/${id}`);
       return response.data;
     },

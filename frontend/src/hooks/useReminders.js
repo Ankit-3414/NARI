@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
 
-export const useReminders = (params = {}) => {
+export const useReminders = (params = {}, queryOptions = {}) => {
   return useQuery({
     queryKey: ['reminders', params],
     queryFn: async () => {
       const response = await client.get('/reminders', { params });
       return response.data;
     },
+    ...queryOptions,
   });
 };
 
@@ -40,7 +41,6 @@ export const useReminderActions = () => {
 
   const dismissMutation = useMutation({
     mutationFn: async (id) => {
-      console.log(`[Mutation] Dismissing reminder ${id}...`);
       const response = await client.post(`/reminders/${id}/dismiss`);
       return response.data;
     },
@@ -61,8 +61,7 @@ export const useReminderActions = () => {
 
       return { previousReminders };
     },
-    onSuccess: (data) => {
-      console.log('[Mutation] Dismiss success:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
     },
     onError: (err, id, context) => {

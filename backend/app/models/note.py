@@ -32,7 +32,8 @@ class Note(BaseModel, table=True):
     )
     subject_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "subjects.id", "index": True},
+        foreign_key="subjects.id",
+        sa_column_kwargs={"nullable": True, "index": True},
         description="Associated subject",
     )
     tags_json: Optional[str] = Field(
@@ -61,7 +62,8 @@ class NoteVersion(BaseModel, table=True):
     __tablename__ = "note_versions"
 
     note_id: int = Field(
-        sa_column_kwargs={"nullable": False, "foreign_key": "notes.id", "index": True},
+        foreign_key="notes.id",
+        sa_column_kwargs={"nullable": False, "index": True},
         description="Parent note",
     )
     version_number: int = Field(

@@ -7,6 +7,7 @@ from sqlmodel import Field, Index, SQLModel
 
 from ..core.constants import TaskPriority, TaskStatus
 from ..db.base import BaseModel
+from ..utils.datetime_utils import utc_naive
 
 
 class Task(BaseModel, table=True):
@@ -116,7 +117,7 @@ class TaskHistory(BaseModel, table=True):
         description="Snapshot after change",
     )
     changed_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=utc_naive,
         sa_column_kwargs={"nullable": False, "index": True},
         description="Change timestamp",
     )

@@ -59,7 +59,8 @@ class Goal(BaseModel, table=True):
     )
     parent_goal_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "goals.id", "index": True},
+        foreign_key="goals.id",
+        sa_column_kwargs={"nullable": True, "index": True},
         description="Parent goal for hierarchy",
     )
 

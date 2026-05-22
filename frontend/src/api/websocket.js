@@ -4,6 +4,12 @@
 
 import { useUiStore } from '../store/uiStore';
 
+const debugLog = (...args) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
 class WebSocketClient {
   constructor() {
     this.socket = null;
@@ -28,12 +34,12 @@ class WebSocketClient {
       wsUrl.searchParams.append('token', apiKey);
     }
 
-    console.log('Connecting to WebSocket:', wsUrl.toString());
+    debugLog('Connecting to WebSocket');
     useUiStore.getState().setWsStatus('connecting');
     this.socket = new WebSocket(wsUrl.toString());
 
     this.socket.onopen = () => {
-      console.log('WebSocket connected');
+      debugLog('WebSocket connected');
       useUiStore.getState().setWsStatus('connected');
       this.reconnectAttempts = 0;
     };
@@ -48,7 +54,7 @@ class WebSocketClient {
     };
 
     this.socket.onclose = (event) => {
-      console.log('WebSocket disconnected', event.code, event.reason);
+      debugLog('WebSocket disconnected', event.code, event.reason);
       useUiStore.getState().setWsStatus('disconnected');
       this.attemptReconnect();
     };
@@ -62,7 +68,7 @@ class WebSocketClient {
   attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${this.reconnectTimeout}ms...`);
+      debugLog(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${this.reconnectTimeout}ms...`);
       setTimeout(() => this.connect(this.url), this.reconnectTimeout);
     } else {
       console.error('Max WebSocket reconnect attempts reached');

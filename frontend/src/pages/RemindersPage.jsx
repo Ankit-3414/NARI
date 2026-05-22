@@ -122,7 +122,7 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
 const RemindersPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState(null);
-  const { data: reminders, isLoading, error } = useReminders();
+  const { data: reminders, isLoading, error } = useReminders({ include_triggered: true });
   const actions = useReminderActions();
 
   if (isLoading) return (

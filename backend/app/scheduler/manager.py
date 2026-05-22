@@ -11,7 +11,7 @@ from sqlmodel import Session, select, or_, and_
 from ..core.config import settings
 from ..core.constants import ReminderStatus
 from ..core.logging import get_logger
-from ..db.session import engine
+from ..db import session as db_session
 from ..models.reminder import Reminder
 from ..services.reminder_service import reminder_service
 
@@ -35,6 +35,8 @@ class SchedulerManager:
             trigger=IntervalTrigger(seconds=1),
             id="check_reminders",
             replace_existing=True,
+            max_instances=1,
+            coalesce=True,
         )
 
         # Add the auto-resolution job (Ghost Protocol)
@@ -43,6 +45,8 @@ class SchedulerManager:
             trigger=IntervalTrigger(seconds=10),
             id="resolve_triggered_reminders",
             replace_existing=True,
+            max_instances=1,
+            coalesce=True,
         )
         
         self.scheduler.start()
@@ -61,7 +65,7 @@ class SchedulerManager:
         now = datetime.now(UTC)
         
         # We need a new session for each check
-        with Session(engine) as session:
+        with Session(db_session.engine) as session:
             # Check for scheduled OR snoozed reminders that are due AND active
             statement = select(Reminder).where(
                 and_(
@@ -91,7 +95,7 @@ class SchedulerManager:
         """Auto-resolve reminders that have been ringing too long (Ghost Protocol)."""
         now = datetime.now(UTC)
         
-        with Session(engine) as session:
+        with Session(db_session.engine) as session:
             # Find all triggered reminders
             statement = select(Reminder).where(Reminder.status == ReminderStatus.TRIGGERED)
             triggered_reminders = session.exec(statement).all()

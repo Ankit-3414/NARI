@@ -65,7 +65,8 @@ class HabitLog(BaseModel, table=True):
     __tablename__ = "habit_logs"
 
     habit_id: int = Field(
-        sa_column_kwargs={"nullable": False, "foreign_key": "habits.id", "index": True},
+        foreign_key="habits.id",
+        sa_column_kwargs={"nullable": False, "index": True},
         description="Habit reference",
     )
     note: Optional[str] = Field(

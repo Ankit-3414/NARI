@@ -6,10 +6,12 @@ import MobileLayout from '../components/layout/MobileLayout';
 import LoginPage from '../pages/LoginPage';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useTimeSync } from '../hooks/useTimeSync';
+import { useSyncEngine } from '../hooks/useSyncEngine';
 import { useAuthStore } from '../store/authStore';
 import NeuralEntrance from '../components/ui/NeuralEntrance';
 import TriggeredAlertOverlay from '../components/ui/TriggeredAlertOverlay';
 import PreFlightIntercept from '../components/ui/PreFlightIntercept';
+import ReloadPrompt from '../components/ui/ReloadPrompt';
 import { useReminderActions, useReminders } from '../hooks/useReminders';
 import { alarmService } from '../utils/alarmService';
 
@@ -43,6 +45,9 @@ function AppContent() {
 
   // Initialize WebSocket connection only if we have an API key
   useWebSocket();
+
+  // Activate Background Sync Engine
+  useSyncEngine();
 
   const triggeredAlerts = reminders?.filter(r => r.status === 'triggered') || [];
 
@@ -115,6 +120,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ReloadPrompt />
       <AnimatePresence mode="wait">
         {showEntrance ? (
           <NeuralEntrance

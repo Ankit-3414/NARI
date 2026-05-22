@@ -68,7 +68,6 @@ const TriggeredAlertOverlay = ({ alerts, onDismiss }) => {
           <div className="w-full space-y-4">
             <button
               onClick={() => {
-                console.log(`[Overlay] Terminate clicked for ID: ${activeAlert.id}`);
                 onDismiss(activeAlert.id);
               }}
               className="w-full py-8 rounded-[2rem] bg-danger text-black font-black uppercase tracking-[0.3em] text-2xl shadow-[0_0_50px_rgba(255,0,85,0.4)] hover:shadow-[0_0_80px_rgba(255,0,85,0.7)] hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden group"

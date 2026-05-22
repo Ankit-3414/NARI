@@ -9,16 +9,19 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 API_URL = os.getenv("NARI_API_URL", "http://localhost:8000/api/v1")
-API_KEY = os.getenv("NARI_API_KEY")
 
-if not API_KEY:
-    print("Error: NARI_API_KEY environment variable is not set.", file=sys.stderr)
-    sys.exit(1)
+
+def get_api_key() -> str:
+    api_key = os.getenv("NARI_API_KEY")
+    if not api_key:
+        print("Error: NARI_API_KEY environment variable is not set.", file=sys.stderr)
+        raise SystemExit(1)
+    return api_key
 
 
 def request(method: str, path: str, payload: dict | None = None) -> dict:
     body = None
-    headers = {"Authorization": f"Bearer {API_KEY}"}
+    headers = {"Authorization": f"Bearer {get_api_key()}"}
     if payload is not None:
         body = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"

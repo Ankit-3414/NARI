@@ -66,6 +66,7 @@ const AnimatedBackground = () => (
 
 const MobileLayout = () => {
   const wsStatus = useUiStore((state) => state.wsStatus);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
@@ -80,8 +81,18 @@ const MobileLayout = () => {
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Ensure AudioContext and Notifications are initialized on user interaction
@@ -133,18 +144,31 @@ const MobileLayout = () => {
         </Link>
         
         <div className="flex items-center gap-3 md:gap-5">
+          {/* Online/Offline Status */}
+          {!isOnline && (
+            <motion.div 
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-danger/10 border border-danger/50 text-danger"
+              style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}
+            >
+              <Zap size={12} className="animate-pulse" />
+              <span className="text-[10px] font-black tracking-tighter uppercase">Offline Mode</span>
+            </motion.div>
+          )}
+
           {/* Status Indicator */}
           <div className="flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none">
             <motion.div 
-              animate={wsStatus === 'connected' ? { opacity: [0.5, 1, 0.5] } : {}}
+              animate={(wsStatus === 'connected' && isOnline) ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
               className={clsx(
                 "w-1.5 h-1.5 rounded-full",
-                wsStatus === 'connected' ? 'bg-success shadow-[0_0_8px_#00FF94]' : 'bg-danger shadow-[0_0_8px_#FF0055]'
+                (wsStatus === 'connected' && isOnline) ? 'bg-success shadow-[0_0_8px_#00FF94]' : 'bg-danger shadow-[0_0_8px_#FF0055]'
               )} 
             />
             <span className="text-[8px] md:text-[10px] font-mono font-bold uppercase tracking-widest text-secondary">
-              {wsStatus === 'connected' ? 'ONLINE' : 'OFFLINE'}
+              {(wsStatus === 'connected' && isOnline) ? 'CONNECTED' : 'DISCONNECTED'}
             </span>
           </div>
           

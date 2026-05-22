@@ -7,6 +7,7 @@ import { useReminders } from '../hooks/useReminders';
 import { useGoals, useUpdateGoalProgress, useDeleteGoal } from '../hooks/useGoals';
 import RealTimeClock from '../components/common/RealTimeClock';
 import ContextInput from '../components/common/ContextInput';
+import PwaInstallButton from '../components/ui/PwaInstallButton';
 import HabitWidget from '../components/habits/HabitWidget';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
@@ -67,7 +68,7 @@ const TodayPage = () => {
   const { mutate: completeTask } = useCompleteTask();
   const { data: activeSession } = useActiveSession();
   const { data: stats } = useTodayStudyStats();
-  const { data: reminders } = useReminders();
+  const { data: reminders } = useReminders({ include_triggered: true });
   const { data: goals } = useGoals();
   const { mutate: updateGoalProgress } = useUpdateGoalProgress();
   const deleteGoal = useDeleteGoal();
@@ -172,6 +173,11 @@ const TodayPage = () => {
           gradientClass="from-danger to-accent"
         />
       </div>
+
+      {/* PWA Deployment Trigger */}
+      <motion.section variants={item}>
+        <PwaInstallButton />
+      </motion.section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Tasks & Focus */}

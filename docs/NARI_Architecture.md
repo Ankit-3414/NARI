@@ -2,7 +2,7 @@
 
 **Version:** v1.0.0-alpha.7  
 **Status:** In Development (Stage 9 Transition)  
-**Last Updated:** 2026-05-22  
+**Last Updated:** 2026-05-23  
 **Author:** Ankit (Solo Developer)  
 **System Type:** Self-hosted personal productivity and intelligence platform  
 **Primary Server:** Server-01 (Intel i5-2400S, 8GB RAM, 500GB HDD)
@@ -103,7 +103,7 @@ Managed via `backend/.env`. Key variables:
 
 ## 7. Database Schema
 
-All models inherit from `NariBase` (id, created_at, updated_at).
+All models inherit from `BaseModel` (id, created_at, updated_at).
 Key Tables: `tasks`, `reminders`, `notes`, `subjects`, `study_sessions`, `goals`, `habits`, `activity_logs`.
 
 ---
@@ -125,7 +125,7 @@ All responses must adhere to the high-fidelity contract:
 {
   "ok": true,
   "data": { ... },
-  "error": { "code": "STRING", "message": "Human readable" } 
+  "error": null
 }
 ```
 

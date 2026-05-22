@@ -1,6 +1,6 @@
 # 🚀 NARI Deployment Guide (Home Server)
 
-This guide explains how to host NARI permanently on your home server (e.g., Ubuntu/Debian) at `192.168.1.240`.
+This guide explains how to host NARI permanently on your home server (e.g., Ubuntu/Debian) at `192.168.1.100`.
 
 ## 1. Build the Frontend
 On your server, go to the frontend directory and build the production files:
@@ -65,4 +65,4 @@ sudo systemctl start nari-backend
 ```
 
 ## 🏁 Done!
-You can now access NARI at `http://192.168.1.240` from any device on your network without needing to type any port numbers.
+You can now access NARI at `http://192.168.1.100` from any device on your network without needing to type any port numbers.

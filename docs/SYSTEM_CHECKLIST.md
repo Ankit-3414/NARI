@@ -48,7 +48,7 @@
 - [ ] **Study:** Subject selection and session controls work.
 - [ ] **Notes:** Markdown preview and editor work.
 - [ ] **Analytics:** Bar/Pie charts render with data.
-- [ ] **Reminders:** Notification dot and list view work.
+- [x] **Reminders:** Notification dot and list view include triggered signals; scheduler trigger path covered by tests.
 
 ### Global Features
 - [x] **WebSocket Sync:** UI updates instantly (verified backend emitting logic and frontend cache invalidation).

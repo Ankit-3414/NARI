@@ -2,10 +2,10 @@
 
 from typing import List, Dict, Any
 from fastapi import WebSocket
-from datetime import datetime
 import json
 
 from ..core.logging import get_logger
+from ..utils.datetime_utils import utc_now
 
 logger = get_logger(__name__)
 
@@ -38,7 +38,7 @@ class ConnectionManager:
             "entity_type": entity_type,
             "entity_id": entity_id,
             "data": data or {},
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now().isoformat().replace("+00:00", "Z"),
         }
 
         message = json.dumps(payload)

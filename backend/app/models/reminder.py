@@ -44,12 +44,14 @@ class Reminder(BaseModel, table=True):
     )
     task_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "tasks.id", "index": True},
+        foreign_key="tasks.id",
+        sa_column_kwargs={"nullable": True, "index": True},
         description="Associated task",
     )
     subject_id: Optional[int] = Field(
         default=None,
-        sa_column_kwargs={"nullable": True, "foreign_key": "subjects.id", "index": True},
+        foreign_key="subjects.id",
+        sa_column_kwargs={"nullable": True, "index": True},
         description="Associated subject",
     )
     triggered_at: Optional[datetime] = Field(
