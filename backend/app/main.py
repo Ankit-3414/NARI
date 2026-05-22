@@ -1,5 +1,6 @@
 """FastAPI application entrypoint for NARI."""
 
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -43,16 +44,22 @@ def create_app() -> FastAPI:
     )
 
     # SECURE: Implement strict CORS lockdown
+    allowed_origins = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://192.168.1.100",
+        "http://192.168.1.100:3000"
+    ]
+    
+    extra_origins = os.getenv("NARI_ALLOWED_ORIGINS")
+    if extra_origins:
+        allowed_origins.extend([o.strip() for o in extra_origins.split(",")])
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000", 
-            "http://127.0.0.1:3000",
-            "http://192.168.1.100",
-            "http://192.168.1.100:3000",
-            "http://localhost",
-            "http://127.0.0.1"
-        ],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

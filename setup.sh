@@ -91,10 +91,13 @@ echo -e "${GREEN}Frontend build optimized for production.${NC}"
 
 # 4. Nginx Configuration
 echo -e "${BLUE}[5/6] Deploying Nginx Web Server...${NC}"
+# Detect primary IP
+PRIMARY_IP=$(hostname -I | awk '{print $1}')
+
 NGINX_CONF="
 server {
     listen 80;
-    server_name 192.168.1.100;
+    server_name $PRIMARY_IP;
 
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;

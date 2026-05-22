@@ -76,9 +76,12 @@ echo "🧹 Purging Tactical Remnants..."
 cd "$PROJECT_ROOT"
 rm -f check_db.py cleanup_proofs.py create_final_proof.py create_official_test.py create_official_test_v2.py debug_500.py ghost_test*.py
 
+# Final display
+PRIMARY_IP=$(hostname -I | awk '{print $1}')
+
 echo "✅ Neural Link Established."
 echo "------------------------------------------------"
 echo "NARI has been upgraded to the latest version."
 echo "Backend: http://localhost:8000"
-echo "Frontend: http://192.168.1.100"
+echo "Frontend: http://$PRIMARY_IP"
 echo "------------------------------------------------"

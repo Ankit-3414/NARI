@@ -27,7 +27,7 @@ sudo ./setup.sh
 2. Configures the Python virtual environment with `uv`.
 3. Runs database migrations (`alembic`).
 4. Builds the React dashboard for production.
-5. Sets up the Nginx Reverse Proxy for the Static IP (`192.168.1.100`).
+5. Sets up the Nginx Reverse Proxy for the server's current IP.
 6. Creates a `systemd` service to keep NARI running 24/7.
 
 ## 4. Porting Existing Data
@@ -40,7 +40,7 @@ If you have data on another machine:
 After the script finishes, open your browser and navigate to:
 `http://192.168.1.100`
 
-Use the Neural Link key: `neural_link_established` to connect.
+Use the Neural Link key provided at the end of the installation.
 
 ## 6. Maintenance Commands
 - **Check Status:** `sudo systemctl status nari`
