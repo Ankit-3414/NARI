@@ -36,17 +36,28 @@ cd "$FRONTEND_DIR"
 npm install
 npm run build
 
-# 4. Permissions & Pulse
-echo "🛡️ [4/5] Securing Neural Infrastructure..."
+# 4. Robust Permission Protocol & Pulse
+echo "🛡️ [4/5] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
-# Grant execute permissions to all operational scripts
-chmod +x nari.sh
-chmod +x setup.sh
-chmod +x update.sh
-chmod +x nari.bat
-chmod +x nari.ps1
 
-# Ensure web-accessible files are readable
+# Ensure the original user owns everything (prevents permission locked-out)
+# We use sudo only if we aren't already root/owner
+OWNER=$(ls -ld . | awk '{print $3}')
+sudo chown -R "$OWNER":"$OWNER" "$PROJECT_ROOT"
+
+# Set standard Directory (755) and File (644) permissions
+find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
+find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
+
+# Grant Execute bits to all operational scripts and CLI
+chmod +x *.sh
+chmod +x backend/run.py
+chmod +x cli/nari.py
+
+# Ensure the database directory is WRITABLE by the system
+chmod -R 775 "$BACKEND_DIR/data"
+
+# Ensure web-accessible files are readable by Nginx
 chmod -R 755 "$FRONTEND_DIR/dist"
 
 echo "⚡ Pulsing System Services..."
