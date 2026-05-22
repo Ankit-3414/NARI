@@ -38,6 +38,7 @@ npm run build
 
 # 4. Permissions & Pulse
 echo "🛡️ [4/5] Securing Neural Infrastructure..."
+cd "$PROJECT_ROOT"
 # Grant execute permissions to all operational scripts
 chmod +x nari.sh
 chmod +x setup.sh
