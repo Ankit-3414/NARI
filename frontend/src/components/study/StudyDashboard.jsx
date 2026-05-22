@@ -6,6 +6,7 @@ import {
   Activity, Target, ChevronRight, Hash, Shield, Box
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { parseUTC, getNeuralTime } from '../../utils/datetime';
 
 const formatSeconds = (seconds) => {
   const h = Math.floor(seconds / 3600);
@@ -131,9 +132,9 @@ const StudyDashboard = () => {
     let interval;
     if (activeSession && activeSession.status === 'running') {
       const baseSeconds = activeSession.duration_seconds;
-      const startTime = new Date(activeSession.resumed_at || activeSession.created_at);
+      const startTime = parseUTC(activeSession.resumed_at || activeSession.created_at);
       const updateTimer = () => {
-        const now = new Date();
+        const now = getNeuralTime();
         const diff = Math.floor((now - startTime) / 1000);
         setElapsed(baseSeconds + diff);
       };

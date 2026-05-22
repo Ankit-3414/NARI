@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { getNeuralTime } from '../../utils/datetime';
 
 const RealTimeClock = () => {
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState(getNeuralTime());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(new Date());
+      setTime(getNeuralTime());
     }, 1000);
     return () => clearInterval(timer);
   }, []);

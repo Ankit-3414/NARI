@@ -3,6 +3,17 @@
  * Handles the "Store in UTC, Display in Local" protocol.
  */
 import { parseISO } from 'date-fns';
+import { useUiStore } from '../store/uiStore';
+
+/**
+ * Returns a new Date object synchronized with the server's atomic clock.
+ * Uses the timeOffset calculated during the handshake.
+ */
+export const getNeuralTime = () => {
+  const localTime = new Date().getTime();
+  const offset = useUiStore.getState().timeOffset || 0;
+  return new Date(localTime + offset);
+};
 
 /**
  * Parses an ISO string from the backend and ensures it is treated as UTC.

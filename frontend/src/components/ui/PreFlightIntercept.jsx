@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReminders, useReminderActions } from '../../hooks/useReminders';
 import { Zap, Bell, Check, X, ShieldAlert, Rocket } from 'lucide-react';
 import { differenceInMinutes, parseISO } from 'date-fns';
-import { parseUTC } from '../../utils/datetime';
+import { parseUTC, getNeuralTime } from '../../utils/datetime';
 
 const MOTIVATIONAL_MESSAGES = [
   "Incoming Operation. Are we locking in?",
@@ -15,7 +15,10 @@ const MOTIVATIONAL_MESSAGES = [
 ];
 
 const PreFlightIntercept = () => {
-  const { data: reminders } = useReminders({ active_only: true, refetchInterval: 5000 });
+  const { data: reminders } = useReminders(
+    { active_only: true },
+    { refetchInterval: 5000 }
+  );
   const { lockIn, skip } = useReminderActions();
   const [activeIntercept, setActiveIntercept] = useState(null);
 
@@ -23,7 +26,7 @@ const PreFlightIntercept = () => {
   useEffect(() => {
     if (!reminders) return;
 
-    const now = new Date();
+    const now = getNeuralTime();
     const upcoming = reminders.find(r => {
       if (r.is_locked_in || r.status !== 'scheduled') return false;
       const dueAt = parseUTC(r.due_at);

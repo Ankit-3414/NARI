@@ -1,26 +1,28 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import MobileLayout from '../components/layout/MobileLayout';
-import TodayPage from '../pages/TodayPage';
-import TasksPage from '../pages/TasksPage';
-import StudyPage from '../pages/StudyPage';
-import NotesPage from '../pages/NotesPage';
-import SubjectsPage from '../pages/SubjectsPage';
-import RemindersPage from '../pages/RemindersPage';
-import AnalyticsPage from '../pages/AnalyticsPage';
-import ActivityPage from '../pages/ActivityPage';
-import GoalsPage from '../pages/GoalsPage';
-import HabitsPage from '../pages/HabitsPage';
 import LoginPage from '../pages/LoginPage';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useTimeSync } from '../hooks/useTimeSync';
 import { useAuthStore } from '../store/authStore';
 import NeuralEntrance from '../components/ui/NeuralEntrance';
 import TriggeredAlertOverlay from '../components/ui/TriggeredAlertOverlay';
 import PreFlightIntercept from '../components/ui/PreFlightIntercept';
 import { useReminderActions, useReminders } from '../hooks/useReminders';
 import { alarmService } from '../utils/alarmService';
+
+const TodayPage = lazy(() => import('../pages/TodayPage'));
+const TasksPage = lazy(() => import('../pages/TasksPage'));
+const StudyPage = lazy(() => import('../pages/StudyPage'));
+const NotesPage = lazy(() => import('../pages/NotesPage'));
+const SubjectsPage = lazy(() => import('../pages/SubjectsPage'));
+const RemindersPage = lazy(() => import('../pages/RemindersPage'));
+const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage'));
+const ActivityPage = lazy(() => import('../pages/ActivityPage'));
+const GoalsPage = lazy(() => import('../pages/GoalsPage'));
+const HabitsPage = lazy(() => import('../pages/HabitsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +38,9 @@ function AppContent() {
   const { data: reminders } = useReminders({ include_triggered: true });
   const reminderActions = useReminderActions();
 
+  // Perform temporal calibration
+  useTimeSync();
+
   // Initialize WebSocket connection only if we have an API key
   useWebSocket();
 
@@ -50,7 +55,6 @@ function AppContent() {
   }, [triggeredAlerts]);
 
   const handleDismissAlert = (id) => {
-    console.log(`[NeuralAlarm] Attempting to terminate signal: ${id}`);
     reminderActions.dismiss(id);
   };
 
@@ -66,21 +70,23 @@ function AppContent() {
       />
       <PreFlightIntercept />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MobileLayout />}>
-            <Route index element={<TodayPage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="study" element={<StudyPage />} />
-            <Route path="notes" element={<NotesPage />} />
-            <Route path="subjects" element={<SubjectsPage />} />
-            <Route path="reminders" element={<RemindersPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="activity" element={<ActivityPage />} />
-            <Route path="goals" element={<GoalsPage />} />
-            <Route path="habits" element={<HabitsPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<MobileLayout />}>
+              <Route index element={<TodayPage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="study" element={<StudyPage />} />
+              <Route path="notes" element={<NotesPage />} />
+              <Route path="subjects" element={<SubjectsPage />} />
+              <Route path="reminders" element={<RemindersPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="activity" element={<ActivityPage />} />
+              <Route path="goals" element={<GoalsPage />} />
+              <Route path="habits" element={<HabitsPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </>
   );
