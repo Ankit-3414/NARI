@@ -51,10 +51,16 @@ echo -e "${BLUE}[3/6] Initializing Neural Core...${NC}"
 cd "$PROJECT_ROOT/backend"
 if [ ! -f .env ]; then
     sudo -u "$ORIGINAL_USER" cp .env.example .env
-    # Force 0.0.0.0 for network resilience and set the default neural key
+    
+    # Generate dynamic secrets
+    NEW_API_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32)
+    NEW_SECRET_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 48)
+
+    # Force 0.0.0.0 for network resilience and inject the new keys
     sed -i "s/NARI_HOST=.*/NARI_HOST=0.0.0.0/" .env
-    sed -i "s/NARI_API_KEY=.*/NARI_API_KEY=neural_link_established/" .env
-    echo -e "${GREEN}Created backend .env from template.${NC}"
+    sed -i "s/NARI_API_KEY=.*/NARI_API_KEY=$NEW_API_KEY/" .env
+    sed -i "s/NARI_SECRET_KEY=.*/NARI_SECRET_KEY=$NEW_SECRET_KEY/" .env
+    echo -e "${GREEN}Created backend .env with unique Neural secrets.${NC}"
 fi
 mkdir -p data
 # Ensure the home directory and root project directory are accessible to Nginx (read/execute)
@@ -71,9 +77,10 @@ sudo -u "$ORIGINAL_USER" "$HOME_DIR/.local/bin/uv" run alembic upgrade head
 echo -e "${BLUE}[4/6] Building Dashboard...${NC}"
 cd "$PROJECT_ROOT/frontend"
 if [ ! -f .env ]; then
-    # Ensure Vite knows it's talking to the static IP during build if necessary
-    echo "VITE_NARI_API_KEY=neural_link_established" | sudo -u "$ORIGINAL_USER" tee .env > /dev/null
-    echo -e "${GREEN}Created frontend .env.${NC}"
+    # Retrieve the API key from backend .env to sync frontend
+    EXTRACTED_KEY=$(grep "NARI_API_KEY=" "$PROJECT_ROOT/backend/.env" | cut -d'=' -f2)
+    echo "VITE_NARI_API_KEY=$EXTRACTED_KEY" | sudo -u "$ORIGINAL_USER" tee .env > /dev/null
+    echo -e "${GREEN}Created frontend .env (Handshake Synchronized).${NC}"
 fi
 chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" .
 sudo -u "$ORIGINAL_USER" npm install
@@ -156,11 +163,15 @@ cd "$PROJECT_ROOT"
 chmod +x nari.sh
 chmod +x setup.sh
 
+# Final display
+FINAL_API_KEY=$(grep "NARI_API_KEY=" "$PROJECT_ROOT/backend/.env" | cut -d'=' -f2)
+
 echo -e "${BLUE}==============================================${NC}"
 echo -e "${GREEN}🚀 NARI IS ONLINE!${NC}"
 echo -e "Dashboard Access: ${BLUE}http://$(hostname -I | awk '{print $1}')${NC}"
-echo -e "Neural Link Key:  ${GREEN}neural_link_established${NC}"
+echo -e "Neural Link Key:  ${GREEN}$FINAL_API_KEY${NC}"
 echo -e "----------------------------------------------"
+echo -e "IMPORTANT: Save this key. It is required for CLI and Mobile access."
 echo -e "To use the CLI:   ${BLUE}./nari.sh task list${NC}"
 echo -e "To view logs:     ${BLUE}journalctl -u nari -f${NC}"
 echo -e "${BLUE}==============================================${NC}"

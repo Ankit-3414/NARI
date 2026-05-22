@@ -8,8 +8,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-API_URL = os.getenv("NARI_API_URL", "http://192.168.1.100:8000/api/v1")
-API_KEY = os.getenv("NARI_API_KEY", "neural_link_established")
+API_URL = os.getenv("NARI_API_URL", "http://localhost:8000/api/v1")
+API_KEY = os.getenv("NARI_API_KEY")
+
+if not API_KEY:
+    print("Error: NARI_API_KEY environment variable is not set.", file=sys.stderr)
+    sys.exit(1)
 
 
 def request(method: str, path: str, payload: dict | None = None) -> dict:
