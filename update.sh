@@ -19,6 +19,14 @@ cd "$PROJECT_ROOT"
 git fetch --all
 git reset --hard origin/main
 
+# 1.5 System Dependencies (New Neural Protocols)
+echo "🔧 Ensuring System Dependencies (avahi-daemon)..."
+if ! command -v avahi-daemon &> /dev/null; then
+    sudo apt update && sudo apt install -y avahi-daemon
+    sudo systemctl enable avahi-daemon
+    sudo systemctl start avahi-daemon
+fi
+
 # 2. Robust Permission Protocol (PRIORITY)
 echo "🛡️ [2/5] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
