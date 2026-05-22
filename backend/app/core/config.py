@@ -3,7 +3,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
     # Core
     NARI_ENV: str = "development"
@@ -11,6 +15,7 @@ class Settings(BaseSettings):
     NARI_VERSION: str = "1.0.0-alpha.7"
     NARI_SECRET_KEY: str # REQUIRED
     NARI_API_KEY: str    # REQUIRED
+    NARI_ALLOWED_ORIGINS: Optional[str] = None
 
     # Database
     DATABASE_URL: str = "sqlite:///./data/nari.db"

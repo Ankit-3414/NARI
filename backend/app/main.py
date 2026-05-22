@@ -54,9 +54,8 @@ def create_app() -> FastAPI:
         "http://192.168.1.100:3000"
     ]
     
-    extra_origins = os.getenv("NARI_ALLOWED_ORIGINS")
-    if extra_origins:
-        allowed_origins.extend([o.strip() for o in extra_origins.split(",")])
+    if settings.NARI_ALLOWED_ORIGINS:
+        allowed_origins.extend([o.strip() for o in settings.NARI_ALLOWED_ORIGINS.split(",")])
 
     app.add_middleware(
         CORSMiddleware,
