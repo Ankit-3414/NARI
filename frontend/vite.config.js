@@ -16,12 +16,19 @@ export default defineConfig({
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: 'icons/favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable'
+          },
+          {
+            src: 'https://cdn.jsdelivr.net/gh/Ankit-3414/NARI@main/frontend/public/icons/favicon.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any'
           }
         ]
       },
