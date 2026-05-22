@@ -6,7 +6,6 @@
 set -e # Exit on error
 
 # Configuration - Defensive Pathing
-# Use the directory where the script lives as the source of truth
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
@@ -20,8 +19,34 @@ cd "$PROJECT_ROOT"
 git fetch --all
 git reset --hard origin/main
 
-# 2. Update Backend
-echo "🧠 [2/5] Recalibrating Backend & Database..."
+# 2. Robust Permission Protocol (PRIORITY)
+# We calibrate permissions BEFORE building to ensure tools (uv, npm) have access
+echo "🛡️ [2/5] Calibrating Neural Permissions..."
+cd "$PROJECT_ROOT"
+
+# Force Ownership to current user
+sudo chown -R $(whoami):$(whoami) "$PROJECT_ROOT"
+
+# Set standard Directory (755) and File (644) permissions
+sudo find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
+sudo find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
+
+# Grant Execute bits to operational scripts
+sudo chmod +x "$PROJECT_ROOT"/*.sh
+sudo chmod +x "$BACKEND_DIR"/run.py
+sudo chmod +x "$PROJECT_ROOT"/cli/nari.py
+
+# Ensure existing Virtual Environment binaries are executable (if they exist)
+if [ -d "$BACKEND_DIR/.venv/bin" ]; then
+    sudo chmod +x "$BACKEND_DIR"/.venv/bin/*
+fi
+
+# Ensure Database directory is fully writable
+mkdir -p "$BACKEND_DIR/data"
+sudo chmod -R 775 "$BACKEND_DIR/data"
+
+# 3. Update Backend
+echo "🧠 [3/5] Recalibrating Backend & Database..."
 cd "$BACKEND_DIR"
 if command -v uv &> /dev/null; then
     uv sync
@@ -31,40 +56,20 @@ else
     alembic upgrade head
 fi
 
-# 3. Build Frontend
-echo "🎨 [3/5] Recompiling User Interface..."
+# 4. Build Frontend
+echo "🎨 [4/5] Recompiling User Interface..."
 cd "$FRONTEND_DIR"
 npm install
 npm run build
-
-# 4. Robust Permission Protocol & Pulse
-echo "🛡️ [4/5] Calibrating Neural Permissions..."
-cd "$PROJECT_ROOT"
-
-# Force Ownership to current user (the one running the script)
-sudo chown -R $(whoami):$(whoami) "$PROJECT_ROOT"
-
-# Set standard Directory (755) and File (644) permissions across the whole tree
-sudo find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
-sudo find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
-
-# Grant Execute bits to operational scripts
-sudo chmod +x "$PROJECT_ROOT"/*.sh
-sudo chmod +x "$BACKEND_DIR"/run.py
-sudo chmod +x "$PROJECT_ROOT"/cli/nari.py
-
-# Ensure Database directory is fully writable by the system
-sudo chmod -R 775 "$BACKEND_DIR/data"
-
 # Ensure web assets are readable by Nginx
 sudo chmod -R 755 "$FRONTEND_DIR/dist"
 
-echo "⚡ Pulsing System Services..."
+# 5. Pulse & Cleanup
+echo "⚡ [5/5] Pulsing System Services..."
 sudo systemctl restart nari
 sudo systemctl reload nginx
 
-# 5. Cleanup & Verification
-echo "🧹 [5/5] Purging Tactical Remnants..."
+echo "🧹 Purging Tactical Remnants..."
 cd "$PROJECT_ROOT"
 rm -f check_db.py cleanup_proofs.py create_final_proof.py create_official_test.py create_official_test_v2.py debug_500.py ghost_test*.py
 
