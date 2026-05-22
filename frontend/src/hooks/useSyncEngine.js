@@ -42,6 +42,30 @@ export const useSyncEngine = () => {
             } else if (action === 'DELETE') {
               response = await client.delete(`/notes/${data.id}`);
             }
+          } else if (entity === 'habits') {
+            if (action === 'CREATE') {
+              const { tempId, ...payload } = data;
+              response = await client.post('/habits', payload);
+            } else if (action === 'UPDATE') {
+              const { id, ...payload } = data;
+              response = await client.patch(`/habits/${id}`, payload);
+            } else if (action === 'DELETE') {
+              response = await client.delete(`/habits/${data.id}`);
+            } else if (action === 'COMPLETE') {
+              response = await client.post(`/habits/${data.id}/complete`, { note: data.note });
+            }
+          } else if (entity === 'goals') {
+            if (action === 'CREATE') {
+              const { tempId, ...payload } = data;
+              response = await client.post('/goals', payload);
+            } else if (action === 'UPDATE') {
+              const { id, ...payload } = data;
+              response = await client.patch(`/goals/${id}`, payload);
+            } else if (action === 'DELETE') {
+              response = await client.delete(`/goals/${data.id}`);
+            } else if (action === 'PROGRESS') {
+              response = await client.post(`/goals/${data.id}/progress`, null, { params: { increment: data.increment } });
+            }
           }
           // Add other entities here (notes, goals, etc.)
 
