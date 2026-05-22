@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .api.v1.router import api_router
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
             "http://localhost:3000", 
             "http://127.0.0.1:3000",
             "http://192.168.1.100",
+            "http://192.168.1.100:3000",
             "http://localhost",
             "http://127.0.0.1"
         ],
