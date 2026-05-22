@@ -62,6 +62,21 @@ class Reminder(BaseModel, table=True):
         sa_column_kwargs={"nullable": True, "index": True},
         description="Snoozed until timestamp",
     )
+    is_active: bool = Field(
+        default=True,
+        sa_column_kwargs={"nullable": False, "index": True},
+        description="Whether the reminder is active",
+    )
+    is_locked_in: bool = Field(
+        default=False,
+        sa_column_kwargs={"nullable": False, "index": True},
+        description="Whether user confirmed attendance via Pre-Flight Intercept",
+    )
+    locked_in_at: Optional[datetime] = Field(
+        default=None,
+        sa_column_kwargs={"nullable": True},
+        description="Timestamp of user confirmation",
+    )
 
     __table_args__ = (
         Index("idx_reminders_task", "task_id"),

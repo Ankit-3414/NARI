@@ -10,6 +10,7 @@ class ReminderBase(BaseModel):
     repeat_rule: Optional[str] = None
     task_id: Optional[int] = None
     subject_id: Optional[int] = None
+    is_active: bool = True
 
 class ReminderCreate(ReminderBase):
     pass
@@ -20,10 +21,13 @@ class ReminderUpdate(BaseModel):
     due_at: Optional[datetime] = None
     repeat_rule: Optional[str] = None
     status: Optional[ReminderStatus] = None
+    is_active: Optional[bool] = None
 
 class ReminderRead(ReminderBase):
     id: int
     status: ReminderStatus
+    is_locked_in: bool
+    locked_in_at: Optional[datetime] = None
     triggered_at: Optional[datetime] = None
     snoozed_until: Optional[datetime] = None
     created_at: datetime

@@ -15,7 +15,8 @@ import { alarmService } from '../../utils/alarmService';
 import { notificationService } from '../../utils/notificationService';
 import ReminderForm from '../reminders/ReminderForm';
 import Modal from '../common/Modal';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { parseUTC } from '../../utils/datetime';
 import NariLogo from '../common/NariLogo';
 
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -231,7 +232,7 @@ const MobileLayout = () => {
                           <div className="flex items-center gap-2 mt-1">
                             <Clock size={10} className="text-secondary" />
                             <span className="text-[9px] font-mono text-secondary uppercase">
-                              {format(parseISO(reminder.due_at), 'MMM d, HH:mm')}
+                              {format(parseUTC(reminder.due_at), 'MMM d, HH:mm')}
                             </span>
                           </div>
                         </div>

@@ -24,6 +24,7 @@ def list_reminders(
     task_id: Optional[int] = None,
     subject_id: Optional[int] = None,
     include_triggered: bool = False,
+    active_only: bool = False,
     session: Session = Depends(get_session),
 ):
     reminders = reminder_service.list(
@@ -32,6 +33,7 @@ def list_reminders(
         task_id=task_id,
         subject_id=subject_id,
         include_triggered=include_triggered,
+        active_only=active_only,
     )
     return success_response([reminder_service.to_data(r) for r in reminders])
 
@@ -80,4 +82,16 @@ async def snooze_reminder(
 @router.post("/{reminder_id}/dismiss")
 async def dismiss_reminder(reminder_id: int, session: Session = Depends(get_session)):
     reminder = await reminder_service.dismiss(session, reminder_id)
+    return success_response(reminder_service.to_data(reminder))
+
+
+@router.post("/{reminder_id}/lock-in")
+async def lock_in_reminder(reminder_id: int, session: Session = Depends(get_session)):
+    reminder = await reminder_service.lock_in(session, reminder_id)
+    return success_response(reminder_service.to_data(reminder))
+
+
+@router.post("/{reminder_id}/skip")
+async def skip_reminder(reminder_id: int, session: Session = Depends(get_session)):
+    reminder = await reminder_service.skip(session, reminder_id)
     return success_response(reminder_service.to_data(reminder))

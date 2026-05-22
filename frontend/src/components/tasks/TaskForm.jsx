@@ -3,6 +3,7 @@ import { useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import { X, Plus, Calendar, Flag, Tag as TagIcon, Clock, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
+import RecurrenceBuilder from '../common/RecurrenceBuilder';
 
 const TaskForm = ({ onClose, initialData = null }) => {
   const isEditing = !!initialData;
@@ -15,6 +16,7 @@ const TaskForm = ({ onClose, initialData = null }) => {
   const [dueDate, setDueDate] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
   const [tags, setTags] = useState('');
+  const [recurrenceRule, setRecurrenceRule] = useState(initialData?.recurrence_rule || null);
 
   useEffect(() => {
     if (initialData) {
@@ -24,6 +26,7 @@ const TaskForm = ({ onClose, initialData = null }) => {
       setDueDate(initialData.due_date ? initialData.due_date.split('T')[0] : '');
       setEstimatedMinutes(initialData.estimated_minutes || '');
       setTags(initialData.tags ? initialData.tags.join(', ') : '');
+      setRecurrenceRule(initialData.recurrence_rule || null);
     }
   }, [initialData]);
 
@@ -38,6 +41,7 @@ const TaskForm = ({ onClose, initialData = null }) => {
       due_date: dueDate || null,
       estimated_minutes: estimatedMinutes ? parseInt(estimatedMinutes) : null,
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      recurrence_rule: recurrenceRule,
     };
 
     if (isEditing) {
@@ -55,11 +59,11 @@ const TaskForm = ({ onClose, initialData = null }) => {
     <motion.div 
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="bg-background border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full relative"
+      className="bg-background border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full relative max-h-[90vh] flex flex-col"
     >
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shrink-0" />
       
-      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-surface/30 backdrop-blur-xl">
+      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-surface/30 backdrop-blur-xl shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-xl text-primary border border-primary/20">
             {isEditing ? <Save size={20} /> : <Plus size={20} />}
@@ -78,7 +82,7 @@ const TaskForm = ({ onClose, initialData = null }) => {
         </motion.button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Objective Title</label>
           <input
@@ -132,6 +136,11 @@ const TaskForm = ({ onClose, initialData = null }) => {
             />
           </div>
         </div>
+
+        <RecurrenceBuilder 
+          value={recurrenceRule} 
+          onChange={setRecurrenceRule} 
+        />
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">

@@ -36,14 +36,28 @@ cd "$FRONTEND_DIR"
 npm install
 npm run build
 
-# 4. Restart System Services
-echo "⚡ [4/5] Pulsing System Services..."
+# 4. Permissions & Pulse
+echo "🛡️ [4/5] Securing Neural Infrastructure..."
+# Grant execute permissions to all operational scripts
+chmod +x nari.sh
+chmod +x setup.sh
+chmod +x update.sh
+chmod +x nari.bat
+chmod +x nari.ps1
+
+# Ensure web-accessible files are readable
+chmod -R 755 "$FRONTEND_DIR/dist"
+
+echo "⚡ Pulsing System Services..."
 # The service is named 'nari' as per setup.sh
 sudo systemctl restart nari
 sudo systemctl reload nginx
 
-# 5. Verification
-echo "✅ [5/5] Neural Link Established."
+# 5. Cleanup & Verification
+echo "🧹 [5/5] Purging Tactical Remnants..."
+rm -f check_db.py cleanup_proofs.py create_final_proof.py create_official_test.py create_official_test_v2.py debug_500.py ghost_test*.py
+
+echo "✅ Neural Link Established."
 echo "------------------------------------------------"
 echo "NARI has been upgraded to the latest version."
 echo "Backend: http://localhost:8000"

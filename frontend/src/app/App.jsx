@@ -17,6 +17,10 @@ import LoginPage from '../pages/LoginPage';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuthStore } from '../store/authStore';
 import NeuralEntrance from '../components/ui/NeuralEntrance';
+import TriggeredAlertOverlay from '../components/ui/TriggeredAlertOverlay';
+import PreFlightIntercept from '../components/ui/PreFlightIntercept';
+import { useReminderActions, useReminders } from '../hooks/useReminders';
+import { alarmService } from '../utils/alarmService';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,32 +33,56 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const apiKey = useAuthStore((state) => state.apiKey);
+  const { data: reminders } = useReminders({ include_triggered: true });
+  const reminderActions = useReminderActions();
 
   // Initialize WebSocket connection only if we have an API key
   useWebSocket();
+
+  const triggeredAlerts = reminders?.filter(r => r.status === 'triggered') || [];
+
+  useEffect(() => {
+    if (triggeredAlerts.length > 0) {
+      alarmService.playAlarm();
+    } else {
+      alarmService.stopAlarm();
+    }
+  }, [triggeredAlerts]);
+
+  const handleDismissAlert = (id) => {
+    console.log(`[NeuralAlarm] Attempting to terminate signal: ${id}`);
+    reminderActions.dismiss(id);
+  };
 
   if (!apiKey) {
     return <LoginPage />;
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MobileLayout />}>
-          <Route index element={<TodayPage />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="study" element={<StudyPage />} />
-          <Route path="notes" element={<NotesPage />} />
-          <Route path="subjects" element={<SubjectsPage />} />
-          <Route path="reminders" element={<RemindersPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="activity" element={<ActivityPage />} />
-          <Route path="goals" element={<GoalsPage />} />
-          <Route path="habits" element={<HabitsPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <TriggeredAlertOverlay 
+        alerts={triggeredAlerts} 
+        onDismiss={handleDismissAlert} 
+      />
+      <PreFlightIntercept />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MobileLayout />}>
+            <Route index element={<TodayPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="study" element={<StudyPage />} />
+            <Route path="notes" element={<NotesPage />} />
+            <Route path="subjects" element={<SubjectsPage />} />
+            <Route path="reminders" element={<RemindersPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="activity" element={<ActivityPage />} />
+            <Route path="goals" element={<GoalsPage />} />
+            <Route path="habits" element={<HabitsPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

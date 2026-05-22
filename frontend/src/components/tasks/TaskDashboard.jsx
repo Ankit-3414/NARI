@@ -5,7 +5,8 @@ import {
   CheckCircle2, Circle, Clock, Tag, Plus, CheckSquare, 
   Sparkles, Trash2, Edit3, ChevronRight, Search, Activity, Flag
 } from 'lucide-react';
-import { format, isToday, isPast, parseISO } from 'date-fns';
+import { format, isToday, isPast } from 'date-fns';
+import { parseUTC } from '../../utils/datetime';
 import Modal from '../common/Modal';
 import TaskForm from './TaskForm';
 import { clsx } from 'clsx';
@@ -67,14 +68,14 @@ const TaskItem = ({ task, onEdit, onDelete }) => {
           {task.due_date && (
             <span className={clsx(
               "text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5 px-2 py-0.5 rounded border",
-              isPast(parseISO(task.due_date)) && !isToday(parseISO(task.due_date)) && !isDone 
+              isPast(parseUTC(task.due_date)) && !isToday(parseUTC(task.due_date)) && !isDone 
                 ? 'text-danger bg-danger/10 border-danger/20 shadow-[0_0_10px_rgba(255,0,85,0.2)]' 
-                : isToday(parseISO(task.due_date)) && !isDone
+                : isToday(parseUTC(task.due_date)) && !isDone
                 ? 'text-primary bg-primary/10 border-primary/20'
                 : 'text-secondary bg-background/50 border-white/5'
             )}>
               <Clock size={10} />
-              {isToday(parseISO(task.due_date)) ? 'Today' : format(parseISO(task.due_date), 'MMM d')}
+              {isToday(parseUTC(task.due_date)) ? 'Today' : format(parseUTC(task.due_date), 'MMM d')}
             </span>
           )}
           {task.priority && task.priority !== 'normal' && (
@@ -160,8 +161,8 @@ const TaskDashboard = () => {
   ) || [];
 
   const pendingTasks = filteredTasks.filter(t => t.status !== 'done' && t.status !== 'cancelled');
-  const todayTasks = pendingTasks.filter(t => t.due_date && isToday(parseISO(t.due_date)));
-  const otherTasks = pendingTasks.filter(t => !t.due_date || !isToday(parseISO(t.due_date)));
+  const todayTasks = pendingTasks.filter(t => t.due_date && isToday(parseUTC(t.due_date)));
+  const otherTasks = pendingTasks.filter(t => !t.due_date || !isToday(parseUTC(t.due_date)));
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto relative min-h-[calc(100vh-8rem)] pb-32">

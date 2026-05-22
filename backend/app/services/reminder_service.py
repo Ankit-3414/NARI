@@ -8,13 +8,14 @@ from typing import Any, Optional
 
 from sqlmodel import Session, select, and_, or_
 
-from ..core.constants import EntityType, ReminderStatus
+from ..core.constants import ACTIVITY_ACTIONS, EntityType, ReminderStatus
 from ..core.errors import NariError
 from ..core.events import get_event_bus
 from ..models.reminder import Reminder
 from ..schemas.reminder import ReminderCreate, ReminderUpdate
 from ..utils.datetime_utils import utc_now
 from ..websocket.events import EventNames
+from .activity_service import activity_service
 
 
 class ReminderService:
@@ -22,7 +23,25 @@ class ReminderService:
 
     async def create(self, session: Session, payload: ReminderCreate) -> Reminder:
         """Create a new reminder and schedule it."""
-        reminder = Reminder(**payload.model_dump())
+        reminder_data = payload.model_dump()
+        is_task_synced = reminder_data.pop('is_task_synced', False)
+        
+        reminder = Reminder(**reminder_data)
+        
+        # If sync requested, create a task first
+        if is_task_synced:
+            from .task_service import task_service
+            from ..schemas.task import TaskCreate
+            
+            task_payload = TaskCreate(
+                title=reminder.title,
+                description=reminder.message or f"Linked to reminder: {reminder.title}",
+                priority="medium",
+                status="todo",
+                due_at=reminder.due_at
+            )
+            task = await task_service.create(session, task_payload)
+            reminder.task_id = task.id
         
         session.add(reminder)
         session.commit()
@@ -46,8 +65,10 @@ class ReminderService:
         task_id: Optional[int] = None,
         subject_id: Optional[int] = None,
         include_triggered: bool = False,
+        active_only: bool = False,
     ) -> list[Reminder]:
-        statement = select(Reminder)
+        statement = select(Reminder).where(Reminder.status != ReminderStatus.DISMISSED)
+        
         if status:
             statement = statement.where(Reminder.status == status)
         elif not include_triggered:
@@ -58,6 +79,9 @@ class ReminderService:
                 )
             )
             
+        if active_only:
+            statement = statement.where(Reminder.is_active == True)
+
         if task_id:
             statement = statement.where(Reminder.task_id == task_id)
         if subject_id:
@@ -105,6 +129,34 @@ class ReminderService:
         await self._emit_event(EventNames.REMINDER_TRIGGERED, reminder)
         return reminder
 
+    async def lock_in(self, session: Session, reminder_id: int) -> Reminder:
+        """Lock in a reminder (confirmed attendance)."""
+        reminder = self.get(session, reminder_id)
+        reminder.is_locked_in = True
+        reminder.locked_in_at = utc_now()
+        reminder.updated_at = utc_now()
+        
+        session.add(reminder)
+        session.commit()
+        session.refresh(reminder)
+        
+        await self._emit_event(EventNames.REMINDER_UPDATED, reminder)
+        return reminder
+
+    async def skip(self, session: Session, reminder_id: int) -> Reminder:
+        """Skip today's reminder (Intentional Skip)."""
+        reminder = self.get(session, reminder_id)
+        
+        # If there's a linked task, cancel it for today
+        if reminder.task_id:
+            from .task_service import task_service
+            from ..schemas.task import TaskUpdate
+            from ..core.constants import TaskStatus
+            await task_service.update(session, reminder.task_id, TaskUpdate(status=TaskStatus.CANCELLED))
+
+        # Mark as skipped and reschedule if recurring
+        return await self.dismiss(session, reminder_id, resolution=ReminderStatus.SKIPPED)
+
     async def snooze(self, session: Session, reminder_id: int, minutes: int = 15) -> Reminder:
         """Snooze a reminder."""
         reminder = self.get(session, reminder_id)
@@ -120,14 +172,26 @@ class ReminderService:
 
         return reminder
 
-    async def dismiss(self, session: Session, reminder_id: int) -> Reminder:
+    async def dismiss(self, session: Session, reminder_id: int, resolution: ReminderStatus = ReminderStatus.DISMISSED) -> Reminder:
         """Dismiss a reminder and reschedule if recurring."""
         from dateutil.rrule import rrulestr
         
         reminder = self.get(session, reminder_id)
-        reminder.status = ReminderStatus.DISMISSED
+        reminder.status = resolution
         reminder.updated_at = utc_now()
         
+        # If it was attended (DISMISSED) and had a linked task, mark task as done if not already
+        if resolution == ReminderStatus.DISMISSED and reminder.task_id:
+            from .task_service import task_service
+            from ..schemas.task import TaskUpdate
+            from ..core.constants import TaskStatus
+            try:
+                task = task_service.get(session, reminder.task_id)
+                if task.status != TaskStatus.DONE:
+                    await task_service.update(session, reminder.task_id, TaskUpdate(status=TaskStatus.DONE))
+            except:
+                pass
+
         # Handle Recurrence
         if reminder.repeat_rule:
             try:
@@ -141,6 +205,9 @@ class ReminderService:
                     reminder.status = ReminderStatus.SCHEDULED
                     reminder.triggered_at = None
                     reminder.snoozed_until = None
+                    # RESET LOCK-IN for next session
+                    reminder.is_locked_in = False
+                    reminder.locked_in_at = None
                     reminder.updated_at = utc_now()
             except Exception as e:
                 # Log error but don't fail dismissal
@@ -150,23 +217,41 @@ class ReminderService:
         session.commit()
         session.refresh(reminder)
         
-        await self._emit_event(EventNames.REMINDER_DISMISSED, reminder)
+        # Determine event name based on resolution
+        event_map = {
+            ReminderStatus.DISMISSED: EventNames.REMINDER_DISMISSED,
+            ReminderStatus.SKIPPED: EventNames.REMINDER_UPDATED,
+            ReminderStatus.MISSED: EventNames.REMINDER_UPDATED,
+        }
+        event = event_map.get(resolution, EventNames.REMINDER_UPDATED)
+        
+        await self._emit_event(event, reminder)
         return reminder
 
     def to_data(self, reminder: Reminder) -> dict[str, Any]:
+        def format_dt(dt):
+            if dt is None:
+                return None
+            if isinstance(dt, str):
+                return dt
+            return dt.isoformat()
+
         return {
             "id": reminder.id,
             "title": reminder.title,
             "message": reminder.message,
-            "due_at": reminder.due_at.isoformat(),
+            "due_at": format_dt(reminder.due_at),
             "repeat_rule": reminder.repeat_rule,
-            "status": reminder.status.value,
+            "status": (reminder.status.value if hasattr(reminder.status, 'value') else str(reminder.status)).lower(),
+            "is_active": reminder.is_active,
+            "is_locked_in": reminder.is_locked_in,
+            "locked_in_at": format_dt(reminder.locked_in_at),
             "task_id": reminder.task_id,
             "subject_id": reminder.subject_id,
-            "triggered_at": reminder.triggered_at.isoformat() if reminder.triggered_at else None,
-            "snoozed_until": reminder.snoozed_until.isoformat() if reminder.snoozed_until else None,
-            "created_at": reminder.created_at.isoformat(),
-            "updated_at": reminder.updated_at.isoformat(),
+            "triggered_at": format_dt(reminder.triggered_at),
+            "snoozed_until": format_dt(reminder.snoozed_until),
+            "created_at": format_dt(reminder.created_at),
+            "updated_at": format_dt(reminder.updated_at),
         }
 
     async def _emit_event(self, event: EventNames, reminder: Reminder) -> None:

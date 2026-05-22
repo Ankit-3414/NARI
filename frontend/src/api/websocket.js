@@ -15,6 +15,9 @@ class WebSocketClient {
   }
 
   connect(url) {
+    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
     this.url = url;
     const apiKey = localStorage.getItem('NARI_API_KEY') || 
                    import.meta.env.VITE_NARI_API_KEY || 

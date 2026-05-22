@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { format, subDays, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
+import { format, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
+import { parseUTC } from '../../utils/datetime';
 
 const NeuralHeatmap = ({ data }) => {
   // Last 100 days for mobile-friendly view
@@ -14,7 +15,7 @@ const NeuralHeatmap = ({ data }) => {
   });
 
   const getIntensity = (date) => {
-    const entry = data?.find(d => isSameDay(parseISO(d.date), date));
+    const entry = data?.find(d => isSameDay(parseUTC(d.date), date));
     return entry ? entry.value : 0;
   };
 

@@ -5,7 +5,8 @@ import {
   Bell, Plus, Clock, X, Trash2, Edit3, Save, 
   CheckCircle2, AlertTriangle, Zap, Search, Activity
 } from 'lucide-react';
-import { format, parseISO, isPast } from 'date-fns';
+import { format, isPast } from 'date-fns';
+import { parseUTC } from '../utils/datetime';
 import Modal from '../components/common/Modal';
 import ReminderForm from '../components/reminders/ReminderForm';
 import { clsx } from 'clsx';
@@ -20,9 +21,9 @@ const item = {
   show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
-const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
+const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggleActive }) => {
   const isTriggered = reminder.status === 'triggered';
-  const isExpired = isPast(parseISO(reminder.due_at)) && reminder.status === 'scheduled';
+  const isActive = reminder.is_active;
 
   return (
     <motion.div 
@@ -30,21 +31,24 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
       layout
       className={clsx(
         "group relative glass-card p-5 rounded-[2rem] border-white/5 transition-all duration-300 flex flex-col gap-4",
-        isTriggered ? "bg-danger/5 border-danger/20 shadow-[0_0_30px_rgba(255,0,85,0.05)]" : "bg-surface/50"
+        isTriggered ? "bg-danger/5 border-danger/20 shadow-[0_0_30px_rgba(255,0,85,0.05)]" : "bg-surface/50",
+        !isActive && "opacity-60 grayscale-[0.5]"
       )}
     >
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
           <div className={clsx(
-            "p-2 rounded-xl border",
-            isTriggered ? "bg-danger/20 text-danger border-danger/30 animate-pulse" : "bg-white/5 text-secondary border-white/5"
+            "p-2 rounded-xl border transition-all",
+            isTriggered ? "bg-danger/20 text-danger border-danger/30 animate-pulse" : 
+            isActive ? "bg-white/5 text-secondary border-white/5" : "bg-black/20 text-slate-600 border-white/5"
           )}>
             <Bell size={18} />
           </div>
           <div className="min-w-0">
             <h3 className={clsx(
               "font-black uppercase tracking-tight truncate transition-colors",
-              isTriggered ? "text-danger" : "text-white group-hover:text-primary"
+              isTriggered ? "text-danger" : 
+              isActive ? "text-white group-hover:text-primary" : "text-slate-500"
             )}>
               {reminder.title}
             </h3>
@@ -53,22 +57,38 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
                 "text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-lg border",
                 isTriggered ? "bg-danger/10 border-danger/10 text-danger" : "bg-background/50 border-white/5 text-secondary"
               )}>
-                {reminder.status}
+                {isActive ? reminder.status : 'inactive'}
               </span>
               <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
-                <Clock size={10} /> {format(parseISO(reminder.due_at), 'MMM d, HH:mm')}
+                <Clock size={10} /> {format(parseUTC(reminder.due_at), 'MMM d, HH:mm')}
               </span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(reminder)} className="p-2 text-secondary hover:text-white transition-colors">
-            <Edit3 size={14} />
+        <div className="flex items-center gap-2">
+          {/* Active/Deactivate Toggle */}
+          <button 
+            onClick={() => onToggleActive(reminder.id, !isActive)}
+            className={clsx(
+              "w-8 h-4 rounded-full relative transition-all duration-300",
+              isActive ? "bg-primary/40" : "bg-white/10"
+            )}
+          >
+            <div className={clsx(
+              "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300",
+              isActive ? "left-4.5 bg-primary shadow-[0_0_8px_#00F2FF]" : "left-0.5 bg-slate-600"
+            )} />
           </button>
-          <button onClick={() => onRemove(reminder.id)} className="p-2 text-secondary hover:text-danger transition-colors">
-            <Trash2 size={14} />
-          </button>
+
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => onEdit(reminder)} className="p-2 text-secondary hover:text-white transition-colors">
+              <Edit3 size={14} />
+            </button>
+            <button onClick={() => onRemove(reminder.id)} className="p-2 text-secondary hover:text-danger transition-colors">
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -85,7 +105,7 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze }) => {
             disabled 
             className="flex-1 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-700 font-bold uppercase tracking-widest text-[9px] cursor-default"
           >
-            Signal Armed
+            {isActive ? 'Signal Armed' : 'Signal Offline'}
           </button>
         )}
         <button 
@@ -180,6 +200,7 @@ const RemindersPage = () => {
                   onRemove={handleRemove}
                   onDismiss={actions.dismiss}
                   onSnooze={(id) => actions.snooze({ id, minutes: 15 })}
+                  onToggleActive={(id, active) => actions.update({ id, is_active: active })}
                 />
               ))
             )}
@@ -209,6 +230,7 @@ const RemindersPage = () => {
                     onRemove={handleRemove}
                     onDismiss={actions.dismiss}
                     onSnooze={(id) => actions.snooze({ id, minutes: 15 })}
+                    onToggleActive={(id, active) => actions.update({ id, is_active: active })}
                   />
                 ))
               )}

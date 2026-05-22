@@ -22,6 +22,8 @@ class ReminderStatus(str, Enum):
     TRIGGERED = "triggered"
     SNOOZED = "snoozed"
     DISMISSED = "dismissed"
+    SKIPPED = "skipped"
+    MISSED = "missed"
 
 
 class StudySessionStatus(str, Enum):

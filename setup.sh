@@ -30,7 +30,13 @@ echo -e "${BLUE}==============================================${NC}"
 echo -e "${BLUE}[1/6] Installing System Core (Non-Interactive)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential
+apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential systemd-timesyncd
+
+# Enable and start time synchronization
+echo -e "${BLUE}Configuring System Time Synchronization...${NC}"
+systemctl enable systemd-timesyncd
+systemctl start systemd-timesyncd
+timedatectl set-ntp true
 
 # Install uv for the original user
 echo -e "${BLUE}[2/6] Configuring Python Environment (uv)...${NC}"
@@ -126,7 +132,8 @@ nginx -t && systemctl restart nginx
 echo -e "${BLUE}[6/6] Establishing 24/7 Background Pulse...${NC}"
 SERVICE_CONF="[Unit]
 Description=NARI Backend Engine
-After=network.target
+Wants=time-sync.target
+After=network.target time-sync.target
 
 [Service]
 User=${ORIGINAL_USER}

@@ -73,9 +73,14 @@ class ActivityService:
         entity_id = payload.get("entity_id")
         data = payload.get("data", {})
 
-        # Derive action and message from event name and data if not provided
-        action = data.get("action", event_name.split("_")[-1])
-        message = data.get("message", f"{entity_type} {action}")
+        # Derive action and message from event name and data
+        action = data.get("action") or event_name.split("_")[-1]
+        
+        # Don't use the entity's internal 'message' field as the audit log message
+        # Audit logs should use a standard format unless a specific 'audit_message' is provided
+        message = data.get("audit_message") or f"{entity_type.upper()} {action.upper()}"
+        if "title" in data and data["title"]:
+            message = f"{message}: {data['title']}"
 
         # ActivityLog writes must not block the main operation
         with Session(db_session.engine) as session:

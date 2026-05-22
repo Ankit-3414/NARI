@@ -7,7 +7,8 @@ import {
   Plus, Archive, BarChart3, Calendar, Tag, BookOpen, 
   Trash2, Edit3, ChevronRight, Activity, Search
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { parseUTC } from '../utils/datetime';
 import { clsx } from 'clsx';
 
 const container = {
@@ -80,7 +81,7 @@ const SubjectCard = ({ subject, onEdit, onDelete }) => (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-white/5">
           <Calendar size={12} className="text-primary" />
           <span className="text-[10px] font-black text-secondary uppercase tracking-widest">
-            {format(parseISO(subject.exam_date), 'MMM d, yyyy').toUpperCase()}
+            {format(parseUTC(subject.exam_date), 'MMM d, yyyy').toUpperCase()}
           </span>
         </div>
       )}

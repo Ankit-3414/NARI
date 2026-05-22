@@ -22,6 +22,7 @@ def add_task(args: argparse.Namespace) -> None:
         "due_date": normalize_due_date(args.due_date),
         "tags": parse_tags(args.tags),
         "estimated_minutes": args.estimated_minutes,
+        "recurrence_rule": args.recurrence,
     }
     data = ensure_ok(request("POST", "/tasks", clean(payload)))
     print(f"Added #{data['id']}: {data['title']}")
@@ -329,10 +330,34 @@ def habit_list(args: argparse.Namespace) -> None:
 def habit_done(args: argparse.Namespace) -> None:
     payload = {"note": args.note}
     data = ensure_ok(request("POST", f"/habits/{args.id}/complete", clean(payload)))
-    print(f"Logged habit #{data['id']}: {data['name']}. Current streak: {data['current_streak']}")
+    print(f"Logged habit #{data['id']}: {data['name']}. Current streak: {data['streak_count']}")
 
 
 # Reminder commands
+def add_reminder(args: argparse.Namespace) -> None:
+    # If sync is requested, we do the task creation first via the support request logic
+    task_id = args.task_id
+    if args.sync and not task_id:
+        task_payload = {
+            "title": args.title,
+            "due_date": normalize_due_date(args.due),
+            "recurrence_rule": args.repeat,
+        }
+        task_data = ensure_ok(request("POST", "/tasks", clean(task_payload)))
+        task_id = task_data["id"]
+        print(f"Created linked task #{task_id}")
+
+    payload = {
+        "title": args.title,
+        "due_at": normalize_due_date(args.due),
+        "repeat_rule": args.repeat,
+        "task_id": task_id,
+        "subject_id": args.subject_id,
+    }
+    data = ensure_ok(request("POST", "/reminders", clean(payload)))
+    print(f"Added reminder #{data['id']}: {data['title']}")
+
+
 def reminder_list(args: argparse.Namespace) -> None:
     suffix = query_suffix(args, "status")
     reminders = ensure_ok(request("GET", f"/reminders{suffix}"))
@@ -373,6 +398,7 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--due", "--due-date", dest="due_date")
     add.add_argument("--tags")
     add.add_argument("--estimated-minutes", type=int)
+    add.add_argument("--recurrence", help="RRULE string (e.g. FREQ=WEEKLY;BYDAY=MO,WE,FR)")
     add.set_defaults(func=add_task)
 
     list_cmd = sub.add_parser("list")
@@ -556,6 +582,15 @@ def build_parser() -> argparse.ArgumentParser:
     h_done.set_defaults(func=habit_done)
 
     # Reminder parsers
+    r_add = sub.add_parser("rem-add")
+    r_add.add_argument("title")
+    r_add.add_argument("--due", required=True, help="ISO datetime")
+    r_add.add_argument("--repeat", help="RRULE string")
+    r_add.add_argument("--task-id", type=int)
+    r_add.add_argument("--subject-id", type=int)
+    r_add.add_argument("--sync", action="store_true", help="Automatically create a linked task")
+    r_add.set_defaults(func=add_reminder)
+
     r_list = sub.add_parser("rem-list")
     r_list.add_argument("--status")
     r_list.set_defaults(func=reminder_list)

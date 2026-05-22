@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTodayTasks, useCompleteTask } from '../hooks/useTasks';
+import { useTasks, useCompleteTask } from '../hooks/useTasks';
 import { useActiveSession, useTodayStudyStats, useStudyActions } from '../hooks/useStudy';
 import { useDashboardSummary } from '../hooks/useAnalytics';
 import { useReminders } from '../hooks/useReminders';
@@ -62,7 +62,7 @@ const TodayPage = () => {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   
-  const { data: tasks, isLoading: tasksLoading } = useTodayTasks();
+  const { data: tasks, isLoading: tasksLoading } = useTasks();
   const { data: summary } = useDashboardSummary();
   const { mutate: completeTask } = useCompleteTask();
   const { data: activeSession } = useActiveSession();

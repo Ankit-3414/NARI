@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReminderActions } from '../../hooks/useReminders';
-import { useTodayTasks } from '../../hooks/useTasks';
+import { useTasks } from '../../hooks/useTasks';
 import { useSubjects } from '../../hooks/useStudy';
 import { Bell, Clock, X, Save, Plus, Calendar as CalendarIcon, Zap, Layers, CheckSquare } from 'lucide-react';
-import { format, addMinutes, addHours, addDays, parseISO, isValid } from 'date-fns';
+import { format, addMinutes, addHours, addDays, isValid, parseISO } from 'date-fns';
+import { parseUTC } from '../../utils/datetime';
 import { clsx } from 'clsx';
+import client from '../../api/client';
+import RecurrenceBuilder from '../common/RecurrenceBuilder';
 
 const ReminderForm = ({ onClose, initialData = null }) => {
   const isEditing = !!initialData;
   const actions = useReminderActions();
-  const { data: tasks } = useTodayTasks();
+  const { data: tasks } = useTasks();
   const { data: subjects } = useSubjects();
   
   // State for raw datetime string
   const [remindAt, setRemindAt] = useState(
     initialData?.due_at 
-      ? format(parseISO(initialData.due_at), "yyyy-MM-dd'T'HH:mm") 
+      ? format(parseUTC(initialData.due_at), "yyyy-MM-dd'T'HH:mm") 
       : format(addMinutes(new Date(), 30), "yyyy-MM-dd'T'HH:mm")
   );
   
@@ -24,6 +27,8 @@ const ReminderForm = ({ onClose, initialData = null }) => {
   const [repeatRule, setRepeatRule] = useState(initialData?.repeat_rule || '');
   const [taskId, setTaskId] = useState(initialData?.task_id || '');
   const [subjectId, setSubjectId] = useState(initialData?.subject_id || '');
+  const [createLinkedTask, setCreateLinkedTask] = useState(false);
+  const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
 
   const applyPreset = (minutes) => {
     const newDate = addMinutes(new Date(), minutes);
@@ -36,16 +41,42 @@ const ReminderForm = ({ onClose, initialData = null }) => {
     setRemindAt(format(tomorrow, "yyyy-MM-dd'T'HH:mm"));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim() || !remindAt) return;
 
+    let finalTaskId = taskId ? parseInt(taskId) : null;
+    
+    // Convert local input to UTC for backend
+    const localDate = parseISO(remindAt);
+    const utcDueAt = localDate.toISOString();
+
+    // If 'Sync as Task' is enabled and we are not editing, create the task first
+    if (createLinkedTask && !isEditing) {
+      try {
+        const taskPayload = {
+          title: text.trim(),
+          priority: 'normal',
+          due_date: remindAt.split('T')[0],
+          recurrence_rule: repeatRule || null,
+          subject_id: subjectId ? parseInt(subjectId) : null,
+        };
+        const taskResponse = await client.post('/tasks', taskPayload);
+        if (taskResponse.data && taskResponse.data.id) {
+          finalTaskId = taskResponse.data.id;
+        }
+      } catch (err) {
+        console.error("Failed to create linked task:", err);
+      }
+    }
+
     const payload = {
       title: text.trim(),
-      due_at: remindAt,
+      due_at: utcDueAt,
       repeat_rule: repeatRule || null,
-      task_id: taskId ? parseInt(taskId) : null,
+      task_id: finalTaskId,
       subject_id: subjectId ? parseInt(subjectId) : null,
+      is_active: isActive,
     };
 
     if (isEditing) {
@@ -59,6 +90,7 @@ const ReminderForm = ({ onClose, initialData = null }) => {
   // Calculate relative time for preview
   const getTimePreview = () => {
     try {
+      // Use parseISO here because remindAt is a naive local string from the input
       const target = parseISO(remindAt);
       if (!isValid(target)) return null;
       
@@ -82,12 +114,12 @@ const ReminderForm = ({ onClose, initialData = null }) => {
     <motion.div 
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="bg-background border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full relative"
+      className="bg-background border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl max-w-lg w-full relative max-h-[90vh] flex flex-col"
     >
       {/* Visual Accent */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-danger to-transparent opacity-50" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-danger to-transparent opacity-50 shrink-0" />
       
-      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-surface/30 backdrop-blur-xl">
+      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-surface/30 backdrop-blur-xl shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-danger/10 rounded-xl text-danger border border-danger/20 shadow-[0_0_15px_rgba(255,0,85,0.2)]">
             <Bell size={20} />
@@ -104,7 +136,7 @@ const ReminderForm = ({ onClose, initialData = null }) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+      <form onSubmit={handleSubmit} className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
         {/* Signal Label */}
         <div className="space-y-3">
           <label className="text-[10px] font-black text-danger uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
@@ -172,20 +204,70 @@ const ReminderForm = ({ onClose, initialData = null }) => {
         </div>
 
         {/* Recurrence Calibration */}
-        <div className="space-y-3">
-          <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
-            <Zap size={10} className="text-warning" /> Recurrence Protocol
-          </label>
-          <select
-            className="w-full bg-surface/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-warning/50 transition-all font-mono font-bold appearance-none cursor-pointer"
-            value={repeatRule}
-            onChange={(e) => setRepeatRule(e.target.value)}
+        <RecurrenceBuilder 
+          value={repeatRule} 
+          onChange={setRepeatRule} 
+        />
+
+        {/* Active Toggle */}
+        <div className="bg-surface/30 border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={clsx(
+              "p-2 rounded-lg transition-all",
+              isActive ? "bg-primary/20 text-primary" : "bg-white/5 text-secondary"
+            )}>
+              <Zap size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white">Signal Status</p>
+              <p className="text-[8px] text-slate-500 font-bold">{isActive ? 'Online & Monitoring' : 'Offline & Standby'}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsActive(!isActive)}
+            className={clsx(
+              "w-12 h-6 rounded-full relative transition-all duration-300",
+              isActive ? "bg-primary" : "bg-white/10"
+            )}
           >
-            <option value="">One-Time Directive</option>
-            <option value="FREQ=DAILY">Daily Cycle</option>
-            <option value="FREQ=WEEKLY">Weekly Cycle</option>
-          </select>
+            <div className={clsx(
+              "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-lg",
+              isActive ? "left-7" : "left-1"
+            )} />
+          </button>
         </div>
+
+        {/* Sync as Task Toggle */}
+        {!isEditing && (
+          <div className="bg-surface/30 border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={clsx(
+                "p-2 rounded-lg transition-all",
+                createLinkedTask ? "bg-primary/20 text-primary" : "bg-white/5 text-secondary"
+              )}>
+                <CheckSquare size={16} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white">Sync as Task</p>
+                <p className="text-[8px] text-slate-500 font-bold">Appear in Task list & Daily View</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCreateLinkedTask(!createLinkedTask)}
+              className={clsx(
+                "w-12 h-6 rounded-full relative transition-all duration-300",
+                createLinkedTask ? "bg-primary" : "bg-white/10"
+              )}
+            >
+              <div className={clsx(
+                "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-lg",
+                createLinkedTask ? "left-7" : "left-1"
+              )} />
+            </button>
+          </div>
+        )}
 
         {/* Tactical Links */}
         <div className="grid grid-cols-2 gap-4">

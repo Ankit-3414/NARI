@@ -6,7 +6,8 @@ import {
   Search, Plus, ChevronRight, Save, X, Hash, 
   StickyNote, Trash2, Edit3, Calendar, Activity, Zap
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { parseUTC } from '../../utils/datetime';
 import { clsx } from 'clsx';
 
 const container = {
@@ -132,7 +133,7 @@ const NoteCard = ({ note, onClick }) => (
       <div className="flex items-center gap-4 text-[10px] text-secondary font-bold uppercase tracking-[0.2em]">
         <div className="flex items-center gap-1.5">
           <Calendar size={12} className="text-primary/60" />
-          <span>{format(parseISO(note.updated_at), 'MMM d, yyyy')}</span>
+          <span>{format(parseUTC(note.updated_at), 'MMM d, yyyy')}</span>
         </div>
         {note.subject_id && (
           <div className="flex items-center gap-1 text-accent">

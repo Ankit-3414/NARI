@@ -21,36 +21,35 @@ export const useWebSocket = () => {
     const unsubscribe = wsClient.subscribe((payload) => {
       const { event, entity_type, data } = payload;
 
-      // Every event should refresh the activity log
-      queryClient.invalidateQueries({ queryKey: ['activity'] });
-
       // Handle Reminders specifically for browser alerts
       if (event === 'reminder_triggered' && data) {
         notificationService.show(`NARI: ${data.title}`, {
           body: data.message || 'Signal triggered.',
           tag: `reminder-${data.id}`,
         });
+        // Specifically invalidate reminders on trigger
+        queryClient.invalidateQueries({ queryKey: ['reminders'] });
       }
 
-      // Invalidate relevant queries based on entity type
-      if (entity_type === 'task') {
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      } else if (entity_type === 'study_session') {
-        queryClient.invalidateQueries({ queryKey: ['study'] });
-        queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      } else if (entity_type === 'note') {
-        queryClient.invalidateQueries({ queryKey: ['notes'] });
-      } else if (entity_type === 'subject') {
-        queryClient.invalidateQueries({ queryKey: ['subjects'] });
-      } else if (entity_type === 'habit') {
-        queryClient.invalidateQueries({ queryKey: ['habits'] });
-        queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      } else if (entity_type === 'goal') {
-        queryClient.invalidateQueries({ queryKey: ['goals'] });
-        queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      } else if (entity_type === 'reminder') {
-        queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      // Every event should refresh the activity log
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
+
+      // Invalidate relevant queries based on entity type ONLY IF the event matches
+      // This prevents "refresh loops"
+      const mapping = {
+        'task': ['tasks', 'analytics'],
+        'study_session': ['study', 'analytics'],
+        'note': ['notes'],
+        'subject': ['subjects'],
+        'habit': ['habits', 'analytics'],
+        'goal': ['goals', 'analytics'],
+        'reminder': ['reminders']
+      };
+
+      if (mapping[entity_type]) {
+        mapping[entity_type].forEach(key => {
+          queryClient.invalidateQueries({ queryKey: [key] });
+        });
       }
     });
 

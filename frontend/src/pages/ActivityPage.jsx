@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useActivity, useActivityStats } from '../hooks/useActivity';
 import { Database, Search, Filter, Clock, Activity as ActivityIcon, HardDrive, Cpu, Hash, Layers, Terminal } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { parseUTC } from '../utils/datetime';
 
 const ActivityPage = () => {
   const [limit, setLimit] = useState(50);
@@ -124,7 +125,7 @@ const ActivityPage = () => {
                       </div>
                       <span className="text-[10px] text-secondary font-mono flex items-center gap-2 bg-surface/80 px-2 py-1 border border-white/5">
                         <Clock size={10} />
-                        {format(parseISO(log.created_at), 'HH:mm:ss:SSS')}
+                        {format(parseUTC(log.created_at), 'HH:mm:ss:SSS')}
                       </span>
                     </div>
                     
@@ -133,7 +134,7 @@ const ActivityPage = () => {
                     <div className="flex flex-wrap items-center gap-6 text-[9px] text-secondary font-bold uppercase tracking-widest">
                       <span>Source: <span className="text-slate-400">{log.source}</span></span>
                       <span>Actor: <span className="text-slate-400">{log.actor}</span></span>
-                      <span className="ml-auto text-secondary/50 italic">{format(parseISO(log.created_at), 'yyyy.MM.dd')}</span>
+                      <span className="ml-auto text-secondary/50 italic">{format(parseUTC(log.created_at), 'yyyy.MM.dd')}</span>
                     </div>
 
                     {log.payload && (
