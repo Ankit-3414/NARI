@@ -136,7 +136,7 @@ const StudyDashboard = () => {
       const updateTimer = () => {
         const now = getNeuralTime();
         const diff = Math.floor((now - startTime) / 1000);
-        setElapsed(baseSeconds + diff);
+        setElapsed(baseSeconds + Math.max(0, diff));
       };
       updateTimer();
       interval = setInterval(updateTimer, 1000);
