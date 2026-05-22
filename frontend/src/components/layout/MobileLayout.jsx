@@ -3,7 +3,7 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
-  Trash2, Edit3, Plus, Clock, Target, Zap
+  Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,7 +74,7 @@ const MobileLayout = () => {
 
   // Initialize Neural Alarms
   const { isAlarming } = useAlarm();
-  const { data: reminders } = useReminders();
+  const { data: reminders } = useReminders({ include_triggered: true });
   const actions = useReminderActions();
   const triggeredReminders = reminders?.filter(r => r.status === 'triggered') || [];
 
@@ -305,6 +305,7 @@ const MobileLayout = () => {
           <NavItem to="/study" icon={BookOpen} label="Focus" />
           <NavItem to="/goals" icon={Target} label="Goals" />
           <NavItem to="/habits" icon={Zap} label="Habits" />
+          <NavItem to="/analytics" icon={BarChart3} label="Insights" />
           <NavItem to="/subjects" icon={Layers} label="Hub" />
           <NavItem to="/notes" icon={StickyNote} label="Vault" />
           <NavItem to="/activity" icon={Activity} label="Activity" />
