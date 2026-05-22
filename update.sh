@@ -20,11 +20,31 @@ git fetch --all
 git reset --hard origin/main
 
 # 1.5 System Dependencies (New Neural Protocols)
-echo "🔧 Ensuring System Dependencies (avahi-daemon)..."
+echo "🔧 Ensuring System Dependencies (avahi-daemon & ufw)..."
 if ! command -v avahi-daemon &> /dev/null; then
     sudo apt update && sudo apt install -y avahi-daemon
     sudo systemctl enable avahi-daemon
     sudo systemctl start avahi-daemon
+fi
+
+# ENFORCE NEURAL IDENTITY (nari.local)
+echo "🆔 Calibrating Neural Identity..."
+CURRENT_HOSTNAME=$(hostname)
+if [ "$CURRENT_HOSTNAME" != "nari" ]; then
+    sudo hostnamectl set-hostname nari
+    # Update /etc/hosts to prevent sudo delays
+    if ! grep -q "127.0.1.1 nari" /etc/hosts; then
+        echo "127.0.1.1 nari" | sudo tee -a /etc/hosts > /dev/null
+    fi
+    sudo systemctl restart avahi-daemon
+    echo "✅ Hostname updated to 'nari'. Reconnect your SSH session if needed."
+fi
+
+# OPEN FIREWALL GATES
+echo "🛡️ Opening Neural Gates (Firewall)..."
+if command -v ufw &> /dev/null; then
+    sudo ufw allow 80/tcp comment 'NARI HTTP' || true
+    sudo ufw allow 5353/udp comment 'NARI mDNS' || true
 fi
 
 # 2. Robust Permission Protocol (PRIORITY)
@@ -55,6 +75,16 @@ sudo chmod -R 775 "$BACKEND_DIR/data"
 # 3. Update Backend
 echo "🧠 [3/5] Recalibrating Backend & Database..."
 cd "$BACKEND_DIR"
+
+# DYNAMIC CORS CALIBRATION
+PRIMARY_IP=$(hostname -I | awk '{print $1}')
+ALLOWED_ORIGINS="http://nari.local,http://$PRIMARY_IP"
+if [ -f .env ]; then
+    # Remove existing and add new to avoid duplicates
+    sed -i "/NARI_ALLOWED_ORIGINS=/d" .env
+    echo "NARI_ALLOWED_ORIGINS=$ALLOWED_ORIGINS" >> .env
+fi
+
 if command -v uv &> /dev/null; then
     uv sync
     # Re-authorize after sync just in case
