@@ -66,6 +66,20 @@ export const useSyncEngine = () => {
             } else if (action === 'PROGRESS') {
               response = await client.post(`/goals/${data.id}/progress`, null, { params: { increment: data.increment } });
             }
+          } else if (entity === 'context') {
+            if (action === 'LOG') {
+              response = await client.post('/context', { text: data.text });
+            }
+          } else if (entity === 'subjects') {
+            if (action === 'CREATE') {
+              const { tempId, ...payload } = data;
+              response = await client.post('/subjects', payload);
+            } else if (action === 'UPDATE') {
+              const { id, ...payload } = data;
+              response = await client.patch(`/subjects/${id}`, payload);
+            } else if (action === 'DELETE') {
+              response = await client.delete(`/subjects/${data.id}`);
+            }
           }
           // Add other entities here (notes, goals, etc.)
 

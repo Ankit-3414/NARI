@@ -1,12 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
+import { db, queueSync } from '../db/db';
 
 export const useSubjects = (includeArchived = false) => {
   return useQuery({
     queryKey: ['subjects', includeArchived],
     queryFn: async () => {
-      const response = await client.get('/subjects', { params: { include_archived: includeArchived } });
-      return response.data;
+      try {
+        const response = await client.get('/subjects', { params: { include_archived: includeArchived } });
+        const subjects = response.data;
+        
+        await db.subjects.clear();
+        await db.subjects.bulkAdd(subjects);
+        
+        return subjects;
+      } catch (error) {
+        if (!navigator.onLine) {
+          return await db.subjects.toArray();
+        }
+        throw error;
+      }
     },
   });
 };
@@ -15,6 +28,11 @@ export const useCreateSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
+      if (!navigator.onLine) {
+        const id = await db.subjects.add({ ...payload, created_at: new Date().toISOString() });
+        await queueSync('CREATE', 'subjects', { ...payload, tempId: id });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.post('/subjects', payload);
       return response.data;
     },
@@ -26,6 +44,11 @@ export const useUpdateSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }) => {
+      if (!navigator.onLine) {
+        await db.subjects.update(id, payload);
+        await queueSync('UPDATE', 'subjects', { id, ...payload });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.patch(`/subjects/${id}`, payload);
       return response.data;
     },
@@ -37,6 +60,11 @@ export const useDeleteSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.subjects.delete(id);
+        await queueSync('DELETE', 'subjects', { id });
+        return { id, _offline: true };
+      }
       const response = await client.delete(`/subjects/${id}`);
       return response.data;
     },

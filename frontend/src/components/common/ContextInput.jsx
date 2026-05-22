@@ -1,25 +1,21 @@
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
-import { logContext } from '../../api/context';
+import { useLogContext } from '../../hooks/useContext';
 
 const ContextInput = ({ onLogged }) => {
   const [text, setText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { mutate: logContext, isPending: isLoading } = useLogContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim() || isLoading) return;
 
-    setIsLoading(true);
-    try {
-      await logContext(text);
-      setText('');
-      if (onLogged) onLogged();
-    } catch (error) {
-      console.error('Failed to log context:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    logContext(text, {
+      onSuccess: () => {
+        setText('');
+        if (onLogged) onLogged();
+      }
+    });
   };
 
   return (
