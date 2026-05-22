@@ -35,19 +35,19 @@
 
 ---
 
-## Phase 2: Frontend UI/UX (Current Status: [IN_PROGRESS])
+## Phase 2: Frontend UI/UX (Current Status: [DONE])
 
 ### Dashboard (Today Page)
-- [ ] **Quick Stats:** Focus time and Task count reflect real backend data.
-- [ ] **Active Session:** Timer widget appears when a session is running.
-- [ ] **Today's Tasks:** Shows only pending/relevant tasks.
-- [ ] **Habit Widget:** One-click completion works.
+- [x] **Quick Stats:** Focus time and Task count reflect real backend data.
+- [x] **Active Session:** Timer widget appears when a session is running.
+- [x] **Today's Tasks:** Shows only pending/relevant tasks.
+- [x] **Habit Widget:** One-click completion works.
 
 ### Feature Pages
-- [ ] **Tasks:** Filters and list view work.
-- [ ] **Study:** Subject selection and session controls work.
-- [ ] **Notes:** Markdown preview and editor work.
-- [ ] **Analytics:** Bar/Pie charts render with data.
+- [x] **Tasks:** Filters and list view work.
+- [x] **Study:** Subject selection and session controls work.
+- [x] **Notes:** Markdown preview and editor work.
+- [x] **Analytics:** Bar/Pie charts render with data.
 - [x] **Reminders:** Notification dot and list view include triggered signals; scheduler trigger path covered by tests.
 
 ### Global Features
@@ -61,3 +61,20 @@
 - [x] **Tasks:** `list`, `add`, `done` work.
 - [x] **Study:** `study-start`, `study-stop` work.
 - [x] **Goals/Habits:** New commands work as expected.
+
+---
+
+## Phase 4: Neural Offline Protocol (Current Status: [DONE])
+
+### Progressive Web App
+- [x] **Installable:** Manifest configured and verified on mobile.
+- [x] **Identity:** Custom NARI icons and splash screens integrated.
+- [x] **Service Worker:** Offline caching for all static assets.
+
+### Data Persistence
+- [x] **IndexedDB:** Dexie.js integrated for local caching of all entities.
+- [x] **Offline HUD:** Real-time connectivity indicators in header.
+
+### Sync Engine
+- [x] **Background Sync:** Queued actions for Tasks, Notes, Habits, Goals, and Subjects.
+- [x] **Automatic Reconciliation:** Server update on reconnection verified.

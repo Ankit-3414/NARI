@@ -56,7 +56,7 @@ This document serves as the primary instructional context for Gemini CLI in the 
 - `cli/`: Standalone Python CLI logic.
 
 ## Current Roadmap
-The project has completed **Stage 8 (Analytics)**.
+The project has completed **Stage 8 (Analytics)** and **Stage 8.5 (PWA & Offline Parity)**.
 - **Next Stage:** Stage 9 (AI Layer).
 
 Refer to `docs/CLAUDE.md` for the development checklist and `docs/NARI_Architecture.md` for full technical specifications.

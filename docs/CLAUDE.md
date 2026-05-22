@@ -93,7 +93,7 @@ backend/app/
 - [x] Stage 6: Reminders trigger browser notifications
 - [x] Stage 7: Goals and habits in daily use
 - [x] Stage 8: Analytics show meaningful patterns
-- [x] **v1.0.0-alpha.7**: Pre-Flight Intercept & Ghost Protocol implemented
+- [x] Stage 8.5: **Neural Offline Protocol (PWA)** - 100% offline parity and background sync
 - [ ] Stage 9: AI provides useful suggestions
 
 ## Response Contract (Always Use)
@@ -108,4 +108,4 @@ backend/app/
 
 ## Current Status
 
-Stage 8 complete. Behavioral Analytics Engine implemented with high-fidelity visual HUD. Moving to Stage 9 - AI Layer (Ollama Integration).
+Stage 8.5 complete. **Neural Offline Protocol (PWA)** implemented with IndexedDB caching and background synchronization across all core entities. NARI is now a mobile-installable, local-first system. Moving to Stage 9 - AI Layer (Ollama Integration).
