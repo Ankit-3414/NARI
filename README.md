@@ -8,12 +8,13 @@
 
 ## 🚀 Key Features
 
+*   **Pre-Flight Intercept:** Proactive real-time signal monitoring that detects upcoming tasks and reminders before they trigger.
+*   **Ghost Protocol:** Automated resolution engine that handles "ghosted" or missed signals by auto-completing or rescheduling them based on behavioral rules.
 *   **Task Intelligence:** Advanced task management with history tracking, priorities, and smart "Today" views.
 *   **Study Core:** Deep focus timer with subject-specific tracking, interruption logging, and session analytics.
 *   **Neural Notes:** Markdown-based note-taking with automatic version history and full-text search.
 *   **Vision Tracking:** Integrated Goals and Habits with streak management and progress HUDs.
 *   **Behavioral HUD:** Real-time analytics engine that visualizes your productivity patterns.
-*   **Context Stream:** Frictionless, unstructured daily logging to build your behavioral dataset.
 *   **Neural Link:** Standardized API-first architecture with WebSocket-driven real-time UI updates.
 
 ---
@@ -30,20 +31,26 @@
 ## 📦 Installation & Deployment
 
 ### One-Click Setup (Ubuntu 24.04 / Debian)
-Port the codebase to your server and run the master deployment engine:
+Port the codebase to your server and run the master setup engine:
 
 ```bash
 sudo chmod +x setup.sh
 sudo ./setup.sh
 ```
 
-**This script automates:**
-1.  System dependency installation (Python, Node, Nginx, SQLite).
-2.  Python environment isolation using `uv`.
-3.  Database initialization and schema migrations.
-4.  Production frontend compilation.
-5.  Nginx reverse proxy configuration for static IP `192.168.1.100`.
-6.  Systemd service creation for 24/7 "Background Pulse."
+### Neural Upgrade Engine (Production Maintenance)
+To update NARI on your production server with absolute reliability, use the **Neural Upgrade Engine**:
+
+```bash
+sudo chmod +x update.sh
+./update.sh
+```
+
+**The upgrade engine automates:**
+1.  **Defensive Pathing:** Dynamic project root detection for path-immune execution.
+2.  **Robust Permission Protocol:** Automated 755/644 permission calibration + executable binary authorization.
+3.  **Neural Pulse:** Atomic restart of NARI backend and Nginx reverse proxy.
+4.  **Tactical Purge:** Automated cleanup of temporary debug and test artifacts.
 
 ---
 
@@ -59,17 +66,12 @@ NARI includes a powerful CLI for terminal-based control:
 
 ---
 
-## 🛰 API Response Contract
+## 🛡 Security & Privacy
 
-All API responses follow a strict high-fidelity contract:
-
-```json
-{
-  "ok": true,
-  "data": { ... },
-  "error": null
-}
-```
+*   **100% Local:** Your data never leaves your server. No cloud dependencies.
+*   **Neural Handshake:** Hardened client-server communication with token masking (`neura***`) and strict CORS lockdown.
+*   **PII Redaction:** Sensitive data is proactively masked in logs to ensure privacy-safe behavioral history.
+*   **Robust Permissions:** Strict filesystem lockdowns (Folders: 755 / Files: 644) managed by the deployment engine.
 
 ---
 
@@ -86,21 +88,14 @@ All API responses follow a strict high-fidelity contract:
 *   [x] **Stage 5:** WebSocket Real-time Sync.
 *   [x] **Stage 6:** Scheduler & Browser Reminders.
 *   [x] **Stage 7:** Vision layer (Goals & Habits).
-*   [x] **Stage 8:** Behavioral Analytics HUD.
+*   [x] **Stage 8:** Behavioral Analytics HUD (HUD v1.0).
+*   [x] **v1.0.0-alpha.7:** Neural Upgrade Engine & Ghost Protocol.
 *   [ ] **Stage 9:** **AI Layer (Ollama + Llama 3.1 8B Integration)** - *Next Objective*
 
 ### **Phase 3: Expansion (v1.1.0+) - FUTURE**
 *   [ ] Plugin system for community extensions.
 *   [ ] Advanced Desktop Management & Voice Input.
 *   [ ] Multi-device sync orchestration.
-
----
-
-## 🛡 Security & Privacy
-
-*   **100% Local:** Your data never leaves your server. No cloud dependencies.
-*   **PII Redaction:** Sensitive data is proactively masked in logs to ensure privacy-safe behavioral history.
-*   **Neural Handshake:** All client-server communication requires a valid API Key/Token handshake.
 
 ---
 

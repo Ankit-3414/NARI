@@ -1,4 +1,4 @@
-# NARI - Development Guide (v1.0.0-alpha.6)
+# NARI - Development Guide (v1.0.0-alpha.7)
 
 ## Project Context
 
@@ -16,14 +16,19 @@ The NARI CLI can be invoked using the utility scripts at the project root:
 
 These scripts automatically use the project's virtual environment or `uv`.
 
-## Linux Setup
+## Linux Setup & Maintenance
 
 On a fresh Linux (Ubuntu 24.04) server, run:
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
-This will install `uv`, setup virtual environments, install dependencies, and run migrations.
+
+To update NARI on production, use the **Neural Upgrade Engine**:
+```bash
+chmod +x update.sh
+./update.sh
+```
 
 ## Build Stages (Follow Sequentially)
 
@@ -46,11 +51,12 @@ This will install `uv`, setup virtual environments, install dependencies, and ru
 2. **Services never call other services directly** - Use event bus for cross-service communication
 3. **Every service method that modifies state writes to ActivityLog** - No exceptions
 4. **Files stay under 250 lines** - Split if larger
-5. **All services follow the same pattern** - create(), get(), list(), update(), delete()
-6. **The CLI calls the API** - Never imports from backend app directly
-7. **All timestamps are stored as UTC** - Timezone conversion at presentation layer
-8. **Never hard-delete subjects or notes** - Use archived_at. Tasks use status=cancelled
-9. **Schema changes require an Alembic migration** - Never modify DB directly in production
+5. **Robust Permission Protocol** - Directories: 755 | Files: 644 | Scripts: +x. Ownership MUST be current user.
+6. **All services follow the same pattern** - create(), get(), list(), update(), delete()
+7. **The CLI calls the API** - Never imports from backend app directly
+8. **All timestamps are stored as UTC** - Timezone conversion at presentation layer
+9. **Never hard-delete subjects or notes** - Use archived_at. Tasks use status=cancelled
+10. **Schema changes require an Alembic migration** - Never modify DB directly in production
 
 ## File Structure Rules
 
@@ -87,6 +93,7 @@ backend/app/
 - [x] Stage 6: Reminders trigger browser notifications
 - [x] Stage 7: Goals and habits in daily use
 - [x] Stage 8: Analytics show meaningful patterns
+- [x] **v1.0.0-alpha.7**: Pre-Flight Intercept & Ghost Protocol implemented
 - [ ] Stage 9: AI provides useful suggestions
 
 ## Response Contract (Always Use)
