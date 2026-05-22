@@ -30,13 +30,18 @@ echo -e "${BLUE}==============================================${NC}"
 echo -e "${BLUE}[1/6] Installing System Core (Non-Interactive)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 apt update
-apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential systemd-timesyncd
+apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential systemd-timesyncd avahi-daemon
 
-# Enable and start time synchronization
-echo -e "${BLUE}Configuring System Time Synchronization...${NC}"
+# Enable and start time synchronization and Avahi for mDNS (nari.local)
+echo -e "${BLUE}Configuring System Services (Time & Hostname)...${NC}"
 systemctl enable systemd-timesyncd
 systemctl start systemd-timesyncd
 timedatectl set-ntp true
+
+systemctl enable avahi-daemon
+systemctl start avahi-daemon
+# Optionally set hostname to nari for consistency
+# hostnamectl set-hostname nari
 
 # Install uv for the original user
 echo -e "${BLUE}[2/6] Configuring Python Environment (uv)...${NC}"
@@ -97,7 +102,7 @@ PRIMARY_IP=$(hostname -I | awk '{print $1}')
 NGINX_CONF="
 server {
     listen 80;
-    server_name $PRIMARY_IP;
+    server_name nari.local $PRIMARY_IP;
 
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;
@@ -171,7 +176,8 @@ FINAL_API_KEY=$(grep "NARI_API_KEY=" "$PROJECT_ROOT/backend/.env" | cut -d'=' -f
 
 echo -e "${BLUE}==============================================${NC}"
 echo -e "${GREEN}🚀 NARI IS ONLINE!${NC}"
-echo -e "Dashboard Access: ${BLUE}http://$(hostname -I | awk '{print $1}')${NC}"
+echo -e "Neural Hostname:  ${BLUE}http://nari.local${NC}"
+echo -e "Dynamic IP:       ${BLUE}http://$PRIMARY_IP${NC}"
 echo -e "Neural Link Key:  ${GREEN}$FINAL_API_KEY${NC}"
 echo -e "----------------------------------------------"
 echo -e "IMPORTANT: Save this key. It is required for CLI and Mobile access."

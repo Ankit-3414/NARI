@@ -82,6 +82,6 @@ PRIMARY_IP=$(hostname -I | awk '{print $1}')
 echo "✅ Neural Link Established."
 echo "------------------------------------------------"
 echo "NARI has been upgraded to the latest version."
-echo "Backend: http://localhost:8000"
-echo "Frontend: http://$PRIMARY_IP"
+echo "Neural Hostname:  http://nari.local"
+echo "Dynamic IP:       http://$PRIMARY_IP"
 echo "------------------------------------------------"
