@@ -78,12 +78,54 @@ cd "$BACKEND_DIR"
 
 # DYNAMIC CORS CALIBRATION
 PRIMARY_IP=$(hostname -I | awk '{print $1}')
-ALLOWED_ORIGINS="http://nari.local,http://$PRIMARY_IP"
+ALLOWED_ORIGINS="http://nari.local,http://server-01.local,http://$PRIMARY_IP"
 if [ -f .env ]; then
     # Remove existing and add new to avoid duplicates
     sed -i "/NARI_ALLOWED_ORIGINS=/d" .env
     echo "NARI_ALLOWED_ORIGINS=$ALLOWED_ORIGINS" >> .env
 fi
+
+# RECALIBRATE NGINX (Dual Identity)
+echo "🌐 Synchronizing Nginx Identity..."
+NGINX_CONF="
+server {
+    listen 80;
+    server_name nari.local server-01.local $PRIMARY_IP;
+
+    root ${PROJECT_ROOT}/frontend/dist;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /ws {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection \"Upgrade\";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    location /assets {
+        expires 1y;
+        add_header Cache-Control \"public, immutable\";
+    }
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml;
+}"
+echo "$NGINX_CONF" | sudo tee /etc/nginx/sites-available/nari > /dev/null
 
 if command -v uv &> /dev/null; then
     uv sync
@@ -120,6 +162,7 @@ PRIMARY_IP=$(hostname -I | awk '{print $1}')
 echo "✅ Neural Link Established."
 echo "------------------------------------------------"
 echo "NARI has been upgraded to the latest version."
-echo "Neural Hostname:  http://nari.local"
+echo "Neural Hostnames: http://nari.local"
+echo "                  http://server-01.local"
 echo "Dynamic IP:       http://$PRIMARY_IP"
 echo "------------------------------------------------"
