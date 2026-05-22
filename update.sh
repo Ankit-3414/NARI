@@ -20,7 +20,6 @@ git fetch --all
 git reset --hard origin/main
 
 # 2. Robust Permission Protocol (PRIORITY)
-# We calibrate permissions BEFORE building to ensure tools (uv, npm) have access
 echo "🛡️ [2/5] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
 
@@ -36,10 +35,10 @@ sudo chmod +x "$PROJECT_ROOT"/*.sh
 sudo chmod +x "$BACKEND_DIR"/run.py
 sudo chmod +x "$PROJECT_ROOT"/cli/nari.py
 
-# Ensure existing Virtual Environment binaries are executable (if they exist)
-if [ -d "$BACKEND_DIR/.venv/bin" ]; then
-    sudo chmod +x "$BACKEND_DIR"/.venv/bin/*
-fi
+# AUTHORIZE BINARIES (Python & Node)
+echo "🔑 Authorizing environment binaries..."
+[ -d "$BACKEND_DIR/.venv/bin" ] && sudo chmod +x "$BACKEND_DIR"/.venv/bin/* || true
+[ -d "$FRONTEND_DIR/node_modules/.bin" ] && sudo chmod +x "$FRONTEND_DIR"/node_modules/.bin/* || true
 
 # Ensure Database directory is fully writable
 mkdir -p "$BACKEND_DIR/data"
@@ -50,6 +49,8 @@ echo "🧠 [3/5] Recalibrating Backend & Database..."
 cd "$BACKEND_DIR"
 if command -v uv &> /dev/null; then
     uv sync
+    # Re-authorize after sync just in case
+    sudo chmod +x "$BACKEND_DIR"/.venv/bin/*
     uv run alembic upgrade head
 else
     pip install -r pyproject.toml
@@ -60,6 +61,8 @@ fi
 echo "🎨 [4/5] Recompiling User Interface..."
 cd "$FRONTEND_DIR"
 npm install
+# Re-authorize after install to ensure vite/etc are executable
+[ -d "node_modules/.bin" ] && sudo chmod +x node_modules/.bin/* || true
 npm run build
 # Ensure web assets are readable by Nginx
 sudo chmod -R 755 "$FRONTEND_DIR/dist"
