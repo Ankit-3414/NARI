@@ -3,7 +3,7 @@
 - **Backend Architecture:** FastAPI, SQLModel, SQLite (WAL mode), EventBus-backed ActivityLog and WebSocket broadcasting.
 - **Core Services:** Tasks, Subjects, Study Sessions, Notes, Goals, Habits, Reminders, and Analytics are implemented.
 - **Frontend:** React SPA (Vite + Tailwind) is functional with route-level lazy loading.
-- **Stage 5-8:** WebSockets, reminders/signals, goals/habits, and analytics are implemented.
+- **Stage 5-8.5:** WebSockets, reminders/signals, goals/habits, analytics, PWA installation, offline persistence, and background sync are implemented.
 
 ## Last Changes Made
 
@@ -16,5 +16,5 @@
 ## Current Priority
 
 1. Keep reminder/signal behavior stable under daily use.
-2. Clean deployment/config docs without changing working runtime defaults.
+2. Prepare Stage 9 AI architecture without changing stable runtime defaults.
 3. Defer deeper recurrence/task-sync architecture changes until there is a dedicated migration plan.

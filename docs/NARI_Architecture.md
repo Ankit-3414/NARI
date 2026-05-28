@@ -1,206 +1,255 @@
-# NARI Technical Architecture Document
+# NARI Technical Architecture
 
 **Version:** v1.0.0-alpha.7  
-**Status:** In Development (Stage 9 Transition)  
-**Last Updated:** 2026-05-23  
-**Author:** Ankit (Solo Developer)  
+**Status:** Stage 8.5 complete; Stage 9 in design and implementation
+**Last Updated:** 2026-05-28
+**Author:** Ankit Upadhyay
 **System Type:** Self-hosted personal productivity and intelligence platform  
-**Primary Server:** Server-01 (Intel i5-2400S, 8GB RAM, 500GB HDD)
-
----
-
-## Table of Contents
-
-1. [Project Overview](#1-project-overview)
-2. [Hardware Profile](#2-hardware-profile--server-01)
-3. [Design Principles](#3-design-principles)
-4. [Finalized Tech Stack](#4-finalized-tech-stack)
-5. [Folder Structure](#5-folder-structure)
-6. [Environment Variables](#6-environment-variables)
-7. [Database Schema](#7-database-schema)
-8. [API Design](#8-api-design)
-9. [Response Contract](#9-response-contract)
-10. [Neural Intelligence Protocols](#10-neural-intelligence-protocols)
-11. [WebSocket Event Map](#11-websocket-event-map)
-12. [ActivityLog Specification](#12-activitylog-specification)
-13. [Build Order & Milestones](#13-build-order--milestones)
-14. [Deployment Setup — Server-01](#14-deployment-setup--server-01)
-15. [Engineering Rules](#15-engineering-rules)
-16. [AI Layer — Reserved (Stage 9)](#16-ai-layer--reserved-stage-9)
-17. [Future Roadmap](#17-future-roadmap)
+**Primary Server:** Server-01, Intel i5-2400S, 8GB RAM, 500GB HDD
 
 ---
 
 ## 1. Project Overview
 
-NARI (Not A Random Intelligence) is a local-first, self-hosted personal operating system for one person. It combines task management, study tracking, notes, goals, habits, reminders, and analytics into a single system that runs permanently on Server-01 and is accessible from any desktop device on the home network via browser.
+NARI (Not A Random Intelligence) is a local-first personal operating system for one person. It combines task management, study tracking, notes, reminders, goals, habits, offline access, and analytics into a system that runs on a home server and is accessed through a browser or CLI.
 
-**Core philosophy:**
-- NARI should learn the user's patterns and grow with them over time.
-- Every action is logged from day one — behavioral data accumulates before AI arrives.
-- The system is usable without AI forever; AI only enhances, never controls.
-- Each build stage must end with something in daily use.
+The system is designed to be useful before AI exists. Every meaningful action is logged so the later AI layer can learn from real historical behavior instead of starting from an empty profile.
 
----
+## 2. Design Principles
 
-## 2. Hardware Profile — Server-01
+1. **Local-first:** User data stays on Server-01.
+2. **API-first:** The frontend and CLI use the same REST API.
+3. **AI-ready:** ActivityLog, Context Stream, and event boundaries prepare the system for Stage 9.
+4. **Time-aware:** Store timestamps in UTC and convert at presentation boundaries.
+5. **Auditable:** State changes emit ActivityLog entries.
+6. **Daily-use first:** Each stage should end in a usable workflow.
+
+## 3. Hardware Profile
 
 | Spec | Value |
-|---|---|
-| Name | **Server-01** |
-| CPU | Intel Core i5-2400S (4 cores, 2.5GHz) |
-| RAM | 8GB DDR3 |
-| Storage | 500GB HDD |
+| --- | --- |
+| Name | Server-01 |
+| CPU | Intel Core i5-2400S, 4 cores, 2.5 GHz |
+| RAM | 8 GB DDR3 |
+| Storage | 500 GB HDD |
 | OS | Ubuntu Server 24.04 LTS |
 
----
-
-## 3. Design Principles
-
-1. **Local-first** — Data stays on Server-01.
-2. **API-first** — All clients use the same REST API.
-3. **AI-ready** — Designed for easy LLM integration.
-4. **Time-aware** — Full historical tracking with UTC timestamps.
-5. **ActivityLog Always** — Append-only audit trail for all state changes.
-
----
-
-## 4. Finalized Tech Stack
+## 4. Tech Stack
 
 ### Backend
-- **Framework:** FastAPI (Python 3.12)
-- **ORM:** SQLModel (SQLite with WAL Mode)
-- **Migrations:** Alembic
-- **Scheduler:** APScheduler
+
+- **Framework:** FastAPI, Python 3.12.
+- **ORM:** SQLModel on SQLite with WAL mode.
+- **Migrations:** Alembic.
+- **Scheduler:** APScheduler.
+- **Realtime:** WebSockets.
 
 ### Frontend
-- **Framework:** React (Vite)
-- **Styling:** Tailwind CSS
-- **State:** Zustand (UI) + TanStack Query (Server)
-- **Icons:** Lucide React
 
----
+- **Framework:** React with Vite.
+- **Styling:** Tailwind CSS.
+- **Server state:** TanStack Query.
+- **UI state:** Zustand.
+- **Icons:** Lucide React.
+- **Offline:** PWA service worker and IndexedDB.
+
+### CLI and Infrastructure
+
+- **CLI:** Python thin client that calls the API over HTTP.
+- **Deployment:** Nginx, systemd, `uv`, Ubuntu Server 24.04.
 
 ## 5. Folder Structure
 
-- `backend/app/api/v1/`: API endpoints.
-- `backend/app/services/`: Business logic and ActivityLog emission.
-- `backend/app/models/`: SQLModel table definitions.
-- `backend/app/schemas/`: Pydantic models for API validation.
-- `frontend/src/components/`: Modular React components.
-- `cli/`: Python thin-client for terminal control.
+```text
+backend/app/
+  main.py              FastAPI entry point
+  api/v1/              Routes only; no database logic
+  core/                Config, security, EventBus, logging
+  db/                  SQLModel engine and session handling
+  models/              SQLModel table definitions
+  schemas/             API validation and response models
+  services/            Business logic and ActivityLog emission
+  websocket/           WebSocket manager and handlers
+  scheduler/           APScheduler setup and jobs
+  ai/                  Reserved for Stage 9
 
----
+frontend/src/
+  api/                 API clients
+  components/          Layout, common UI, and feature components
+  hooks/               Query and mutation hooks
+  pages/               Page-level screens
+  store/               Zustand stores
+
+cli/                   Standalone CLI client
+docs/                  Architecture and operating documentation
+deploy/                Deployment support files
+```
 
 ## 6. Environment Variables
 
-Managed via `backend/.env`. Key variables:
-- `NARI_API_KEY`: Neural Handshake secret.
-- `DATABASE_URL`: Path to SQLite DB.
-- `NARI_TIMEZONE`: User local timezone (e.g., Asia/Kolkata).
+Backend configuration is managed through `backend/.env`.
 
----
+- `NARI_API_KEY`: API authentication secret.
+- `DATABASE_URL`: SQLite database path.
+- `NARI_TIMEZONE`: Local presentation timezone, for example `Asia/Kolkata`.
 
-## 7. Database Schema
+## 7. Core Data Model
 
-All models inherit from `BaseModel` (id, created_at, updated_at).
-Key Tables: `tasks`, `reminders`, `notes`, `subjects`, `study_sessions`, `goals`, `habits`, `activity_logs`.
+All major records use shared metadata such as `id`, `created_at`, and `updated_at`.
 
----
+Core tables:
+
+- `tasks`
+- `task_history`
+- `reminders`
+- `notes`
+- `note_versions`
+- `subjects`
+- `study_sessions`
+- `goals`
+- `habits`
+- `activity_logs`
 
 ## 8. API Design
 
-NARI follows a standard RESTful pattern:
-- `GET /api/v1/{resource}`: List resources with filtering.
-- `POST /api/v1/{resource}`: Create resource.
-- `PATCH /api/v1/{resource}/{id}`: Partial update.
-- `DELETE /api/v1/{resource}/{id}`: Soft delete (archived_at).
+NARI follows RESTful resource routes:
 
----
+- `GET /api/v1/{resource}`: List resources with optional filters.
+- `POST /api/v1/{resource}`: Create a resource.
+- `GET /api/v1/{resource}/{id}`: Fetch a resource.
+- `PATCH /api/v1/{resource}/{id}`: Partially update a resource.
+- `DELETE /api/v1/{resource}/{id}`: Archive, cancel, or otherwise soft-delete.
+
+Routes should validate inputs, call services, and return the standard response contract. Services own database access.
 
 ## 9. Response Contract
 
-All responses must adhere to the high-fidelity contract:
+All API responses should use this shape:
+
 ```json
 {
   "ok": true,
-  "data": { ... },
+  "data": {},
   "error": null
 }
 ```
 
----
+Errors use the same wrapper:
 
-## 10. Neural Intelligence Protocols
+```json
+{
+  "ok": false,
+  "data": null,
+  "error": {
+    "code": "TASK_NOT_FOUND",
+    "message": "Task with id 42 does not exist"
+  }
+}
+```
 
-### 10.1 Pre-Flight Intercept
-- **Logic:** Frontend polls `/reminders?active_only=true` every 5s.
-- **Trigger:** Displays high-priority HUD for upcoming signals within the trigger window.
+## 10. Event and Activity Architecture
 
-### 10.2 Ghost Protocol
-- **Logic:** Automated resolution for missed signals.
-- **Locked-In:** Auto-dismissed after 2 mins of inactivity.
-- **Ghosted:** Marked as `MISSED` after 5 mins of user silence.
+### EventBus
 
----
+Services publish domain events to avoid direct service-to-service coupling. Cross-feature behavior should subscribe to events instead of importing another service and calling it directly.
 
-## 11. WebSocket Event Map
+### ActivityLog
 
-- `TASK_UPDATED`: Real-time task status sync.
-- `STUDY_STARTED` / `STUDY_STOPPED`: Sync focus timer across devices.
-- `REMINDER_TRIGGERED`: Instant browser notification signal.
-- `ACTIVITY_LOGGED`: Live update of the Behavioral HUD.
+ActivityLog is append-only and records meaningful user and system actions. It is the backbone for the timeline, analytics, Context Stream, and future AI memory.
 
----
+Activity entries should include:
 
-## 12. ActivityLog Specification
+- `entity_type`
+- `entity_id`
+- `action`
+- `description`
+- structured payload or metadata when useful
 
-- **Append-only:** Records `user_id`, `entity_type`, `entity_id`, `action`, and `description`.
-- **Integrity:** derivations provided by `ActivityService` if description is missing.
+ActivityLog writes happen after the main state change succeeds. A failed ActivityLog write should be logged, but should not roll back the main operation.
 
----
+## 11. Neural Intelligence Protocols
 
-## 13. Build Order & Milestones
+### Context Stream
 
-1. **Stages 0-4:** Foundation (Backend, Tasks, Study, Notes, Dashboard).
-2. **Stages 5-8:** Intelligence (WebSockets, Reminders, Vision, Analytics).
-3. **Stage 9:** AI Layer (Ollama Integration).
+The Context Stream is the low-friction natural-language input layer. Entries are accepted through the API, CLI, and dashboard, then stored chronologically in ActivityLog as context events.
 
----
+### Pre-Flight Intercept
 
-## 14. Deployment Setup — Server-01
+The frontend checks active reminders frequently and surfaces upcoming reminders before they become missed signals.
 
-### 14.1 Neural Upgrade Engine (`update.sh`)
-Automates production maintenance with:
-- **Defensive Pathing:** Absolute root detection via `BASH_SOURCE`.
-- **Robust Permission Protocol:** Recursive 755 (Dir) / 644 (File) calibration + Sudo-hardened binary authorization.
+### Ghost Protocol
 
-### 14.2 Nginx Configuration
-Reverse proxy on port 80, routing `/api` and `/ws` to the FastAPI backend (Port 8000).
+Missed reminders are resolved through defined reminder state transitions so stale signals do not remain indefinitely active.
 
----
+## 12. WebSocket Event Map
+
+Common event names include:
+
+- `TASK_UPDATED`
+- `STUDY_STARTED`
+- `STUDY_STOPPED`
+- `REMINDER_TRIGGERED`
+- `ACTIVITY_LOGGED`
+
+The frontend uses these events to invalidate TanStack Query caches and refresh visible state without a full page reload.
+
+## 13. Build Stages
+
+1. **Stage 0:** Backend core, health endpoint, ActivityLog.
+2. **Stage 1:** CLI task management.
+3. **Stage 2:** Subjects and study tracking.
+4. **Stage 3:** Versioned notes.
+5. **Stage 4:** Web dashboard.
+6. **Stage 5:** WebSocket real-time sync.
+7. **Stage 6:** Scheduler and browser reminders.
+8. **Stage 7:** Goals and habits.
+9. **Stage 8:** Behavioral analytics.
+10. **Stage 8.5:** PWA, offline cache, IndexedDB, background sync.
+11. **Stage 9:** Local AI layer.
+
+## 14. Deployment
+
+Production runs on Server-01 behind Nginx:
+
+- Nginx serves the built frontend.
+- Nginx proxies `/api` and `/ws` to the FastAPI backend on port 8000.
+- systemd keeps the backend running.
+- SQLite stores application data locally.
+
+Use `setup.sh` for first-time installation and `update.sh` for production updates.
 
 ## 15. Engineering Rules
 
-1. **Routes vs. Services:** Routes call services; services touch DB.
-2. **EventBus:** Use for cross-service communication (no direct service-to-service calls).
-3. **Audit Rule:** Every state-modifying method MUST write to `ActivityLog`.
-4. **File Size:** Max 250 lines per file.
+1. Routes never touch the database directly.
+2. Routes call services; services own database operations.
+3. Services do not call other services directly; use EventBus for cross-service behavior.
+4. Every state-modifying service method writes to ActivityLog.
+5. The CLI calls the API and never imports backend internals.
+6. Store timestamps in UTC.
+7. Convert timezone only in presentation layers.
+8. Never hard-delete subjects or notes; use `archived_at`.
+9. Tasks should be cancelled or completed through status transitions.
+10. Schema changes require Alembic migrations.
+11. Keep files under 250 lines unless there is a strong reason.
 
----
+## 16. Stage 9: Local AI Layer
 
-## 16. AI Layer — Reserved (Stage 9)
+Stage 9 adds intelligence on top of the existing activity and event system. The direction is a local, resource-aware AI pipeline rather than a cloud dependency.
 
-- Local integration with Ollama (Llama 3.1 8B).
-- Focus: Pattern reasoning, task suggestions, and natural language command parsing.
+Planned components:
 
----
+- **Intent Engine:** A lightweight classifier that reads Context Stream events and routes clear user intent into existing services.
+- **Semantic Memory:** Local retrieval over ActivityLog, notes, tasks, study sessions, and selected external knowledge.
+- **Nightly Consolidation:** Scheduled jobs that summarize, index, or train from the day's activity while the system is idle.
+- **Conversational Interface:** A local assistant layer that uses retrieval and memory to answer questions and suggest actions.
+
+Ollama or other local model runners may be useful for prototyping, but the architecture should keep NARI's core intelligence boundary local, replaceable, and independent of any single model provider.
 
 ## 17. Future Roadmap
 
-- Year 2: Plugin system and calendar integration.
-- Year 3: Voice input and advanced desktop management.
-
----
-
-*This document is the single source of truth for NARI architecture. Last Updated: v1.0.0-alpha.7.*
+- Plugin system.
+- Calendar integration.
+- Voice input and output.
+- Richer desktop integrations.
+- Multi-device sync orchestration.
+- More proactive planning and recommendation workflows.

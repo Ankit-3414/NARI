@@ -25,6 +25,8 @@ const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 const GoalsPage = lazy(() => import('../pages/GoalsPage'));
 const HabitsPage = lazy(() => import('../pages/HabitsPage'));
+const ContextPage = lazy(() => import('../pages/ContextPage'));
+const ContextStreamExperimentPage = lazy(() => import('../experiments/context-stream/ContextStreamExperimentPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,18 +79,20 @@ function AppContent() {
       <BrowserRouter>
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<MobileLayout />}>
-              <Route index element={<TodayPage />} />
-              <Route path="tasks" element={<TasksPage />} />
-              <Route path="study" element={<StudyPage />} />
-              <Route path="notes" element={<NotesPage />} />
-              <Route path="subjects" element={<SubjectsPage />} />
-              <Route path="reminders" element={<RemindersPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="activity" element={<ActivityPage />} />
-              <Route path="goals" element={<GoalsPage />} />
-              <Route path="habits" element={<HabitsPage />} />
-            </Route>
+             <Route path="/" element={<MobileLayout />}>
+               <Route index element={<TodayPage />} />
+               <Route path="tasks" element={<TasksPage />} />
+               <Route path="study" element={<StudyPage />} />
+               <Route path="notes" element={<NotesPage />} />
+               <Route path="subjects" element={<SubjectsPage />} />
+               <Route path="reminders" element={<RemindersPage />} />
+               <Route path="analytics" element={<AnalyticsPage />} />
+               <Route path="activity" element={<ActivityPage />} />
+               <Route path="goals" element={<GoalsPage />} />
+               <Route path="habits" element={<HabitsPage />} />
+               <Route path="context" element={<ContextPage />} />
+               <Route path="experiments/context-stream" element={<ContextStreamExperimentPage />} />
+             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

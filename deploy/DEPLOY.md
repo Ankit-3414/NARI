@@ -1,46 +1,34 @@
-# 🚀 NARI Deployment Guide (Home Server)
+# NARI Manual Deployment Notes
 
-This guide explains how to host NARI permanently on your home server (e.g., Ubuntu/Debian) at `192.168.1.100`.
+The preferred production path is `setup.sh` for first install and `update.sh` for maintenance. This file documents the manual pieces those scripts manage.
 
-## 1. Build the Frontend
-On your server, go to the frontend directory and build the production files:
+## Frontend Build
+
 ```bash
 cd frontend
 npm install
 npm run build
 ```
-This creates a `dist/` folder. This is what Nginx will serve.
 
-## 2. Install Nginx
-```bash
-sudo apt update
-sudo apt install nginx
-```
+Nginx serves `frontend/dist`.
 
-## 3. Apply Nginx Configuration
-Copy the provided config to Nginx's available sites:
+## Nginx
+
+Copy or adapt the provided Nginx config:
+
 ```bash
 sudo cp deploy/nari.nginx.conf /etc/nginx/sites-available/nari
-```
-**Edit the config** to match your server's folder path:
-```bash
-sudo nano /etc/nginx/sites-available/nari
-# Change the 'root' line to point to your /home/ankit/NARI/frontend/dist
-```
-
-Enable the site and restart Nginx:
-```bash
-sudo ln -s /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/
-sudo nginx -t  # Test the config
+sudo ln -s /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/nari
+sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-## 4. Run the Backend as a Service (Systemd)
-To keep the backend running forever, create a service file:
-```bash
-sudo nano /etc/systemd/system/nari-backend.service
-```
-Paste this:
+Make sure the config points to the correct absolute `frontend/dist` path and proxies `/api` and `/ws` to the backend on port 8000.
+
+## Backend Service
+
+The one-click setup is expected to create a service named `nari`. If creating it manually:
+
 ```ini
 [Unit]
 Description=NARI Backend Service
@@ -57,12 +45,20 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-Start the service:
+Then run:
+
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable nari-backend
-sudo systemctl start nari-backend
+sudo systemctl enable nari
+sudo systemctl start nari
 ```
 
-## 🏁 Done!
-You can now access NARI at `http://192.168.1.100` from any device on your network without needing to type any port numbers.
+## Verification
+
+Open:
+
+```text
+http://192.168.1.100
+```
+
+Confirm the frontend loads, API requests succeed, and WebSocket status is connected.

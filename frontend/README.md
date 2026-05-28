@@ -1,26 +1,47 @@
 # NARI Frontend
 
-Mobile-first web dashboard for NARI (Not A Random Intelligence).
+Responsive web dashboard and PWA shell for NARI.
 
 ## Tech Stack
-*   **React + Vite**
-*   **Tailwind CSS**
-*   **TanStack Query** (React Query)
-*   **Lucide React** (Icons)
+
+- React and Vite.
+- Tailwind CSS.
+- TanStack Query for server state.
+- Zustand for local UI state.
+- Lucide React for icons.
+- IndexedDB and service worker support for offline workflows.
 
 ## Development
-1.  Install dependencies: `npm install`
-2.  Start the dev server: `npm run dev`
-3.  The frontend will proxy `/api` requests to `http://127.0.0.1:8000`. Ensure the backend is running.
+
+```bash
+npm install
+npm run dev
+```
+
+The Vite dev server proxies `/api` requests to `http://127.0.0.1:8000`. Start the backend before using API-backed screens.
+
+## Production Build
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Features
-*   **Mobile-First Design:** Optimized for phone screens with a bottom navigation bar.
-*   **Tasks:** View, group, and complete tasks with instant UI feedback.
-*   **Study:** Dedicated focus timer with subject selection and interruption tracking.
-*   **Notes:** Markdown-based note-taking with automatic version history support.
+
+- Dashboard with today view, quick stats, active study session, tasks, habits, and Context Stream input.
+- Task, study, notes, reminders, goals, habits, and analytics pages.
+- WebSocket-backed cache invalidation for live updates.
+- API key auth gate.
+- PWA installation and offline status.
+- IndexedDB-backed local persistence and queued sync for offline actions.
 
 ## Architecture
-*   **`src/api/client.js`:** Central Axios instance for API communication.
-*   **`src/hooks/`:** Custom React hooks for data fetching and state management.
-*   **`src/components/layout/`:** Core App shell and navigation.
-*   **`src/components/[feature]/`:** Feature-specific UI components and logic.
+
+- `src/api/`: API clients and WebSocket client.
+- `src/hooks/`: TanStack Query hooks and feature data access.
+- `src/components/layout/`: App shell and navigation.
+- `src/components/common/`: Shared UI components.
+- `src/components/[feature]/`: Feature-specific UI.
+- `src/pages/`: Route-level page components.
+- `src/store/`: Zustand stores.

@@ -23,11 +23,12 @@ def test_health_with_valid_api_key_returns_ok(client: TestClient):
     response = client.get("/api/v1/health", headers=auth_headers())
 
     assert response.status_code == 200
-    assert response.json() == {
-        "ok": True,
-        "data": {"status": "healthy", "database": "ok"},
-        "error": None,
-    }
+    data = response.json()
+    assert data["ok"] is True
+    assert data["error"] is None
+    assert data["data"]["status"] == "healthy"
+    assert data["data"]["database"] == "ok"
+    assert "server_time" in data["data"]
 
 
 def test_health_without_api_key_returns_standard_error(client: TestClient):

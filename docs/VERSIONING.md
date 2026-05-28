@@ -1,34 +1,59 @@
 # NARI Versioning Protocol
 
-NARI follows a modified **Semantic Versioning (SemVer 2.0.0)** strategy to reflect its unique stage-based development lifecycle.
+NARI follows a modified Semantic Versioning strategy that reflects its stage-based development lifecycle.
 
 ## Version Format
-`MAJOR.MINOR.PATCH[-SUFFIX]`
 
-### 1. MAJOR (Architectural Shifts)
-Incremented when the fundamental scope of the platform changes.
-- *Example:* Transitioning from a single-user system to a multi-device platform (Year 4+).
-- *Example:* Complete rewrite of the core neural engine.
+```text
+MAJOR.MINOR.PATCH[-SUFFIX]
+```
 
-### 2. MINOR (Build Stages)
-Incremented when a significant **Build Stage** is completed or initiated.
-- *Example:* Moving from Stage 8 (Analytics) to Stage 9 (AI Layer).
-- *Example:* Adding a completely new feature domain (e.g., Habits or Goals).
+## Version Parts
 
-### 3. PATCH (Refinements & Fixes)
-Incremented for small behavioral fixes, UI/UX polishes, or environment recalibrations.
-- *Example:* Static IP calibration (192.168.1.100).
-- *Example:* Bug fixes in the EventBus or ActivityService.
+### MAJOR
 
-### 4. SUFFIX (`-alpha.x`)
-Used during the current pre-release development phase. 
-- *Current Phase:* Alpha (Development & Testing on Server-01).
+Increment for architectural shifts that change the scope of the system.
 
----
+Examples:
+
+- Moving from a single-user system to a multi-user platform.
+- Replacing the core intelligence architecture.
+
+### MINOR
+
+Increment when a significant build stage is completed or initiated.
+
+Examples:
+
+- Moving from Stage 8 analytics to Stage 8.5 PWA/offline support.
+- Moving from Stage 8.5 to Stage 9 local AI.
+- Adding a major feature domain such as goals or habits.
+
+### PATCH
+
+Increment for fixes, refinements, small behavior changes, and deployment improvements.
+
+Examples:
+
+- EventBus bug fixes.
+- ActivityLog consistency fixes.
+- UI polish.
+- Static IP or deployment script calibration.
+
+### SUFFIX
+
+Use suffixes such as `-alpha.x` during pre-release development.
+
+Current phase: alpha development and testing on Server-01.
 
 ## Change Management
-- Every version increment must be reflected in:
-    - `backend/.env` & `backend/app/core/config.py`
-    - `frontend/package.json`
-    - `README.md` & `docs/NARI_Architecture.md`
-- Tag the commit in git for major/minor milestones.
+
+When the version changes, update the relevant places:
+
+- `backend/.env`, when the deployed environment exposes a version.
+- `backend/app/core/config.py`, when the application config exposes a version.
+- `frontend/package.json`.
+- `README.md`.
+- `docs/NARI_Architecture.md`.
+
+Tag major and minor milestones in git.

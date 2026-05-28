@@ -1,6 +1,16 @@
 # NARI Backend
 
-Stage 0 backend foundation for NARI.
+FastAPI backend for NARI. It owns the REST API, business services, SQLite persistence, WebSocket events, scheduler jobs, and ActivityLog emission.
+
+## Tech Stack
+
+- Python 3.12.
+- FastAPI.
+- SQLModel on SQLite with WAL mode.
+- Alembic migrations.
+- APScheduler.
+- WebSockets.
+- `uv` for dependency management.
 
 ## Setup
 
@@ -19,8 +29,7 @@ $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
 uv run alembic upgrade head
 ```
 
-Alembic owns schema changes. Runtime startup only prepares SQLite directories,
-applies WAL pragmas, and checks connectivity.
+Alembic owns schema changes. Runtime startup should only prepare SQLite directories, apply WAL pragmas, and check connectivity.
 
 ## Run
 
@@ -33,24 +42,8 @@ Health check:
 
 ```powershell
 Invoke-RestMethod `
-  -Uri http://192.168.1.100:8000/api/v1/health `
+  -Uri http://127.0.0.1:8000/api/v1/health `
   -Headers @{ Authorization = 'Bearer changeme-your-api-key-here' }
-```
-
-## CLI
-
-From the repo root:
-
-```powershell
-.\nari.ps1 add "Revise physics" --due today --priority high
-.\nari.ps1 list
-.\nari.ps1 done 1
-```
-
-If PowerShell script execution gets in the way, use the batch shim:
-
-```powershell
-.\nari.bat list
 ```
 
 ## Test
@@ -59,3 +52,12 @@ If PowerShell script execution gets in the way, use the batch shim:
 $env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
 uv run pytest
 ```
+
+## Architecture Rules
+
+- Routes validate requests and call services.
+- Services own database access.
+- Services communicate across domains through EventBus.
+- Every state-modifying service method writes to ActivityLog.
+- Timestamps are stored in UTC.
+- Schema changes require Alembic migrations.

@@ -25,6 +25,7 @@ class SubjectUpdate(BaseModel):
     priority: Optional[int] = None
     exam_date: Optional[datetime] = None
     tags: Optional[list[str]] = None
+    archived_at: Optional[datetime] = None
 
 
 class SubjectResponse(SubjectBase):

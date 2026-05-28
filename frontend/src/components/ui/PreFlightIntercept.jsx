@@ -83,9 +83,9 @@ const PreFlightIntercept = () => {
               </p>
             </div>
 
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/5 italic text-xl font-medium text-white/90">
-              "{message}"
-            </div>
+             <div className="bg-white/5 rounded-2xl p-6 border border-white/5 italic text-xl font-medium text-white/90">
+               {message}
+             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button

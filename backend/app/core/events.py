@@ -80,6 +80,35 @@ def get_event_bus() -> EventBus:
 _listeners_setup = False
 
 
+async def _on_reminder_updated(event_name: str, payload: Dict[str, Any]) -> None:
+    """Handle side effects when a reminder is updated or dismissed."""
+    from ..services.task_service import task_service
+    from ..schemas.task import TaskUpdate
+    from ..core.constants import TaskStatus
+    from ..db.session import db_session
+    from sqlmodel import Session
+    from ..core.errors import NariError
+    from ..websocket.events import EventNames
+
+    data = payload.get("data", {})
+    task_id = data.get("task_id")
+
+    if not task_id:
+        return
+
+    with Session(db_session.engine) as session:
+        try:
+            task = task_service.get(session, task_id)
+            if event_name == EventNames.REMINDER_DISMISSED.value:
+                if task.status != TaskStatus.DONE:
+                    await task_service.update(session, task_id, TaskUpdate(status=TaskStatus.DONE))
+            elif event_name == EventNames.REMINDER_UPDATED.value and data.get("status") == "skipped":
+                if task.status != TaskStatus.CANCELLED:
+                    await task_service.update(session, task_id, TaskUpdate(status=TaskStatus.CANCELLED))
+        except NariError:
+            logger.warning("Linked task %s was not found while handling reminder event %s", task_id, event_name)
+
+
 def setup_event_listeners() -> None:
     """Initialize all event subscribers."""
     global _listeners_setup
@@ -141,6 +170,10 @@ def setup_event_listeners() -> None:
         bus.subscribe(event, activity_service.handle_event)
         # Subscribe for WebSocket Broadcasting (Async)
         bus.subscribe(event, broadcast_handler)
+
+    # Cross-service side effects
+    bus.subscribe(EventNames.REMINDER_DISMISSED.value, _on_reminder_updated)
+    bus.subscribe(EventNames.REMINDER_UPDATED.value, _on_reminder_updated)
 
     _listeners_setup = True
     logger.info(f"Initialized {len(activity_events)} event listeners (ActivityLog + WS)")

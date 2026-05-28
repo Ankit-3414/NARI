@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useSubjects, useDeleteSubject, useArchiveSubject } from '../hooks/useStudy';
+import { 
+  useSubjects, useDeleteSubject, useArchiveSubject, useRestoreSubject 
+} from '../hooks/useStudy';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '../components/common/Modal';
 import SubjectForm from '../components/study/SubjectForm';
 import { 
   Plus, Archive, BarChart3, Calendar, Tag, BookOpen, 
-  Trash2, Edit3, ChevronRight, Activity, Search
+  Trash2, Edit3, ChevronRight, Activity, Search, RotateCcw, Filter
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { parseUTC } from '../utils/datetime';
@@ -21,45 +23,75 @@ const item = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
-const SubjectCard = ({ subject, onEdit, onDelete }) => (
-  <motion.div 
-    variants={item}
-    layout
-    className="group relative glass-card p-6 md:p-8 rounded-[2rem] border-white/5 hover:border-white/10 transition-all duration-500 flex flex-col h-full overflow-hidden"
-  >
-    {/* Background Glow */}
-    <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 blur-[60px] rounded-full group-hover:bg-primary/10 transition-colors duration-700" />
-    
-    <div className="flex justify-between items-start mb-6 z-10">
-      <div className="flex-1 min-w-0">
-        <h3 className="font-black text-2xl text-white tracking-tighter uppercase italic truncate group-hover:text-primary transition-colors">
-          {subject.name}
-        </h3>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          <span className="text-[10px] font-mono text-secondary uppercase tracking-[0.2em]">Active Sector</span>
+const SubjectCard = React.forwardRef(({ subject, onEdit, onDelete, onRestore }, ref) => {
+  SubjectCard.displayName = 'SubjectCard';
+  const isArchived = !!subject.archived_at;
+
+  return (
+    <motion.div 
+      ref={ref}
+      variants={item}
+      layout
+      className={clsx(
+        "group relative glass-card p-6 md:p-8 rounded-[2rem] border-white/5 hover:border-white/10 transition-all duration-500 flex flex-col h-full overflow-hidden",
+        isArchived && "opacity-60 grayscale-[0.5] border-dashed"
+      )}
+    >
+      {/* Background Glow */}
+      <div className={clsx(
+        "absolute -top-24 -right-24 w-48 h-48 blur-[60px] rounded-full transition-colors duration-700",
+        isArchived ? "bg-secondary/5" : "bg-primary/5 group-hover:bg-primary/10"
+      )} />
+      
+      <div className="flex justify-between items-start mb-6 z-10">
+        <div className="flex-1 min-w-0">
+          <h3 className={clsx(
+            "font-black text-2xl tracking-tighter uppercase italic truncate transition-colors",
+            isArchived ? "text-secondary" : "text-white group-hover:text-primary"
+          )}>
+            {subject.name}
+          </h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={clsx("w-1.5 h-1.5 rounded-full", isArchived ? "bg-secondary" : "bg-primary")} />
+            <span className="text-[10px] font-mono text-secondary uppercase tracking-[0.2em]">
+              {isArchived ? 'Archived Sector' : 'Active Sector'}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {isArchived ? (
+            <motion.button 
+              whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,242,255,0.1)' }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => onRestore(subject.id)}
+              className="p-2.5 rounded-xl bg-primary/10 text-primary hover:text-white transition-colors border border-primary/20"
+              title="Restore Sector"
+            >
+              <RotateCcw size={16} />
+            </motion.button>
+          ) : (
+            <React.Fragment>
+              <motion.button 
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onEdit(subject)}
+                className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-white transition-colors border border-white/5"
+              >
+                <Edit3 size={16} />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,0,85,0.1)' }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onDelete(subject.id)}
+                className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-danger transition-colors border border-white/5"
+              >
+                <Archive size={16} />
+              </motion.button>
+            </React.Fragment>
+          )}
         </div>
       </div>
-      
-      <div className="flex items-center gap-2">
-        <motion.button 
-          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => onEdit(subject)}
-          className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-white transition-colors border border-white/5"
-        >
-          <Edit3 size={16} />
-        </motion.button>
-        <motion.button 
-          whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,0,85,0.1)' }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => onDelete(subject.id)}
-          className="p-2.5 rounded-xl bg-white/5 text-secondary hover:text-danger transition-colors border border-white/5"
-        >
-          <Trash2 size={16} />
-        </motion.button>
-      </div>
-    </div>
     
     {subject.description ? (
       <p className="text-secondary text-sm font-medium mb-8 line-clamp-2 z-10 flex-grow leading-relaxed">
@@ -95,15 +127,18 @@ const SubjectCard = ({ subject, onEdit, onDelete }) => (
       </div>
     </div>
   </motion.div>
-);
+  );
+});
 
 const SubjectsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [editingSubject, setEditingSubject] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: subjects, isLoading, error } = useSubjects();
-  const deleteSubject = useDeleteSubject();
+  const { data: subjects, isLoading, error } = useSubjects(showArchived);
+  const archiveSubject = useArchiveSubject();
+  const restoreSubject = useRestoreSubject();
 
   const handleEdit = (subject) => {
     setEditingSubject(subject);
@@ -111,8 +146,14 @@ const SubjectsPage = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to terminate this subject? All associated data will be purged.')) {
-      deleteSubject.mutate(id);
+    if (window.confirm('Archive this knowledge sector? All linked data will be preserved but hidden from active views.')) {
+      archiveSubject.mutate(id);
+    }
+  };
+
+  const handleRestore = (id) => {
+    if (window.confirm('Restore this knowledge sector to the active network?')) {
+      restoreSubject.mutate(id);
     }
   };
 
@@ -154,10 +195,22 @@ const SubjectsPage = () => {
             </div>
             <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">Knowledge Hub</h1>
           </div>
-          <p className="text-secondary font-mono text-xs tracking-[0.3em] ml-16">Active Subjects: {subjects?.length || 0}</p>
+          <p className="text-secondary font-mono text-xs tracking-[0.3em] ml-16">
+            {showArchived ? 'Archived' : 'Active'} Subjects: {subjects?.length || 0}
+          </p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-4">
+          <button 
+            onClick={() => setShowArchived(!showArchived)}
+            className={clsx(
+              "flex items-center gap-2 px-4 py-3.5 rounded-2xl border transition-all font-bold text-xs uppercase tracking-widest",
+              showArchived ? "bg-secondary text-black border-secondary" : "bg-white/5 text-secondary border-white/5 hover:border-white/20"
+            )}
+          >
+            <Archive size={16} /> {showArchived ? 'Hide Archives' : 'View Archives'}
+          </button>
+          
           <div className="relative group w-full sm:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-primary transition-colors" size={18} />
             <input 
@@ -212,6 +265,7 @@ const SubjectsPage = () => {
                 subject={subject} 
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onRestore={handleRestore}
               />
             ))}
           </AnimatePresence>

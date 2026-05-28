@@ -1,80 +1,111 @@
 # NARI System Verification Checklist
 
-## Phase 1: Backend API & Business Logic (Current Status: [DONE])
+This checklist records the current verified system surface for v1.0.0-alpha.7. It is a status reference, not a full test plan.
+
+## Phase 1: Backend API and Business Logic
+
+Current status: done.
 
 ### Core Infrastructure
-- [x] **Health & Auth:** `GET /api/v1/health` returns 200 with valid key, 401 without.
-- [x] **Database:** SQLite WAL mode is active.
-- [x] **Migrations:** All tables (`tasks`, `study_sessions`, `notes`, `reminders`, `goals`, `habits`, `activity_logs`, `task_history`) exist.
-- [x] **Scheduler:** APScheduler is running and polling (verified via logs).
-- [x] **WebSockets:** Server accepts connections at `/ws?token=...` (verified via `test_ws_connection.py`).
+
+- [x] Health and auth: `GET /api/v1/health` returns 200 with a valid key and 401 without one.
+- [x] Database: SQLite WAL mode is active.
+- [x] Migrations: Core tables exist for tasks, study sessions, notes, reminders, goals, habits, activity logs, and task history.
+- [x] Scheduler: APScheduler runs reminder polling jobs.
+- [x] WebSockets: Server accepts connections at `/ws?token=...`.
 
 ### Task Management
-- [x] **CRUD:** Create, Read, List (with filters) verified via CLI.
-- [x] **Transitions:** Complete/Reopen works and updates `completed_at` (tested in Stage 1/2).
-- [x] **History:** `task_history` records all changes (verified via CLI `history`).
-- [x] **Logging:** All actions written to `activity_log` (verified via CLI `activity`).
 
-### Study & Subjects
-- [x] **Subjects:** CRUD and archiving works (verified via CLI).
-- [x] **Session Lifecycle:** Start -> Pause -> Resume -> Stop cycle calculates duration (verified via CLI `study-status`).
-- [x] **Interruptions:** Pause increments `interrupt_count` (verified in tests).
-- [x] **Stats:** `GET /study/today` returns accurate cumulative time (verified in tests).
+- [x] CRUD: Create, read, list, and filter work through the CLI/API.
+- [x] Transitions: Complete and reopen update state and timestamps.
+- [x] History: `task_history` records task changes.
+- [x] Logging: Task actions write ActivityLog entries.
 
-### Notes & Versions
-- [x] **Versioning:** Every `PATCH` creates a new entry in `note_versions` (verified via CLI `note-history`).
-- [x] **Content:** Markdown content is stored and retrieved correctly.
+### Study and Subjects
 
-### Goals & Habits
-- [x] **Habits:** Logging completion updates `current_streak`. (Bug fix: added missing events in `EventNames`).
-- [x] **Goals:** Progress increments update `current_value` and auto-complete (verified via CLI).
+- [x] Subjects: CRUD and archiving work.
+- [x] Session lifecycle: Start, pause, resume, and stop calculate session duration.
+- [x] Interruptions: Pause increments interruption count.
+- [x] Stats: Study summary endpoints return daily cumulative time.
+
+### Notes and Versions
+
+- [x] Versioning: Note updates create `note_versions` entries.
+- [x] Content: Markdown content is stored and retrieved correctly.
+
+### Goals and Habits
+
+- [x] Habits: Completion logging updates streak state.
+- [x] Goals: Progress updates current value and can auto-complete goals.
 
 ### Analytics
-- [x] **Summary:** Dashboard summary returns aggregate data (verified via curl).
-- [x] **Trends:** Study trends return correct daily buckets (verified via curl).
 
----
+- [x] Summary: Dashboard summary returns aggregate data.
+- [x] Trends: Study trends return daily buckets.
 
-## Phase 2: Frontend UI/UX (Current Status: [DONE])
+## Phase 2: Frontend UI and UX
 
-### Dashboard (Today Page)
-- [x] **Quick Stats:** Focus time and Task count reflect real backend data.
-- [x] **Active Session:** Timer widget appears when a session is running.
-- [x] **Today's Tasks:** Shows only pending/relevant tasks.
-- [x] **Habit Widget:** One-click completion works.
+Current status: done.
+
+### Dashboard
+
+- [x] Quick stats reflect backend data.
+- [x] Active session timer appears when a study session is running.
+- [x] Today's tasks show pending and relevant tasks.
+- [x] Habit widget supports one-click completion.
+- [x] Context input supports fast daily logging.
 
 ### Feature Pages
-- [x] **Tasks:** Filters and list view work.
-- [x] **Study:** Subject selection and session controls work.
-- [x] **Notes:** Markdown preview and editor work.
-- [x] **Analytics:** Bar/Pie charts render with data.
-- [x] **Reminders:** Notification dot and list view include triggered signals; scheduler trigger path covered by tests.
+
+- [x] Tasks: Filters and list view work.
+- [x] Study: Subject selection and session controls work.
+- [x] Notes: Markdown preview, editor, and version history work.
+- [x] Analytics: Charts render with backend data.
+- [x] Reminders: Notification state and triggered signals appear in app surfaces.
+- [x] Goals and habits: Progress and streak workflows are available.
 
 ### Global Features
-- [x] **WebSocket Sync:** UI updates instantly (verified backend emitting logic and frontend cache invalidation).
-- [x] **Auth Gate:** LoginPage appears if API key is missing (verified security middleware).
-- [x] **Responsiveness:** Layout works on mobile-sized viewports (verified `MobileLayout.jsx` logic).
 
----
+- [x] WebSocket sync updates the UI without refresh.
+- [x] Auth gate appears when the API key is missing.
+- [x] Responsive layout works on mobile and desktop.
+- [x] Offline status is visible in the UI.
 
-## Phase 3: CLI Thin Client (Current Status: [DONE])
-- [x] **Tasks:** `list`, `add`, `done` work.
-- [x] **Study:** `study-start`, `study-stop` work.
-- [x] **Goals/Habits:** New commands work as expected.
+## Phase 3: CLI Thin Client
 
----
+Current status: done.
 
-## Phase 4: Neural Offline Protocol (Current Status: [DONE])
+- [x] Tasks: `list`, `add`, and `done` work.
+- [x] Study: `study-start` and `study-stop` work.
+- [x] Goals and habits: Commands work as expected.
+- [x] Context Stream: `tell` logs raw context.
+
+## Phase 4: Neural Offline Protocol
+
+Current status: done.
 
 ### Progressive Web App
-- [x] **Installable:** Manifest configured and verified on mobile.
-- [x] **Identity:** Custom NARI icons and splash screens integrated.
-- [x] **Service Worker:** Offline caching for all static assets.
+
+- [x] Manifest configured for installation.
+- [x] Icons and splash assets are integrated.
+- [x] Service worker caches static assets.
 
 ### Data Persistence
-- [x] **IndexedDB:** Dexie.js integrated for local caching of all entities.
-- [x] **Offline HUD:** Real-time connectivity indicators in header.
+
+- [x] IndexedDB is integrated for local entity caching.
+- [x] Offline indicators show connectivity state.
 
 ### Sync Engine
-- [x] **Background Sync:** Queued actions for Tasks, Notes, Habits, Goals, and Subjects.
-- [x] **Automatic Reconciliation:** Server update on reconnection verified.
+
+- [x] Offline actions queue for core entities.
+- [x] Reconnection reconciles queued changes with the server.
+
+## Phase 5: Stage 9 Readiness
+
+Current status: pending.
+
+- [ ] Intent engine design finalized.
+- [ ] Semantic memory storage selected.
+- [ ] Retrieval/indexing boundary defined.
+- [ ] Nightly consolidation job design finalized.
+- [ ] First useful AI suggestion workflow implemented.

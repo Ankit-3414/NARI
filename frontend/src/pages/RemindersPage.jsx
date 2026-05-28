@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReminders, useReminderActions } from '../hooks/useReminders';
 import { 
   Bell, Plus, Clock, X, Trash2, Edit3, Save, 
-  CheckCircle2, AlertTriangle, Zap, Search, Activity
+  CheckCircle2, AlertTriangle, Zap, Search, Activity, ShieldCheck
 } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { parseUTC } from '../utils/datetime';
@@ -21,9 +21,10 @@ const item = {
   show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
-const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggleActive }) => {
+const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggleActive, onLockIn }) => {
   const isTriggered = reminder.status === 'triggered';
   const isActive = reminder.is_active;
+  const canLockIn = reminder.status === 'scheduled' && isActive && !reminder.locked_in;
 
   return (
     <motion.div 
@@ -32,6 +33,7 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
       className={clsx(
         "group relative glass-card p-5 rounded-[2rem] border-white/5 transition-all duration-300 flex flex-col gap-4",
         isTriggered ? "bg-danger/5 border-danger/20 shadow-[0_0_30px_rgba(255,0,85,0.05)]" : "bg-surface/50",
+        reminder.locked_in ? "border-success/30 bg-success/5" : "",
         !isActive && "opacity-60 grayscale-[0.5]"
       )}
     >
@@ -40,14 +42,16 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
           <div className={clsx(
             "p-2 rounded-xl border transition-all",
             isTriggered ? "bg-danger/20 text-danger border-danger/30 animate-pulse" : 
+            reminder.locked_in ? "bg-success/20 text-success border-success/30" :
             isActive ? "bg-white/5 text-secondary border-white/5" : "bg-black/20 text-slate-600 border-white/5"
           )}>
-            <Bell size={18} />
+            {reminder.locked_in ? <ShieldCheck size={18} /> : <Bell size={18} />}
           </div>
           <div className="min-w-0">
             <h3 className={clsx(
               "font-black uppercase tracking-tight truncate transition-colors",
               isTriggered ? "text-danger" : 
+              reminder.locked_in ? "text-success" :
               isActive ? "text-white group-hover:text-primary" : "text-slate-500"
             )}>
               {reminder.title}
@@ -55,9 +59,11 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
             <div className="flex items-center gap-2 mt-0.5">
               <span className={clsx(
                 "text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-lg border",
-                isTriggered ? "bg-danger/10 border-danger/10 text-danger" : "bg-background/50 border-white/5 text-secondary"
+                isTriggered ? "bg-danger/10 border-danger/10 text-danger" : 
+                reminder.locked_in ? "bg-success/10 border-success/10 text-success" :
+                "bg-background/50 border-white/5 text-secondary"
               )}>
-                {isActive ? reminder.status : 'inactive'}
+                {reminder.locked_in ? 'LOCKED-IN' : isActive ? reminder.status : 'inactive'}
               </span>
               <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
                 <Clock size={10} /> {format(parseUTC(reminder.due_at), 'MMM d, HH:mm')}
@@ -69,10 +75,12 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
         <div className="flex items-center gap-2">
           {/* Active/Deactivate Toggle */}
           <button 
+            disabled={reminder.locked_in}
             onClick={() => onToggleActive(reminder.id, !isActive)}
             className={clsx(
               "w-8 h-4 rounded-full relative transition-all duration-300",
-              isActive ? "bg-primary/40" : "bg-white/10"
+              isActive ? "bg-primary/40" : "bg-white/10",
+              reminder.locked_in && "opacity-50 cursor-not-allowed"
             )}
           >
             <div className={clsx(
@@ -100,17 +108,28 @@ const ReminderCard = ({ reminder, onEdit, onRemove, onDismiss, onSnooze, onToggl
           >
             Acknowledge
           </button>
+        ) : canLockIn ? (
+          <button 
+            onClick={() => onLockIn(reminder.id)}
+            className="flex-1 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary hover:bg-primary hover:text-black font-black uppercase tracking-widest text-[9px] transition-all"
+          >
+            Intercept Signal (Lock-In)
+          </button>
         ) : (
           <button 
             disabled 
             className="flex-1 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-700 font-bold uppercase tracking-widest text-[9px] cursor-default"
           >
-            {isActive ? 'Signal Armed' : 'Signal Offline'}
+            {reminder.locked_in ? 'Confirmed Attendance' : isActive ? 'Signal Armed' : 'Signal Offline'}
           </button>
         )}
         <button 
+          disabled={isTriggered || reminder.locked_in}
           onClick={() => onSnooze(reminder.id)}
-          className="px-4 py-2 rounded-xl bg-surface-light border border-white/5 text-secondary hover:text-white font-bold uppercase tracking-widest text-[9px] transition-all"
+          className={clsx(
+            "px-4 py-2 rounded-xl bg-surface-light border border-white/5 text-secondary font-bold uppercase tracking-widest text-[9px] transition-all",
+            (isTriggered || reminder.locked_in) ? "opacity-50 cursor-not-allowed" : "hover:text-white"
+          )}
         >
           Snooze
         </button>
@@ -201,6 +220,7 @@ const RemindersPage = () => {
                   onDismiss={actions.dismiss}
                   onSnooze={(id) => actions.snooze({ id, minutes: 15 })}
                   onToggleActive={(id, active) => actions.update({ id, is_active: active })}
+                  onLockIn={actions.lockIn}
                 />
               ))
             )}
@@ -231,6 +251,7 @@ const RemindersPage = () => {
                     onDismiss={actions.dismiss}
                     onSnooze={(id) => actions.snooze({ id, minutes: 15 })}
                     onToggleActive={(id, active) => actions.update({ id, is_active: active })}
+                    onLockIn={actions.lockIn}
                   />
                 ))
               )}

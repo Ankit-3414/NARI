@@ -3,7 +3,7 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
-  Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3
+  Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3, Terminal
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -329,6 +329,7 @@ const MobileLayout = () => {
           <NavItem to="/study" icon={BookOpen} label="Focus" />
           <NavItem to="/goals" icon={Target} label="Goals" />
           <NavItem to="/habits" icon={Zap} label="Habits" />
+          <NavItem to="/context" icon={Terminal} label="Context" />
           <NavItem to="/analytics" icon={BarChart3} label="Insights" />
           <NavItem to="/subjects" icon={Layers} label="Hub" />
           <NavItem to="/notes" icon={StickyNote} label="Vault" />

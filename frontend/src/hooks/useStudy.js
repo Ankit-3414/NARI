@@ -76,8 +76,19 @@ export const useArchiveSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id) => {
-      // If there is no dedicated archive endpoint, we use update
-      const response = await client.patch(`/subjects/${id}`, { is_archived: true });
+      // Backend delete is actually soft-delete (archive)
+      const response = await client.delete(`/subjects/${id}`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),
+  });
+};
+
+export const useRestoreSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await client.patch(`/subjects/${id}`, { archived_at: null });
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subjects'] }),

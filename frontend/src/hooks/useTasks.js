@@ -136,3 +136,14 @@ export const useCompleteTask = () => {
     },
   });
 };
+
+export const useTaskHistory = (taskId) => {
+  return useQuery({
+    queryKey: ['tasks', taskId, 'history'],
+    queryFn: async () => {
+      const response = await client.get(`/tasks/${taskId}/history`);
+      return response.data;
+    },
+    enabled: !!taskId && navigator.onLine,
+  });
+};

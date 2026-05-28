@@ -22,6 +22,7 @@ class NoteUpdate(BaseModel):
     subject_id: Optional[int] = None
     tags: Optional[list[str]] = None
     change_note: Optional[str] = None
+    archived_at: Optional[datetime] = None
 
 
 class NoteVersionResponse(BaseModel):

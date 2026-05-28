@@ -42,6 +42,17 @@ export const useNote = (noteId) => {
   });
 };
 
+export const useNoteVersions = (noteId) => {
+  return useQuery({
+    queryKey: ['notes', noteId, 'versions'],
+    queryFn: async () => {
+      const response = await client.get(`/notes/${noteId}/versions`);
+      return response.data;
+    },
+    enabled: !!noteId && navigator.onLine,
+  });
+};
+
 export const useNoteActions = () => {
   const queryClient = useQueryClient();
 
@@ -71,6 +82,7 @@ export const useNoteActions = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       queryClient.setQueryData(['notes', data.id], data);
+      queryClient.invalidateQueries({ queryKey: ['notes', data.id, 'versions'] });
     },
   });
 
@@ -89,12 +101,38 @@ export const useNoteActions = () => {
     },
   });
 
+  const restoreMutation = useMutation({
+    mutationFn: async ({ id, versionId }) => {
+      const response = await client.post(`/notes/${id}/restore/${versionId}`);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      queryClient.setQueryData(['notes', data.id], data);
+      queryClient.invalidateQueries({ queryKey: ['notes', data.id, 'versions'] });
+    },
+  });
+
+  const restoreArchivedMutation = useMutation({
+    mutationFn: async (id) => {
+      const response = await client.patch(`/notes/${id}`, { archived_at: null });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    },
+  });
+
   return {
     create: createMutation.mutate,
     update: updateMutation.mutate,
     remove: deleteMutation.mutate,
+    restore: restoreMutation.mutate,
+    restoreArchived: restoreArchivedMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isRemoving: deleteMutation.isPending,
+    isRestoring: restoreMutation.isPending,
+    isRestoringArchived: restoreArchivedMutation.isPending,
   };
 };

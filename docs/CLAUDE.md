@@ -1,111 +1,152 @@
-# NARI - Development Guide (v1.0.0-alpha.7)
+# NARI Development Guide
 
 ## Project Context
 
-NARI (Not A Random Intelligence) is a self-hosted personal productivity platform. We follow Semantic Versioning (SemVer) starting from v1.0.0-alpha.x.
+NARI (Not A Random Intelligence) is a self-hosted, local-first personal productivity platform. It combines task management, study tracking, notes, goals, habits, reminders, offline access, and behavioral analytics.
 
-**Hardware:** Intel i5-2400S, 8GB RAM, 500GB HDD, Ubuntu Server 24.04 LTS
-**Tech Stack:** Python 3.12 + FastAPI + SQLModel + SQLite (backend), React + Vite + Tailwind (frontend)
+**Current status:** Stage 8.5 complete. NARI has analytics, PWA installation, offline caching, IndexedDB persistence, and background sync. Stage 9, the local AI layer, is next.
+
+**Hardware:** Intel i5-2400S, 8 GB RAM, 500 GB HDD, Ubuntu Server 24.04 LTS.
+**Backend:** Python 3.12, FastAPI, SQLModel, SQLite WAL, Alembic, APScheduler.
+**Frontend:** React, Vite, Tailwind CSS, TanStack Query, Zustand, Lucide React.
 
 ## CLI Usage
 
-The NARI CLI can be invoked using the utility scripts at the project root:
-- **Windows (CMD):** `nari <command>`
-- **Windows (PowerShell):** `.\nari <command>`
-- **Linux:** `./nari.sh <command>`
+The NARI CLI can be invoked through the root utility scripts:
 
-These scripts automatically use the project's virtual environment or `uv`.
+- Windows CMD: `nari <command>`
+- Windows PowerShell: `.\nari <command>`
+- Linux: `./nari.sh <command>`
 
-## Linux Setup & Maintenance
+These scripts use the project virtual environment or `uv`.
 
-On a fresh Linux (Ubuntu 24.04) server, run:
+## Linux Setup and Maintenance
+
+Fresh Ubuntu 24.04 server:
+
 ```bash
 chmod +x setup.sh
-./setup.sh
+sudo ./setup.sh
 ```
 
-To update NARI on production, use the **Neural Upgrade Engine**:
+Production update:
+
 ```bash
 chmod +x update.sh
-./update.sh
+sudo ./update.sh
 ```
 
-## Build Stages (Follow Sequentially)
+## Developer Commands
 
-1. **Stage 0 - Skeleton** (3-5 days): Backend foundation, health endpoint, ActivityLog
-2. **Stage 1 - Tasks** (7-10 days): CLI task management - stop using other tools
-3. **Stage 2 - Subjects + Study** (7-10 days): Study session tracking with interruptions
-4. **Stage 3 - Notes** (7-10 days): Versioned notes with full-text search
-5. **Stage 4 - Web Dashboard** (2 weeks): Desktop-focused React interface
-6. **Stage 5 - WebSockets** (5-7 days): Live updates without refresh
-7. **Stage 6 - Reminders** (5-7 days): Browser notifications and scheduler
-8. **Stage 7 - Goals + Habits** (1-2 weeks): Long-term vision tracking
-9. **Stage 8 - Analytics** (5-7 days): Behavioral pattern recognition
-10. **Stage 9 - AI Layer** (1 week): Ollama Llama 3.1 8B for local insights
+### Backend
 
-**Rule:** Never start a new stage until the current stage is in daily use.
+```powershell
+$env:UV_CACHE_DIR='C:\tmp\uv-cache-nari'
+uv sync
+Copy-Item .env.example .env
+uv run alembic upgrade head
+uv run python run.py
+uv run pytest
+```
 
-## Engineering Rules (Non-Negotiable)
+### Frontend
 
-1. **Routes never touch the database** - Routes call services, services touch DB
-2. **Services never call other services directly** - Use event bus for cross-service communication
-3. **Every service method that modifies state writes to ActivityLog** - No exceptions
-4. **Files stay under 250 lines** - Split if larger
-5. **Robust Permission Protocol** - Directories: 755 | Files: 644 | Scripts: +x. Ownership MUST be current user.
-6. **All services follow the same pattern** - create(), get(), list(), update(), delete()
-7. **The CLI calls the API** - Never imports from backend app directly
-8. **All timestamps are stored as UTC** - Timezone conversion at presentation layer
-9. **Never hard-delete subjects or notes** - Use archived_at. Tasks use status=cancelled
-10. **Schema changes require an Alembic migration** - Never modify DB directly in production
+Run from `frontend/`:
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Build Stages
+
+1. **Stage 0 - Skeleton:** Backend foundation, health endpoint, ActivityLog.
+2. **Stage 1 - Tasks:** CLI task management.
+3. **Stage 2 - Subjects and Study:** Study session tracking with interruptions.
+4. **Stage 3 - Notes:** Versioned notes with full-text search readiness.
+5. **Stage 4 - Web Dashboard:** Responsive React dashboard.
+6. **Stage 5 - WebSockets:** Live updates without refresh.
+7. **Stage 6 - Reminders:** Browser notifications and scheduler.
+8. **Stage 7 - Goals and Habits:** Long-term vision tracking.
+9. **Stage 8 - Analytics:** Behavioral pattern recognition.
+10. **Stage 8.5 - PWA and Offline:** Installable app, local cache, IndexedDB, background sync.
+11. **Stage 9 - AI Layer:** Local intent engine, semantic memory, retrieval, and lightweight model pipeline.
+
+Rule: do not start a new stage until the current stage is useful in daily use.
+
+## Engineering Rules
+
+1. Routes never touch the database; routes call services.
+2. Services do not call other services directly; use EventBus.
+3. Every service method that modifies state writes to ActivityLog.
+4. Keep files under 250 lines when practical.
+5. Follow service method patterns such as `create()`, `get()`, `list()`, `update()`, and `delete()`.
+6. The CLI calls the API over HTTP and never imports backend internals.
+7. Store all timestamps in UTC.
+8. Convert timezone only in the UI or CLI.
+9. Never hard-delete subjects or notes; use `archived_at`.
+10. Tasks should use status transitions such as completed or cancelled.
+11. Schema changes require Alembic migrations.
+12. Build and test UI mobile-first, while keeping desktop layouts polished.
 
 ## File Structure Rules
 
-```
+```text
 backend/app/
-├── main.py              # FastAPI entry point
-├── api/v1/              # Routes ONLY - no DB logic
-├── core/                # config.py, security.py, events.py, logging.py
-├── db/session.py        # SQLModel engine with WAL mode
-├── models/              # SQLModel Table classes (DB layer)
-├── schemas/             # Pydantic BaseModel classes (API layer)
-├── services/            # Business logic - all follow same pattern
-├── websocket/           # manager.py, handlers.py, events.py
-├── scheduler/           # APScheduler setup and jobs
-└── ai/                  # EMPTY - reserved for Stage 9
+  main.py              FastAPI entry point
+  api/v1/              Routes only; no DB logic
+  core/                Config, security, EventBus, logging
+  db/session.py        SQLModel engine with WAL mode
+  models/              SQLModel table classes
+  schemas/             Pydantic API models
+  services/            Business logic and ActivityLog emission
+  websocket/           WebSocket manager and handlers
+  scheduler/           APScheduler setup and jobs
+  ai/                  Reserved for Stage 9
 ```
 
 ## ActivityLog Rules
 
-1. Every service method that modifies state MUST write to ActivityLog
-2. ActivityLog writes happen AFTER successful DB commit
-3. ActivityLog is append-only - never update or delete
-4. If ActivityLog write fails, log error but don't roll back main operation
-5. Use background task if writes become slow
+1. Every state-modifying service method must write to ActivityLog.
+2. ActivityLog writes happen after the successful database commit.
+3. ActivityLog is append-only.
+4. If ActivityLog writing fails, log the error without rolling back the main operation.
+5. Use background work if ActivityLog writes become slow.
 
 ## Development Checklist
 
-- [x] Stage 0: Health endpoint returns `{"ok": true}` with valid API key
-- [x] Stage 1: Stopped using other task managers, CLI works
-- [x] Stage 2: Every study session tracked through NARI
-- [x] Stage 3: All notes centralized with version history
-- [x] Stage 4: Web dashboard responsive on desktop
-- [x] Stage 5: Changes appear live without page refresh
-- [x] Stage 6: Reminders trigger browser notifications
-- [x] Stage 7: Goals and habits in daily use
-- [x] Stage 8: Analytics show meaningful patterns
-- [x] Stage 8.5: **Neural Offline Protocol (PWA)** - 100% offline parity and background sync
-- [ ] Stage 9: AI provides useful suggestions
+- [x] Stage 0: Health endpoint and ActivityLog.
+- [x] Stage 1: CLI task management.
+- [x] Stage 2: Subjects and study sessions.
+- [x] Stage 3: Versioned notes.
+- [x] Stage 4: Responsive web dashboard.
+- [x] Stage 5: WebSocket live updates.
+- [x] Stage 6: Scheduler and browser reminders.
+- [x] Stage 7: Goals and habits.
+- [x] Stage 8: Analytics HUD.
+- [x] Stage 8.5: PWA, offline cache, IndexedDB, and background sync.
+- [ ] Stage 9: Local AI layer provides useful suggestions and intent routing.
 
-## Response Contract (Always Use)
+## Response Contract
 
 ```json
-// Success
-{"ok": true, "data": {}, "error": null}
-
-// Error
-{"ok": false, "data": null, "error": {"code": "TASK_NOT_FOUND", "message": "Task with id 42 does not exist"}}
+{
+  "ok": true,
+  "data": {},
+  "error": null
+}
 ```
 
-## Current Status
-
-Stage 8.5 complete. **Neural Offline Protocol (PWA)** implemented with IndexedDB caching and background synchronization across all core entities. NARI is now a mobile-installable, local-first system. Moving to Stage 9 - AI Layer (Ollama Integration).
+```json
+{
+  "ok": false,
+  "data": null,
+  "error": {
+    "code": "TASK_NOT_FOUND",
+    "message": "Task with id 42 does not exist"
+  }
+}
+```

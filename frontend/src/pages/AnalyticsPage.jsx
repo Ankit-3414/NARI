@@ -4,14 +4,16 @@ import {
   useTemporalPerformance, 
   useNeuralHeatmap, 
   useSubjectDistribution,
-  useTaskStats
+  useTaskStats,
+  useStudyTrends
 } from '../hooks/useAnalytics';
 import PerformanceChart from '../components/analytics/PerformanceChart';
 import NeuralHeatmap from '../components/analytics/NeuralHeatmap';
 import SubjectRadar from '../components/analytics/SubjectRadar';
+import StudyTrendsChart from '../components/analytics/StudyTrendsChart';
 import { 
   BarChart3, Activity, Brain, Clock, 
-  Target, Zap, TrendingUp, ShieldCheck 
+  Target, Zap, TrendingUp, ShieldCheck, LineChart
 } from 'lucide-react';
 
 const AnalyticsPage = () => {
@@ -19,6 +21,7 @@ const AnalyticsPage = () => {
   const { data: heatmap, isLoading: heatmapLoading } = useNeuralHeatmap();
   const { data: distribution, isLoading: distLoading } = useSubjectDistribution();
   const { data: taskStats, isLoading: taskLoading } = useTaskStats();
+  const { data: studyTrends, isLoading: trendsLoading } = useStudyTrends(14);
 
   const container = {
     hidden: { opacity: 0 },
@@ -105,6 +108,20 @@ const AnalyticsPage = () => {
           </div>
         </div>
         <NeuralHeatmap data={heatmap} />
+      </motion.section>
+
+      {/* Study Trends */}
+      <motion.section variants={item} className="glass-card p-8 rounded-[2.5rem] border-white/5">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <LineChart size={20} className="text-primary" />
+            <h2 className="text-sm font-black uppercase tracking-widest text-white">Focus Velocity</h2>
+          </div>
+          <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-mono text-secondary uppercase tracking-widest">
+            Last 14 Days
+          </div>
+        </div>
+        <StudyTrendsChart data={studyTrends} />
       </motion.section>
 
       {/* Secondary Charts Grid */}

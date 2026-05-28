@@ -129,13 +129,6 @@ class ReminderService:
     async def skip(self, session: Session, reminder_id: int) -> Reminder:
         """Skip today's reminder (Intentional Skip)."""
         reminder = self.get(session, reminder_id)
-        
-        # If there's a linked task, cancel it for today
-        if reminder.task_id:
-            from .task_service import task_service
-            from ..schemas.task import TaskUpdate
-            from ..core.constants import TaskStatus
-            await task_service.update(session, reminder.task_id, TaskUpdate(status=TaskStatus.CANCELLED))
 
         # Mark as skipped and reschedule if recurring
         return await self.dismiss(session, reminder_id, resolution=ReminderStatus.SKIPPED)
@@ -158,22 +151,10 @@ class ReminderService:
     async def dismiss(self, session: Session, reminder_id: int, resolution: ReminderStatus = ReminderStatus.DISMISSED) -> Reminder:
         """Dismiss a reminder and reschedule if recurring."""
         from dateutil.rrule import rrulestr
-        
+
         reminder = self.get(session, reminder_id)
         reminder.status = resolution
         reminder.updated_at = utc_now()
-        
-        # If it was attended (DISMISSED) and had a linked task, mark task as done if not already
-        if resolution == ReminderStatus.DISMISSED and reminder.task_id:
-            from .task_service import task_service
-            from ..schemas.task import TaskUpdate
-            from ..core.constants import TaskStatus
-            try:
-                task = task_service.get(session, reminder.task_id)
-                if task.status != TaskStatus.DONE:
-                    await task_service.update(session, reminder.task_id, TaskUpdate(status=TaskStatus.DONE))
-            except NariError:
-                logger.warning("Linked task %s was not found while dismissing reminder %s", reminder.task_id, reminder.id)
 
         # Handle Recurrence
         if reminder.repeat_rule:

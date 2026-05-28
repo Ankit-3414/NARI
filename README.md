@@ -1,104 +1,116 @@
-# 🌌 NARI (Not A Random Intelligence)
+# NARI (Not A Random Intelligence)
 
-**NARI** is a local-first, self-hosted personal productivity platform designed to be your private "Personal Operating System." It integrates task management, study tracking, notes, goals, habits, and behavioral analytics into a single, cohesive intelligence layer.
+**NARI** is a local-first, self-hosted personal productivity platform designed to act as a private personal operating system. It combines task management, study tracking, notes, goals, habits, reminders, offline access, and behavioral analytics into one cohesive system.
 
-> **Philosophy:** AI-ready but AI-deferred. NARI logs every meaningful action to build a rich behavioral dataset, preparing for local AI integration (Stage 9) while remaining fully functional without it.
-
----
-
-## 🚀 Key Features
-
-*   **Pre-Flight Intercept:** Proactive real-time signal monitoring that detects upcoming tasks and reminders before they trigger.
-*   **Ghost Protocol:** Automated resolution engine that handles "ghosted" or missed signals by auto-completing or rescheduling them based on behavioral rules.
-*   **Task Intelligence:** Advanced task management with history tracking, priorities, and smart "Today" views.
-*   **Study Core:** Deep focus timer with subject-specific tracking, interruption logging, and session analytics.
-*   **Neural Notes:** Markdown-based note-taking with automatic version history and full-text search.
-*   **Vision Tracking:** Integrated Goals and Habits with streak management and progress HUDs.
-*   **Behavioral HUD:** Real-time analytics engine that visualizes your productivity patterns.
-*   **Neural Link:** Standardized API-first architecture with WebSocket-driven real-time UI updates.
+> **Philosophy:** AI-ready but AI-deferred. NARI logs meaningful activity from day one so a useful behavioral dataset exists before the Stage 9 AI layer arrives. The system remains fully usable without AI.
 
 ---
 
-## 🛠 Tech Stack
+## Key Features
 
-*   **Backend:** Python 3.12, FastAPI, SQLModel (SQLAlchemy + Pydantic), SQLite (WAL Mode).
-*   **Frontend:** React (Vite), Tailwind CSS, TanStack Query, Zustand, Lucide Icons.
-*   **CLI:** Thin Python HTTP client for power-user interaction.
-*   **Infrastructure:** Nginx (Reverse Proxy), Systemd (Service management), `uv` (Fast dependency management).
+- **Task Intelligence:** Task management with priorities, status transitions, history tracking, and focused "Today" views.
+- **Study Core:** Subject-based focus sessions with pause/resume, interruption tracking, and daily study analytics.
+- **Neural Notes:** Markdown notes with automatic version history and search-ready content.
+- **Vision Tracking:** Goals and habits with progress tracking, streaks, and daily check-ins.
+- **Reminders:** Scheduler-backed reminders with browser notifications and missed-signal handling.
+- **Context Stream:** Fast natural-language logging through the CLI, API, and dashboard.
+- **Behavioral HUD:** Analytics for tasks, study, habits, goals, and activity patterns.
+- **Neural Offline Protocol:** PWA installation, local caching, IndexedDB persistence, and background sync for core entities.
+- **Neural Link:** API-first architecture with WebSocket-driven real-time UI updates.
 
 ---
 
-## 📦 Installation & Deployment
+## Tech Stack
 
-### One-Click Setup (Ubuntu 24.04 / Debian)
-Port the codebase to your server and run the master setup engine:
+- **Backend:** Python 3.12, FastAPI, SQLModel, SQLite with WAL mode, Alembic, APScheduler.
+- **Frontend:** React, Vite, Tailwind CSS, TanStack Query, Zustand, Lucide React.
+- **CLI:** Thin Python HTTP client for terminal workflows.
+- **Infrastructure:** Ubuntu Server 24.04, Nginx, systemd, `uv`.
+
+---
+
+## Installation
+
+### One-Click Setup on Ubuntu 24.04 / Debian
+
+Move the codebase to the server, then run:
 
 ```bash
 sudo chmod +x setup.sh
 sudo ./setup.sh
 ```
 
-### Neural Upgrade Engine (Production Maintenance)
-To update NARI on your production server with absolute reliability, use the **Neural Upgrade Engine**:
+The setup script installs dependencies, prepares the backend, runs migrations, builds the frontend, configures Nginx, and creates the systemd service.
+
+### Production Updates
+
+Use the update script for production maintenance:
 
 ```bash
 sudo chmod +x update.sh
-./update.sh
+sudo ./update.sh
 ```
 
-**The upgrade engine automates:**
-1.  **Defensive Pathing:** Dynamic project root detection for path-immune execution.
-2.  **Robust Permission Protocol:** Automated 755/644 permission calibration + executable binary authorization.
-3.  **Neural Pulse:** Atomic restart of NARI backend and Nginx reverse proxy.
-4.  **Tactical Purge:** Automated cleanup of temporary debug and test artifacts.
+The update script refreshes the deployment, reapplies permissions, restarts the backend and Nginx, and removes temporary artifacts.
 
 ---
 
-## ⌨️ CLI Usage
+## CLI Usage
 
-NARI includes a powerful CLI for terminal-based control:
+From the project root:
 
-*   **Log Context:** `./nari.sh tell "Just finished a deep focus block"`
-*   **Add Task:** `./nari.sh add "Finish Research" --priority high`
-*   **Today's View:** `./nari.sh today`
-*   **Study Start:** `./nari.sh study-start <subject_id> --goal "Neural Calibration"`
-*   **Activity Log:** `./nari.sh activity --limit 10`
+```bash
+./nari.sh tell "Just finished a deep focus block"
+./nari.sh add "Finish research" --priority high
+./nari.sh today
+./nari.sh study-start <subject_id> --goal "Physics revision"
+./nari.sh activity --limit 10
+```
 
----
-
-## 🛡 Security & Privacy
-
-*   **100% Local:** Your data never leaves your server. No cloud dependencies.
-*   **Neural Handshake:** Hardened client-server communication with token masking (`neura***`) and strict CORS lockdown.
-*   **PII Redaction:** Sensitive data is proactively masked in logs to ensure privacy-safe behavioral history.
-*   **Robust Permissions:** Strict filesystem lockdowns (Folders: 755 / Files: 644) managed by the deployment engine.
+Windows shims are available as `nari.ps1` and `nari.bat`.
 
 ---
 
-## 🗺 Roadmap & Version History
+## Security and Privacy
 
-### **Phase 1: Foundation (v0.1.0 - v0.5.0) - DONE**
-*   [x] **Stage 0:** Neural Core, ActivityLog, and Health monitoring.
-*   [x] **Stage 1:** CLI Task Management.
-*   [x] **Stage 2:** Subjects & Study tracking.
-*   [x] **Stage 3:** Versioned Neural Notes.
-*   [x] **Stage 4:** Mobile-first Web Dashboard.
-
-### **Phase 2: Intelligence (v0.6.0 - v1.0.0) - CURRENT**
-*   [x] **Stage 5:** WebSocket Real-time Sync.
-*   [x] **Stage 6:** Scheduler & Browser Reminders.
-*   [x] **Stage 7:** Vision layer (Goals & Habits).
-*   [x] **Stage 8:** Behavioral Analytics HUD (HUD v1.0).
-*   [x] **v1.0.0-alpha.7:** Neural Upgrade Engine & Ghost Protocol.
-*   [ ] **Stage 9:** **AI Layer (Ollama + Llama 3.1 8B Integration)** - *Next Objective*
-
-### **Phase 3: Expansion (v1.1.0+) - FUTURE**
-*   [ ] Plugin system for community extensions.
-*   [ ] Advanced Desktop Management & Voice Input.
-*   [ ] Multi-device sync orchestration.
+- **Local-first:** Data stays on the user's server.
+- **API key auth:** Clients use a configured NARI API key.
+- **CORS controls:** Frontend/backend communication is restricted through configured origins.
+- **PII-aware logging:** Sensitive values should be masked before entering logs.
+- **Filesystem permissions:** Deployment scripts enforce production permissions for directories, files, and executable scripts.
 
 ---
 
-## 📄 License
-Private & Personal Use only.
+## Roadmap
+
+### Phase 1: Foundation
+
+- [x] Stage 0: Backend core, health checks, ActivityLog.
+- [x] Stage 1: CLI task management.
+- [x] Stage 2: Subjects and study tracking.
+- [x] Stage 3: Versioned notes.
+- [x] Stage 4: Web dashboard.
+
+### Phase 2: Intelligence
+
+- [x] Stage 5: WebSocket real-time sync.
+- [x] Stage 6: Scheduler and browser reminders.
+- [x] Stage 7: Goals and habits.
+- [x] Stage 8: Behavioral Analytics HUD.
+- [x] Stage 8.5: PWA, offline cache, IndexedDB persistence, and background sync.
+- [ ] Stage 9: Local AI layer with an intent engine, semantic memory, and lightweight model pipeline.
+
+### Phase 3: Expansion
+
+- [ ] Plugin system.
+- [ ] Calendar and desktop integrations.
+- [ ] Voice input and output.
+- [ ] Multi-device sync orchestration.
+
+---
+
+## License
+
+Private and personal use only.
+
 Developed by **Ankit Upadhyay**.

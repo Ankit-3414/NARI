@@ -1,71 +1,63 @@
-# NARI PWA Integration Plan: Neural Offline Protocol
+# NARI PWA Integration: Neural Offline Protocol
 
-## Objective
-Transform NARI into a Progressive Web App (PWA) to enable:
-1.  **Mobile Installation:** Add to Home Screen (A2HS) for a native app-like experience.
-2.  **Offline Productivity:** Access cached notes, tasks, and analytics without an active internet connection.
-3.  **Background Sync:** Queue state changes (e.g., completing a task) while offline and sync when reconnected.
+## Status
 
----
+Implemented as Stage 8.5.
 
-## Phase 1: Infrastructure Setup
-### 1.1 Install Dependencies
-Add `vite-plugin-pwa` to handle service worker generation and manifest management.
-```bash
-cd frontend
-npm install -D vite-plugin-pwa
-```
+NARI is installable as a Progressive Web App and supports offline-first usage for core workflows through service worker caching, IndexedDB persistence, and queued background synchronization.
 
-### 1.2 Asset Preparation
-Create high-resolution icons in `frontend/public/icons/`:
-- `pwa-192x192.png`: Standard Android/Chrome icon.
-- `pwa-512x512.png`: Large splash screen icon.
-- `apple-touch-icon.png`: For iOS compatibility.
-- `favicon.svg`: Vector source for the neural logo.
+## Objectives
 
----
+1. **Mobile installation:** Support Add to Home Screen for an app-like experience.
+2. **Offline productivity:** Keep core data available when the network is unavailable.
+3. **Background sync:** Queue state changes while offline and sync them when the connection returns.
 
-## Phase 2: Configuration (Vite)
-Modify `frontend/vite.config.js` to integrate the PWA plugin.
+## Implemented Capabilities
 
-### 2.1 Web App Manifest
-Define the "Neural Identity" of the app:
-- **Name:** NARI (Not A Random Intelligence)
-- **Short Name:** NARI
-- **Theme Color:** #000000 (OLED Black)
-- **Background Color:** #000000
-- **Display:** `standalone` (removes browser UI)
+### PWA Infrastructure
 
-### 2.2 Service Worker Strategy
-Use **Workbox** with the following caching logic:
--   **Static Assets (CSS, JS, Images):** `StaleWhileRevalidate` (Serve from cache, update in background).
--   **API Routes (`/api/v1/*`):** `NetworkFirst` (Try network for fresh data, fallback to cache for offline).
--   **Pre-caching:** Automatically cache all build artifacts for instant startup.
+- `vite-plugin-pwa` configured in the frontend build.
+- Web app manifest configured with NARI identity.
+- Static build assets are precached.
+- Service worker registration happens through the Vite PWA integration.
 
----
+### App Identity
 
-## Phase 3: UI Integration
-### 3.1 Reload/Offline Notification
-Implement a "Reload Prompt" component in `App.jsx` to notify users when a new version of the PWA is available (Auto-update strategy).
+- App name: NARI.
+- Display mode: standalone.
+- Theme and background colors configured for the app shell.
+- Icons and touch assets available under `frontend/public`.
 
-### 3.2 Installation Prompt
-Create a "Neural Install" button in the Settings page or Sidebar that triggers the `beforeinstallprompt` event for users who haven't installed the app yet.
+### Caching Strategy
 
-### 3.3 Offline State Indicators
-Add a subtle "Offline Mode" badge to the header when the browser loses connectivity (`navigator.onLine`).
+- Static assets are cached for fast startup.
+- API data is backed by local persistence for offline views.
+- The UI exposes offline/online state so the user can tell when NARI is operating locally.
 
----
+### Local Persistence
 
-## Phase 4: Data Persistence (Future)
-- **IndexedDB:** Use `idb` or `dexie` to store API responses locally.
-- **Background Sync API:** Register sync events to push queued updates to the Python backend once connectivity returns.
+- IndexedDB is used for entity caching.
+- Core entities such as tasks, notes, goals, habits, and subjects can remain available offline.
 
----
+### Sync Engine
 
-## Implementation Checklist
+- Offline mutations are queued.
+- Queued actions sync when connectivity returns.
+- Reconciliation updates server state and refreshes local views.
+
+## Verification Checklist
+
 - [x] Install `vite-plugin-pwa`.
-- [x] Configure `manifest` in `vite.config.js`.
-- [x] Generate 192x192 and 512x512 PNG icons (Simulated via SVG with broad support).
-- [x] Register Service Worker in `main.jsx` (Auto-registered via plugin).
-- [x] Verify "Installable" status in Chrome DevTools Lighthouse.
-- [x] Test offline access on mobile devices (Verified via Brave/Chrome).
+- [x] Configure the app manifest.
+- [x] Add PWA icons and touch assets.
+- [x] Register the service worker.
+- [x] Verify installability in Chromium-based browsers.
+- [x] Verify static offline startup.
+- [x] Verify IndexedDB-backed local reads.
+- [x] Verify queued writes sync after reconnection.
+
+## Follow-Up Work
+
+- Add broader conflict-resolution behavior for simultaneous edits from multiple devices.
+- Expand offline coverage if new feature domains are added.
+- Keep the service worker update prompt clear and low-friction.
