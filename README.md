@@ -13,7 +13,7 @@
 - **Neural Notes:** Markdown notes with automatic version history and search-ready content.
 - **Vision Tracking:** Goals and habits with progress tracking, streaks, and daily check-ins.
 - **Reminders:** Scheduler-backed reminders with browser notifications and missed-signal handling.
-- **Context Stream:** Fast natural-language logging through the CLI, API, and dashboard.
+- **Context Stream:** Fast natural-language logging through the CLI, API, and dashboard. Now with archive page, search, filters, habit/study/mood detection, and export functionality.
 - **Behavioral HUD:** Analytics for tasks, study, habits, goals, and activity patterns.
 - **Neural Offline Protocol:** PWA installation, local caching, IndexedDB persistence, and background sync for core entities.
 - **Neural Link:** API-first architecture with WebSocket-driven real-time UI updates.
@@ -98,6 +98,7 @@ Windows shims are available as `nari.ps1` and `nari.bat`.
 - [x] Stage 7: Goals and habits.
 - [x] Stage 8: Behavioral Analytics HUD.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB persistence, and background sync.
+- [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
 - [ ] Stage 9: Local AI layer with an intent engine, semantic memory, and lightweight model pipeline.
 
 ### Phase 3: Expansion

@@ -26,7 +26,8 @@ Increment when a significant build stage is completed or initiated.
 Examples:
 
 - Moving from Stage 8 analytics to Stage 8.5 PWA/offline support.
-- Moving from Stage 8.5 to Stage 9 local AI.
+- Moving from Stage 8.5 to Stage 8.7 Context Stream.
+- Moving from Stage 8.7 to Stage 9 local AI.
 - Adding a major feature domain such as goals or habits.
 
 ### PATCH

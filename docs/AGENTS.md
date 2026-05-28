@@ -119,6 +119,7 @@ backend/app/
 - [x] Stage 7: Goals and habits.
 - [x] Stage 8: Analytics HUD.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB, and background sync.
+- [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
 - [ ] Stage 9: Local AI layer provides useful suggestions and intent routing.
 
 ## Response Contract

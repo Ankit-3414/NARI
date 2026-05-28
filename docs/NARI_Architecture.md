@@ -1,8 +1,8 @@
 # NARI Technical Architecture
 
-**Version:** v1.0.0-alpha.7  
-**Status:** Stage 8.5 complete; Stage 9 in design and implementation
-**Last Updated:** 2026-05-28
+**Version:** v1.0.0-alpha.8  
+**Status:** Stage 8.7 complete; Stage 9 in design and implementation
+**Last Updated:** 2026-05-29
 **Author:** Ankit Upadhyay
 **System Type:** Self-hosted personal productivity and intelligence platform  
 **Primary Server:** Server-01, Intel i5-2400S, 8GB RAM, 500GB HDD
