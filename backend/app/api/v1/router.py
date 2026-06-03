@@ -17,6 +17,7 @@ from .settings import router as settings_router
 from .study import router as study_router
 from .subjects import router as subjects_router
 from .tasks import router as tasks_router
+from .utils import router as utils_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -34,3 +35,4 @@ api_router.include_router(locations_router)
 api_router.include_router(ai_router, prefix="/ai", tags=["AI"])
 api_router.include_router(settings_router)
 api_router.include_router(context_router, prefix="/context", tags=["Context"])
+api_router.include_router(utils_router, prefix="/utils", tags=["Utils"])

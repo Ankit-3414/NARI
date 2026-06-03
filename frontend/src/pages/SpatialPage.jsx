@@ -131,6 +131,7 @@ const SpatialPage = () => {
   const [gpsCaptureError, setGpsCaptureError] = useState('');
   const [loadingGps, setLoadingGps] = useState(false);
   const [hasAutoCentered, setHasAutoCentered] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
   // Geocoding Search State
   const [addressQuery, setAddressQuery] = useState('');
@@ -184,6 +185,29 @@ const SpatialPage = () => {
   }, [currentCoords, locations, hasAutoCentered]);
 
   const handleCaptureGps = () => {
+    const canUseGPS = window.isSecureContext || window.location.hostname === 'localhost';
+    
+    if (!canUseGPS) {
+      setGpsCaptureError('GPS restricted to Secure Context (HTTPS). Trying NARI-Proxied IP fallback...');
+      setLoadingGps(true);
+      client.get('/utils/geolocate').then(res => {
+        if (res && res.ok && res.data) {
+          const { latitude, longitude } = res.data;
+          setCurrentGps([latitude, longitude]);
+          setMapCenter([latitude, longitude]);
+          setMapZoom(14);
+          setFormLat(latitude.toFixed(6));
+          setFormLng(longitude.toFixed(6));
+          setHasAutoCentered(true);
+        } else {
+          setGpsCaptureError('Geolocation failed. Please drop a pin or enter coordinates.');
+        }
+      }).catch(err => {
+        setGpsCaptureError('Geolocation error. Use manual coordinates.');
+      }).finally(() => setLoadingGps(false));
+      return;
+    }
+
     if (!navigator.geolocation) {
       setGpsCaptureError('Geolocation is not supported.');
       return;
@@ -202,8 +226,15 @@ const SpatialPage = () => {
         setHasAutoCentered(true);
       },
       (err) => {
-        setGpsCaptureError(`GPS Capture failed: ${err.message}`);
-        setLoadingGps(false);
+        setGpsCaptureError(`GPS Capture failed: ${err.message}. Trying IP fallback...`);
+        // Fallback to proxy
+        client.get('/utils/geolocate').then(res => {
+          if (res && res.ok && res.data) {
+             const { latitude, longitude } = res.data;
+             setCurrentGps([latitude, longitude]);
+             setMapCenter([latitude, longitude]);
+          }
+        }).finally(() => setLoadingGps(false));
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -283,13 +314,33 @@ const SpatialPage = () => {
   if (isLoading) return <div className="h-screen flex items-center justify-center text-primary font-mono animate-pulse">CALIBRATING_SPATIAL_MATRIX...</div>;
 
   return (
-    <div className="w-full h-full relative z-0 bg-background overflow-hidden font-mono flex">
+    <div className="w-full h-full relative z-0 bg-background overflow-hidden font-mono flex flex-col md:flex-row">
       <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none z-0" />
 
-      {/* Left Sidebar Panel (Not floating over the map) */}
-      <div 
-        className="w-80 h-full border-r border-white/10 bg-surface/85 backdrop-blur-2xl z-20 flex flex-col gap-4 p-6 pb-8 overflow-hidden"
+      {/* Sidebar Toggle Button for Mobile */}
+      <button 
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="md:hidden absolute top-24 left-4 z-[1000] p-3 bg-surface/90 border border-primary/30 rounded-full text-primary shadow-2xl backdrop-blur-md"
       >
+        <Grid size={20} />
+      </button>
+
+      {/* Left Sidebar Panel */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ x: -320, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -320, opacity: 0 }}
+            className="fixed md:relative inset-y-0 left-0 w-full sm:w-80 h-full border-r border-white/10 bg-surface/95 backdrop-blur-2xl z-[1001] md:z-20 flex flex-col gap-4 p-6 pb-8 overflow-hidden shadow-2xl md:shadow-none"
+          >
+            {/* Close button for mobile sidebar */}
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden absolute top-4 right-4 p-2 text-secondary hover:text-white"
+            >
+              <X size={20} />
+            </button>
         <motion.div 
           initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
           className="glass-card p-4 rounded-2xl border-primary/20 bg-background/40 shadow-2xl"
@@ -428,10 +479,11 @@ const SpatialPage = () => {
             </AnimatePresence>
           </div>
         </motion.div>
-      </div>
+      )}
+      </AnimatePresence>
 
       {/* Right Map Viewport */}
-      <div className="flex-1 h-full relative z-10">
+      <div className="flex-1 h-full relative z-10 min-h-[400px]">
         <MapContainer 
           center={mapCenter} 
           zoom={mapZoom} 

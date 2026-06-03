@@ -135,36 +135,39 @@ const SettingsModal = ({ isOpen, onClose }) => {
     setIsDetecting(true);
     let detectedCity = '';
 
-    try {
-      const coords = await new Promise((resolve, reject) => {
-        if (!navigator.geolocation) return reject();
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(pos.coords),
-          (err) => reject(err),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
+    const canUseGPS = window.isSecureContext || window.location.hostname === 'localhost';
 
-      const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=en`, {
-        headers: { 'User-Agent': 'NARI-Personal-OS-Client' }
-      });
-      if (revRes.ok) {
-        const revData = await revRes.json();
-        const addr = revData.address || {};
-        detectedCity = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || '';
+    try {
+      if (canUseGPS) {
+        const coords = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) return reject();
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(pos.coords),
+            (err) => reject(err),
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+          );
+        });
+
+        const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=en`, {
+          headers: { 'User-Agent': 'NARI-Personal-OS-Client' }
+        });
+        if (revRes.ok) {
+          const revData = await revRes.json();
+          const addr = revData.address || {};
+          detectedCity = addr.city || addr.town || addr.village || addr.suburb || addr.city_district || '';
+        }
+      } else {
+        throw new Error("GPS restricted to HTTPS");
       }
     } catch (err) {
-      console.log("GPS failed, trying IP chain...");
-      const ipProviders = ['https://ipapi.co/json/', 'https://ip-api.com/json/', 'https://freeipapi.com/api/json'];
-      for (const url of ipProviders) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            detectedCity = data.city || data.cityName || '';
-            if (detectedCity) break;
-          }
-        } catch (e) {}
+      console.log("GPS unavailable or denied, trying NARI-Proxied IP fallback...");
+      try {
+        const geoRes = await client.get('/utils/geolocate');
+        if (geoRes && geoRes.ok && geoRes.data) {
+          detectedCity = geoRes.data.city || '';
+        }
+      } catch (proxiedErr) {
+        console.warn("NARI Proxied geolocation failed", proxiedErr);
       }
     }
 
@@ -172,7 +175,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
       setLocationInput(detectedCity);
       saveToRecent({ name: detectedCity });
     } else {
-      alert("Could not detect location. Please enter your city manually.");
+      alert("Could not detect location. Please enter your city manually in the input box.");
     }
     setIsDetecting(false);
   };

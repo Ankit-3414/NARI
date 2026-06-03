@@ -82,16 +82,19 @@ export const useWeather = () => {
 
       if (!manualResolved) {
         // 2. Resolve Geolocation: Try GPS / Browser Geolocation first
+        // Note: Browsers only allow navigator.geolocation on secure contexts (HTTPS or localhost)
+        const canUseGPS = window.isSecureContext || window.location.hostname === 'localhost';
+
         const getBrowserCoords = () => {
           return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-              reject(new Error("Geolocation not supported"));
+            if (!canUseGPS || !navigator.geolocation) {
+              reject(new Error("Secure Context or Geolocation required"));
               return;
             }
             navigator.geolocation.getCurrentPosition(
               (pos) => resolve(pos.coords),
               (err) => reject(err),
-              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
           });
         };
@@ -118,38 +121,25 @@ export const useWeather = () => {
             console.warn("Reverse geocoding failed", revErr);
           }
         } catch (geoErr) {
-          console.log("GPS Geolocation failed or denied, trying IP-based fallback...", geoErr);
-          
-          // Try IP Geolocation Fallback Chain
-          const ipProviders = [
-            { url: 'https://ipapi.co/json/', lat: 'latitude', lon: 'longitude', city: 'city', country: 'country_name' },
-            { url: 'https://ip-api.com/json/', lat: 'lat', lon: 'lon', city: 'city', country: 'country' },
-            { url: 'https://freeipapi.com/api/json', lat: 'latitude', lon: 'longitude', city: 'cityName', country: 'countryName' }
-          ];
-
-          let resolved = false;
-          for (const provider of ipProviders) {
-            try {
-              const ipRes = await fetch(provider.url);
-              if (ipRes.ok) {
-                const ipData = await ipRes.json();
-                if (ipData[provider.lat] && ipData[provider.lon]) {
-                  lat = ipData[provider.lat];
-                  lon = ipData[provider.lon];
-                  city = ipData[provider.city] || 'Local Area';
-                  country = ipData[provider.country] || '';
-                  resolved = true;
-                  console.log(`Resolved location via ${provider.url}`);
-                  break;
-                }
-              }
-            } catch (pErr) {
-              console.warn(`IP provider ${provider.url} failed`, pErr);
-            }
+          if (canUseGPS) {
+            console.log("GPS Geolocation failed or denied, trying NARI-Proxied IP fallback...", geoErr);
+          } else {
+            console.log("Insecure context detected (HTTP). Skipping GPS, using NARI-Proxied IP fallback.");
           }
-
-          if (!resolved) {
-            console.log("All IP Geolocation providers failed, using default fallback (Jamshedpur)");
+          
+          // Try NARI-Proxied IP Geolocation (Backend-side lookup to avoid CORS)
+          try {
+            const geoRes = await client.get('/utils/geolocate');
+            if (geoRes && geoRes.ok && geoRes.data) {
+              const { data } = geoRes;
+              lat = data.latitude || lat;
+              lon = data.longitude || lon;
+              city = data.city || city;
+              country = data.country || country;
+              console.log(`Resolved location via NARI Proxy: ${city}`);
+            }
+          } catch (proxiedErr) {
+            console.warn("NARI Proxied geolocation failed, using hard fallback.", proxiedErr);
           }
         }
       }

@@ -219,13 +219,13 @@ const MobileLayout = () => {
           </div>
         </Link>
         
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-1.5 md:gap-5">
           {/* Online/Offline Status */}
           {!isOnline && (
             <motion.div 
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-danger/10 border border-danger/50 text-danger"
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-danger/10 border border-danger/50 text-danger"
               style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}
             >
               <Zap size={12} className="animate-pulse" />
@@ -238,9 +238,9 @@ const MobileLayout = () => {
             <Link 
               to="/weather"
               aria-label={`Local weather is currently ${weather.condition} at ${weather.temperature}°C. Click for 3-day forecast details.`}
-              className="flex items-center gap-2 px-3 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none hover:border-primary/50 hover:bg-primary/5 transition-all group"
+              className="flex items-center gap-2 px-2 md:px-3 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none hover:border-primary/50 hover:bg-primary/5 transition-all group shrink-0"
             >
-              {getWeatherIcon(weather.weatherCode, weather.isDay, 16)}
+              {getWeatherIcon(weather.weatherCode, weather.isDay, 14)}
               <span className="text-[10px] font-bold text-white font-mono leading-none group-hover:text-primary transition-colors">
                 {weather.temperature}°C
               </span>
@@ -248,7 +248,7 @@ const MobileLayout = () => {
           )}
 
           {/* Status Indicator */}
-          <div className="flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none">
+          <div className="hidden sm:flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none shrink-0">
             <motion.div 
               animate={(wsStatus === 'connected' && isOnline) ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
@@ -265,14 +265,14 @@ const MobileLayout = () => {
           <Link 
             to="/spatial"
             className={clsx(
-              "p-2 border transition-all relative rounded-xl hover:text-primary hover:border-primary/50",
+              "p-1.5 md:p-2 border transition-all relative rounded-xl hover:text-primary hover:border-primary/50 shrink-0",
               location.pathname === '/spatial' 
                 ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
                 : "border-white/10 text-secondary"
             )}
             title="Spatial OS Map"
           >
-            <Navigation size={20} />
+            <Navigation size={18} />
           </Link>
           
           <motion.button 
@@ -280,20 +280,20 @@ const MobileLayout = () => {
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsAssistantOpen(true)}
             className={clsx(
-              "p-2 border transition-all relative rounded-xl",
+              "p-1.5 md:p-2 border transition-all relative rounded-xl shrink-0",
               isAssistantOpen ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)] animate-pulse" : "border-white/10 text-secondary"
             )}
           >
-            <Cpu size={20} />
+            <Cpu size={18} />
           </motion.button>
 
           <motion.button 
             whileHover={{ scale: 1.1, color: '#00F2FF' }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2 border border-white/10 text-secondary hover:text-white transition-all relative rounded-xl"
+            className="p-1.5 md:p-2 border border-white/10 text-secondary hover:text-white transition-all relative rounded-xl shrink-0"
           >
-            <Settings size={20} />
+            <Settings size={18} />
           </motion.button>
           
           <motion.button 
