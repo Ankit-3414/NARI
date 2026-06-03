@@ -17,7 +17,7 @@ from .settings import router as settings_router
 from .study import router as study_router
 from .subjects import router as subjects_router
 from .tasks import router as tasks_router
-from .utils import router as utils_router
+from .geolocation import router as utils_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
