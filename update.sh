@@ -28,7 +28,15 @@ echo "🔧 [2/6] Ensuring System Core Dependencies..."
 # Ensure basic build tools and required services
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update
-sudo apt install -y python3.12 python3.12-venv nodejs npm nginx sqlite3 curl git build-essential systemd-timesyncd avahi-daemon ufw
+
+# Fix for Node.js conflict: NodeSource provides npm inside nodejs package
+# We install nodejs first, then check if npm is available
+sudo apt install -y python3.12 python3.12-venv nodejs nginx sqlite3 curl git build-essential systemd-timesyncd avahi-daemon ufw
+
+if ! command -v npm &> /dev/null; then
+    echo "📦 npm not found in nodejs package, installing separately..."
+    sudo apt install -y npm || true
+fi
 
 # ENFORCE NEURAL IDENTITY (nari.local)
 echo "🆔 Calibrating Neural Identity..."
