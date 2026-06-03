@@ -205,16 +205,21 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml;
 }"
 echo "$NGINX_CONF" | sudo tee /etc/nginx/sites-available/nari > /dev/null
+echo "✅ Nginx configuration updated."
 
+echo "📦 Synchronizing Python dependencies and AI models (this may take a few minutes)..."
 if command -v uv &> /dev/null; then
-    uv sync
+    uv sync --quiet
     sudo chmod +x "$BACKEND_DIR"/.venv/bin/*
+    echo "⚙️ Running database migrations..."
     uv run alembic upgrade head
 else
     # Fallback to standard pip if uv is not present
-    pip install -r pyproject.toml
+    pip install -r pyproject.toml --quiet
+    echo "⚙️ Running database migrations..."
     alembic upgrade head
 fi
+echo "✅ Backend recalibration complete."
 
 # 5. Build Frontend
 echo "🎨 [6/6] Recompiling User Interface..."
