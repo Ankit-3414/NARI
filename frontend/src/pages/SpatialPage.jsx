@@ -480,7 +480,6 @@ const SpatialPage = () => {
           </div>
         </motion.div>
       )}
-      </AnimatePresence>
 
       {/* Right Map Viewport */}
       <div className="flex-1 h-full relative z-10 min-h-[400px]">
