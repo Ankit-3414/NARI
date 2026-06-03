@@ -10,15 +10,14 @@ This document provides project context and development rules for Gemini CLI in t
 
 ## Current Status
 
-Stage 8.5 is complete:
+Stage 9 is complete:
 
-- Analytics HUD.
-- PWA installation.
-- Offline static caching.
-- IndexedDB persistence for core entities.
-- Background sync for offline actions.
-
-The next major stage is Stage 9: a local AI layer with intent routing, semantic memory, retrieval, and a lightweight model pipeline.
+- **AI Co-pilot & Intent Routing**: Powered by cloud-hosted NVIDIA NIM LLaMA 3.1 70B and `tool_registry` allowing intent classification to dynamically create tasks, complete tasks, record behavioral context, or query the system.
+- **Local Semantic Memory**: SQLite vector database using SQLModel table `knowledge_nodes` loaded with `sqlite_vec` extension and SentenceTransformers (`all-MiniLM-L6-v2`) locally for high-performance retrieval.
+- **Context & Persona Retrieval**: Context builder retrieves top semantic memory nodes (limit=5) and injects them under `CORE DIRECTIVES & RETRIEVED KNOWLEDGE:` along with the active time, pending tasks, active reminders, and recent behavior stream.
+- **Natural Conversational Dialogue**: Custom pre-filtering and system prompt rules block function-calling/parameter meta-talk, maintaining a warm and professional copilot dialogue with single tool-call restriction per turn to conform to model provider constraints.
+- **Real-Time Background Ingestion (Auto-Digestion)**: Emitting `CONTEXT_LOGGED` events (via `nari tell` or UI context logs) automatically schedules a non-blocking background task. This task uses LLaMA completions on NVIDIA NIM to parse raw context entries, extract structured rules, preferences, and personal identity details, and commit them as vector nodes in the semantic database.
+- Stage 8.5/8.7 features (Analytics HUD, PWA caching, IndexedDB offline persistence, background sync, Context Stream archive) remain 100% operational.
 
 ## Tech Stack
 
@@ -77,10 +76,14 @@ Root entry points:
 - Windows CMD: `nari.bat`
 - Windows PowerShell: `nari.ps1`
 
-Example:
+Examples:
 
 ```bash
-./nari.sh tell "Finished a focused work block"
+# Log a raw context entry (triggers background auto-digestion learning)
+./nari.sh tell "Ankit prefers to write Rust code at night."
+
+# Manually trigger a digest run for unprocessed context logs
+./nari.sh digest
 ```
 
 ## Project Structure

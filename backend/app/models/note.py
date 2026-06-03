@@ -41,6 +41,12 @@ class Note(BaseModel, table=True):
         sa_column_kwargs={"nullable": True},
         description="Tags as JSON array",
     )
+    location_id: Optional[int] = Field(
+        default=None,
+        foreign_key="location_nodes.id",
+        sa_column_kwargs={"nullable": True},
+        description="Linked physical location",
+    )
     archived_at: Optional[datetime] = Field(
         default=None,
         sa_column_kwargs={"nullable": True, "index": True},

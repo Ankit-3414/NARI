@@ -18,40 +18,23 @@ from ..models.study_session import StudySession
 
 logger = get_logger(__name__)
 
-SENSITIVE_FIELDS = {
-    "title",
-    "description",
-    "content_markdown",
-    "notes",
-    "goal_text",
-    "summary",
-    "message",
-    "payload",
-}
-
-
 class ActivityService:
     """Append-only writer for the NARI ActivityLog."""
 
     def _redact_pii(self, data: dict[str, Any]) -> dict[str, Any]:
         """Recursively redact sensitive fields from a dictionary."""
-        if not isinstance(data, dict):
-            return data
-        
-        redacted = {}
-        for key, value in data.items():
-            if key in SENSITIVE_FIELDS and isinstance(value, str):
-                redacted[key] = f"[REDACTED:{len(value)} chars]"
-            elif isinstance(value, dict):
-                redacted[key] = self._redact_pii(value)
-            elif isinstance(value, list):
-                redacted[key] = [
-                    self._redact_pii(item) if isinstance(item, dict) else item 
-                    for item in value
-                ]
-            else:
-                redacted[key] = value
-        return redacted
+        from ..utils.privacy import redact_pii
+        sensitive = {
+            "title",
+            "description",
+            "content_markdown",
+            "notes",
+            "goal_text",
+            "summary",
+            "message",
+            "payload",
+        }
+        return redact_pii(data, sensitive)
 
     def get_system_stats(self, session: Session) -> dict[str, int]:
         """Get the total row count for all main system tables."""
@@ -80,7 +63,8 @@ class ActivityService:
         # Audit logs should use a standard format unless a specific 'audit_message' is provided
         message = data.get("audit_message") or f"{entity_type.upper()} {action.upper()}"
         if "title" in data and data["title"]:
-            message = f"{message}: {data['title']}"
+            redacted_title = f"[REDACTED:{len(str(data['title']))} chars]"
+            message = f"{message}: {redacted_title}"
 
         # ActivityLog writes must not block the main operation
         with Session(db_session.engine) as session:

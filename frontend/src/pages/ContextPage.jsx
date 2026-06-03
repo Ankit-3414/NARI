@@ -30,7 +30,17 @@ const ContextPage = () => {
 
   // Search entries client-side (since we're getting a limited set from API)
   const filteredEntries = entries?.filter(entry => {
-    const text = entry.message || entry.payload_json ? JSON.parse(entry.payload_json).text : '';
+    let text = '';
+    if (entry.payload_json) {
+      try {
+        const payload = JSON.parse(entry.payload_json);
+        text = payload?.text || payload?.observation || entry.message || '';
+      } catch (e) {
+        text = entry.message || '';
+      }
+    } else {
+      text = entry.message || '';
+    }
     return text.toLowerCase().includes(searchTerm.toLowerCase());
   }) || [];
 

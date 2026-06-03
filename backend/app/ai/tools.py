@@ -16,7 +16,6 @@ from ..schemas.task import TaskCreate
 from ..core.constants import EntityType, TaskPriority
 from ..services.semantic_memory import semantic_memory
 from ..utils.weather import fetch_weather_report
-from ..utils.web_search import perform_web_search
 
 class ToolRegistry:
     def __init__(self):
@@ -135,23 +134,7 @@ class ToolRegistry:
                     }
                 }
             },
-            {
-                "type": "function",
-                "function": {
-                    "name": "web_search",
-                    "description": "Search the live web for real-time news, documentation, weather, coding help, or general public knowledge.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "The search query (e.g. 'FastAPI background tasks', 'weather in New Delhi today')."
-                            }
-                        },
-                        "required": ["query"]
-                    }
-                }
-            },
+
             {
                 "type": "function",
                 "function": {
@@ -217,6 +200,56 @@ class ToolRegistry:
                         "required": ["label", "latitude", "longitude"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_tasks",
+                    "description": "List the user's tasks.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": ["pending", "done", "all"],
+                                "description": "Filter by task status."
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_habits",
+                    "description": "List active habits with their streaks.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_goals",
+                    "description": "List active goals and their target progress.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_reminders",
+                    "description": "List scheduled, triggered, or snoozed reminders.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
             }
         ]
 
@@ -273,15 +306,26 @@ class ToolRegistry:
             elif name == "search_memory":
                 target = arguments["target"]
                 query = arguments["query"]
+                from sqlmodel import select
                 
                 if target == "activity":
-                    results = activity_service.search(session, query, limit=5)
+                    from ..models.activity_log import ActivityLog
+                    statement = select(ActivityLog).where(
+                        ActivityLog.message.like(f"%{query}%")
+                    ).order_by(ActivityLog.created_at.desc()).limit(5)
+                    results = list(session.exec(statement).all())
                     if not results:
                         return "No matching activity found."
                     formatted = "\n".join([f"- [{r.created_at.strftime('%Y-%m-%d')}] {r.message}" for r in results if not r.is_encrypted])
                     return f"Search Results (Activity):\n{formatted}"
                 else:
-                    results = note_service.search(session, query, limit=3)
+                    from ..models.note import Note
+                    statement = select(Note).where(
+                        Note.archived_at == None
+                    ).where(
+                        (Note.title.like(f"%{query}%")) | (Note.content_markdown.like(f"%{query}%"))
+                    ).order_by(Note.updated_at.desc()).limit(3)
+                    results = list(session.exec(statement).all())
                     if not results:
                         return "No matching notes found."
                     formatted = "\n".join([f"- [Note {r.id}: {r.title}] {r.content_markdown[:100]}..." for r in results])
@@ -293,9 +337,7 @@ class ToolRegistry:
                 semantic_memory.store_knowledge(session, concept, summary, source="agent_interaction")
                 return f"Core memory saved for concept: {concept}"
 
-            elif name == "web_search":
-                 query = arguments["query"]
-                 return await perform_web_search(query)
+
                 
             elif name == "get_weather":
                 location = arguments.get("location")
@@ -346,6 +388,40 @@ class ToolRegistry:
                 )
                 loc = await location_service.create_location(session, payload)
                 return f"Successfully registered new location '{loc.label}' with ID {loc.id}."
+                
+            elif name == "list_tasks":
+                from ..core.constants import TaskStatus
+                status_val = arguments.get("status", "pending")
+                task_status = None
+                if status_val == "pending":
+                    task_status = TaskStatus.PENDING
+                elif status_val == "done":
+                    task_status = TaskStatus.DONE
+                tasks = task_service.list(session, status=task_status)
+                if not tasks:
+                    return f"No {status_val} tasks found."
+                return "Tasks:\n" + "\n".join([f"- [ID {t.id}] [{t.priority.value.upper()}] {t.title} ({t.status.value})" for t in tasks])
+
+            elif name == "list_habits":
+                from ..services.habit_service import habit_service
+                habits = habit_service.list(session)
+                if not habits:
+                    return "No habits registered."
+                return "Active Habits:\n" + "\n".join([f"- [ID {h.id}] {h.title} (Streak: {h.current_streak} days, Freq: {h.frequency.value})" for h in habits])
+
+            elif name == "list_goals":
+                from ..services.goal_service import goal_service
+                goals = goal_service.list(session)
+                if not goals:
+                    return "No goals registered."
+                return "Active Goals:\n" + "\n".join([f"- [ID {g.id}] {g.title}: Progress {g.current_value}/{g.target_value} ({g.status.value})" for g in goals])
+
+            elif name == "list_reminders":
+                from ..services.reminder_service import reminder_service
+                reminders = reminder_service.list(session, include_triggered=True)
+                if not reminders:
+                    return "No active reminders."
+                return "Reminders:\n" + "\n".join([f"- [ID {r.id}] {r.title}: Status {r.status.value} (Due: {r.due_at.isoformat() if r.due_at else 'N/A'})" for r in reminders])
                     
             else:
                 return f"Error: Tool '{name}' is not recognized."

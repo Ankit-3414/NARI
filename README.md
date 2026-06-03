@@ -13,10 +13,12 @@
 - **Neural Notes:** Markdown notes with automatic version history and search-ready content.
 - **Vision Tracking:** Goals and habits with progress tracking, streaks, and daily check-ins.
 - **Reminders:** Scheduler-backed reminders with browser notifications and missed-signal handling.
-- **Context Stream:** Fast natural-language logging through the CLI, API, and dashboard. Now with archive page, search, filters, habit/study/mood detection, and export functionality.
+- **Context Stream:** Fast natural-language logging through the CLI, API, and dashboard. Raw logs are digested automatically in the background by NVIDIA NIM to synthesize and learn personal preferences, identity details, and operational rules, storing them as vector memories. Includes archive page, search, filters, mood detection, and export.
 - **Behavioral HUD:** Analytics for tasks, study, habits, goals, and activity patterns.
 - **Neural Offline Protocol:** PWA installation, local caching, IndexedDB persistence, and background sync for core entities.
 - **Neural Link:** API-first architecture with WebSocket-driven real-time UI updates.
+- **Web Co-pilot:** Live meta-search capability (via **SearXNG**) allowing NARI to search 70+ sources for coding documentation, news, or general knowledge autonomously and privately.
+- **Spatial OS Map & Geofencing:** Interactive Leaflet-powered maps featuring Vector, Satellite, and Hybrid tactical views, automatic high-accuracy GPS positioning on mount, category-based geofence radii, and "When I Reach" natural language reminders.
 
 ---
 
@@ -61,6 +63,7 @@ From the project root:
 
 ```bash
 ./nari.sh tell "Just finished a deep focus block"
+./nari.sh digest   # Manually trigger digestion of raw context logs (normally runs automatically in background)
 ./nari.sh add "Finish research" --priority high
 ./nari.sh today
 ./nari.sh study-start <subject_id> --goal "Physics revision"
@@ -99,7 +102,8 @@ Windows shims are available as `nari.ps1` and `nari.bat`.
 - [x] Stage 8: Behavioral Analytics HUD.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB persistence, and background sync.
 - [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
-- [ ] Stage 9: Local AI layer with an intent engine, semantic memory, and lightweight model pipeline.
+- [x] Stage 9: AI Co-pilot Integration (NVIDIA NIM cloud inference with local semantic memory).
+- [x] Stage 9.5: Spatial OS Map & Geofencing (Phases 1-5 with adaptive polling battery optimization and geofence reminders).
 
 ### Phase 3: Expansion
 

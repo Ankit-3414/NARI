@@ -3,7 +3,8 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
-  Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3, Terminal
+  Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3, Terminal,
+  Navigation
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,9 +16,14 @@ import { alarmService } from '../../utils/alarmService';
 import { notificationService } from '../../utils/notificationService';
 import ReminderForm from '../reminders/ReminderForm';
 import Modal from '../common/Modal';
+import SettingsModal from '../common/SettingsModal';
+import AssistantDrawer from './AssistantDrawer';
 import { format } from 'date-fns';
 import { parseUTC } from '../../utils/datetime';
 import NariLogo from '../common/NariLogo';
+import { useWeather } from '../../hooks/useWeather';
+import { getWeatherIcon } from '../../utils/weather';
+import { useSpatialAwareness } from '../../hooks/useSpatialAwareness';
 
 const NavItem = ({ to, icon: Icon, label }) => (
   <NavLink
@@ -48,28 +54,98 @@ const NavItem = ({ to, icon: Icon, label }) => (
   </NavLink>
 );
 
-const AnimatedBackground = () => (
-  <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-    <div className="scanline-overlay" />
-    <div className="absolute inset-0 bg-noise opacity-[0.05] brightness-100 contrast-150 mix-blend-overlay"></div>
-    <div className="absolute inset-0 bg-grid opacity-20" style={{ backgroundSize: '60px 60px' }} />
-    
-    <motion.div 
-      animate={{ 
-        opacity: [0.1, 0.2, 0.1],
-      }}
-      transition={{ duration: 10, repeat: Infinity }}
-      className="absolute top-0 left-0 w-full h-full bg-primary/5 pointer-events-none"
-    />
-  </div>
-);
+const AnimatedBackground = ({ weather }) => {
+  const weatherCode = weather?.weatherCode;
+  
+  const isRainy = weatherCode !== undefined && 
+    ((weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82) || weatherCode >= 95);
+  const isFoggy = weatherCode !== undefined && (weatherCode === 45 || weatherCode === 48);
+  const isSunny = weatherCode !== undefined && (weatherCode === 0 || weatherCode === 1 || weatherCode === 2);
+
+  // Scanline properties - falls faster during rain
+  const scanlineDuration = isRainy ? '1.5s' : '10s';
+  const scanlineGradient = isRainy
+    ? 'linear-gradient(to bottom, transparent 50%, rgba(0, 242, 255, 0.08) 50%)'
+    : 'linear-gradient(to bottom, transparent 50%, rgba(0, 242, 255, 0.02) 50%)';
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* Scanline overlay with dynamic animation speed */}
+      <div 
+        className="scanline-overlay" 
+        style={{ 
+          animationDuration: scanlineDuration,
+          backgroundImage: scanlineGradient
+        }} 
+      />
+      
+      {/* Noise background */}
+      <div className="absolute inset-0 bg-noise opacity-[0.05] brightness-100 contrast-150 mix-blend-overlay"></div>
+      
+      {/* Dynamic Grid Background - expands and shifts to amber when sunny */}
+      <motion.div 
+        animate={{ 
+          backgroundSize: isSunny ? '80px 80px' : '60px 60px',
+          opacity: isSunny ? 0.3 : 0.2
+        }}
+        style={{
+          backgroundImage: isSunny 
+            ? 'radial-gradient(rgba(245, 158, 11, 0.08) 1px, transparent 1px)' 
+            : 'radial-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px)'
+        }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
+        className="absolute inset-0 bg-grid"
+      />
+      
+      {/* Weather Overlays */}
+      {/* Sunny: Amber Glow */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isSunny ? 1 : 0 }}
+        transition={{ duration: 1.5 }}
+        className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-amber-400/5 mix-blend-color-dodge pointer-events-none"
+      />
+
+      {/* Rainy: Cyan Tint Glow */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isRainy ? 1 : 0 }}
+        transition={{ duration: 1.5 }}
+        className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-accent/5 pointer-events-none"
+      />
+
+      {/* Foggy: Misty Backdrop Blur & White haze */}
+      <motion.div
+        initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+        animate={{ 
+          opacity: isFoggy ? 1 : 0,
+          backdropFilter: isFoggy ? 'blur(12px)' : 'blur(0px)'
+        }}
+        transition={{ duration: 1.5 }}
+        className="absolute inset-0 bg-white/[0.03] pointer-events-none"
+      />
+      
+      {/* Pulse effect */}
+      <motion.div 
+        animate={{ 
+          opacity: [0.1, 0.2, 0.1],
+        }}
+        transition={{ duration: 10, repeat: Infinity }}
+        className="absolute top-0 left-0 w-full h-full bg-primary/5 pointer-events-none"
+      />
+    </div>
+  );
+};
 
 const MobileLayout = () => {
   const wsStatus = useUiStore((state) => state.wsStatus);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { weather, loading } = useWeather();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState(null);
 
@@ -113,7 +189,7 @@ const MobileLayout = () => {
       className="min-h-screen bg-background relative selection:bg-primary selection:text-background font-mono"
       onClick={handleUserInteraction}
     >
-      <AnimatedBackground />
+      <AnimatedBackground weather={weather} />
 
       {/* Alarm Overlay for Critical Status */}
       <AnimatePresence>
@@ -138,7 +214,7 @@ const MobileLayout = () => {
             <span className="font-black text-2xl tracking-tighter text-white leading-none uppercase italic glitch-text group-hover:text-primary transition-colors">NARI</span>
             <div className="flex items-center gap-2">
               <span className="text-[8px] font-mono text-primary/60 uppercase tracking-[0.4em]">Personal_OS</span>
-              <span className="text-[8px] font-mono text-accent animate-pulse">[v1.0.0-alpha.7]</span>
+              <span className="text-[8px] font-mono text-accent animate-pulse">[v1.0.0-alpha.10]</span>
             </div>
           </div>
         </Link>
@@ -157,6 +233,20 @@ const MobileLayout = () => {
             </motion.div>
           )}
 
+          {/* Weather Widget */}
+          {!loading && weather && (
+            <Link 
+              to="/weather"
+              aria-label={`Local weather is currently ${weather.condition} at ${weather.temperature}°C. Click for 3-day forecast details.`}
+              className="flex items-center gap-2 px-3 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none hover:border-primary/50 hover:bg-primary/5 transition-all group"
+            >
+              {getWeatherIcon(weather.weatherCode, weather.isDay, 16)}
+              <span className="text-[10px] font-bold text-white font-mono leading-none group-hover:text-primary transition-colors">
+                {weather.temperature}°C
+              </span>
+            </Link>
+          )}
+
           {/* Status Indicator */}
           <div className="flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none">
             <motion.div 
@@ -171,6 +261,40 @@ const MobileLayout = () => {
               {(wsStatus === 'connected' && isOnline) ? 'CONNECTED' : 'DISCONNECTED'}
             </span>
           </div>
+          
+          <Link 
+            to="/spatial"
+            className={clsx(
+              "p-2 border transition-all relative rounded-xl hover:text-primary hover:border-primary/50",
+              location.pathname === '/spatial' 
+                ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
+                : "border-white/10 text-secondary"
+            )}
+            title="Spatial OS Map"
+          >
+            <Navigation size={20} />
+          </Link>
+          
+          <motion.button 
+            whileHover={{ scale: 1.1, color: '#00F2FF' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsAssistantOpen(true)}
+            className={clsx(
+              "p-2 border transition-all relative rounded-xl",
+              isAssistantOpen ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)] animate-pulse" : "border-white/10 text-secondary"
+            )}
+          >
+            <Cpu size={20} />
+          </motion.button>
+
+          <motion.button 
+            whileHover={{ scale: 1.1, color: '#00F2FF' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 border border-white/10 text-secondary hover:text-white transition-all relative rounded-xl"
+          >
+            <Settings size={20} />
+          </motion.button>
           
           <motion.button 
             whileHover={{ scale: 1.1, color: '#00F2FF' }}
@@ -300,16 +424,38 @@ const MobileLayout = () => {
         <ReminderForm onClose={() => { setIsAddModalOpen(false); setEditingReminder(null); }} initialData={editingReminder} />
       </Modal>
 
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      <AnimatePresence>
+        {isAssistantOpen && (
+          <AssistantDrawer isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
+        )}
+      </AnimatePresence>
+
       {/* Main Content Area */}
-      <main className="relative z-10 pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto min-h-screen flex flex-col">
+      <main className={clsx(
+        "relative z-10 flex flex-col",
+        location.pathname === '/spatial' 
+          ? "h-screen w-screen overflow-hidden pt-20 bg-background" 
+          : "min-h-screen pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto"
+      )}>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+            initial={location.pathname === '/spatial'
+              ? { opacity: 0 }
+              : { opacity: 0, y: 20, filter: 'blur(10px)' }
+            }
+            animate={location.pathname === '/spatial'
+              ? { opacity: 1 }
+              : { opacity: 1, y: 0, filter: 'blur(0px)' }
+            }
+            exit={location.pathname === '/spatial'
+              ? { opacity: 0 }
+              : { opacity: 0, y: -20, filter: 'blur(10px)' }
+            }
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="flex-1"
+            className="flex-1 h-full w-full min-h-0 relative"
           >
             <Outlet />
           </motion.div>

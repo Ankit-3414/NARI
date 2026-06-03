@@ -4,7 +4,7 @@
 
 NARI (Not A Random Intelligence) is a self-hosted personal productivity platform combining tasks, study tracking, notes, goals, habits, reminders, offline access, and analytics. All primary data lives on Server-01, not in third-party clouds.
 
-**Current status:** Stage 8.7 complete (v1.0.0-alpha.8). Stage 9, the local AI layer, is next.
+**Current status:** Stage 9.5 complete (v1.0.0-alpha.10).
 
 **Hardware:** Intel i5-2400S, 8 GB RAM, 500 GB HDD, Ubuntu Server 24.04 LTS.
 **Backend:** Python 3.12, FastAPI, SQLModel, SQLite WAL, Alembic, APScheduler.
@@ -179,7 +179,7 @@ sudo journalctl -u nari -f
 - [x] Stage 8: Analytics HUD.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB, and background sync.
 - [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
-- [ ] Stage 9: Local AI layer provides useful suggestions and intent routing.
+- [ ] Stage 9: Local AI layer provides useful suggestions, intent routing, and private web retrieval via SearXNG.
 
 ## Response Contract
 
@@ -204,7 +204,7 @@ sudo journalctl -u nari -f
 
 ## Version Management
 
-Current version: **v1.0.0-alpha.8**
+Current version: **v1.0.0-alpha.10**
 
 When version changes, update:
 - `frontend/package.json`

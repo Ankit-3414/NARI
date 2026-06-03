@@ -13,6 +13,11 @@ if [ -z "$UV_CACHE_DIR" ]; then
     export UV_CACHE_DIR="/tmp/uv-cache-nari"
 fi
 
+# Automatically load API Key from backend .env if not already set in environment
+if [ -z "$NARI_API_KEY" ] && [ -f "$BACKEND/.env" ]; then
+    export NARI_API_KEY=$(grep -E "^NARI_API_KEY=" "$BACKEND/.env" | cut -d'=' -f2- | tr -d '\r' | tr -d '"' | tr -d "'")
+fi
+
 # Ensure we are in the backend directory for path consistency
 cd "$BACKEND"
 

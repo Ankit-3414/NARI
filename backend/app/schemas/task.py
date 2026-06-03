@@ -19,6 +19,7 @@ class TaskBase(BaseModel):
     actual_minutes: Optional[int] = None
     recurrence_rule: Optional[str] = None
     parent_task_id: Optional[int] = None
+    location_id: Optional[int] = None
 
 
 class TaskCreate(TaskBase):
@@ -37,6 +38,7 @@ class TaskUpdate(BaseModel):
     actual_minutes: Optional[int] = None
     recurrence_rule: Optional[str] = None
     parent_task_id: Optional[int] = None
+    location_id: Optional[int] = None
 
 
 class TaskResponse(TaskBase):

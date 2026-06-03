@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const client = axios.create({
   baseURL: '/api/v1',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,7 +25,11 @@ client.interceptors.request.use((config) => {
 // Standard response unwrapper to match NARI contract
 client.interceptors.response.use(
   (response) => {
-    return response.data; // Returns {ok, data, error}
+    const res = response.data;
+    if (res && res.ok === false) {
+      return Promise.reject(res.error || { code: 'API_ERROR', message: 'API response was not ok' });
+    }
+    return res; // Returns {ok, data, error}
   },
   (error) => {
     console.error('[API_FAILURE]', error.message);

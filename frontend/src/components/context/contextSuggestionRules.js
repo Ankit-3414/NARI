@@ -210,7 +210,7 @@ export const getContextText = (entry) => {
 
   try {
     const payload = JSON.parse(entry?.payload_json || '{}');
-    return payload.text || payload.message || entry?.message || '';
+    return payload.text || payload.message || payload.observation || entry?.message || '';
   } catch {
     return entry?.message || '';
   }

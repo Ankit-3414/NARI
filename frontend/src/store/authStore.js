@@ -1,15 +1,23 @@
 import { create } from 'zustand';
 
 export const useAuthStore = create((set) => ({
-  apiKey: localStorage.getItem('NARI_API_KEY') || 
-          import.meta.env.VITE_NARI_API_KEY,
+  // We use a flag to track if the user has unlocked the session
+  isAuthenticated: localStorage.getItem('NARI_SESSION_ACTIVE') === 'true',
           
-  setApiKey: (key) => {
-    localStorage.setItem('NARI_API_KEY', key);
-    set({ apiKey: key });
+  setAuthenticated: (active) => {
+    if (active) {
+      localStorage.setItem('NARI_SESSION_ACTIVE', 'true');
+    } else {
+      localStorage.removeItem('NARI_SESSION_ACTIVE');
+    }
+    set({ isAuthenticated: active });
   },
-  clearApiKey: () => {
-    localStorage.removeItem('NARI_API_KEY');
-    set({ apiKey: null });
+
+  // Deprecated: apiKey is now handled via secure HttpOnly cookies
+  apiKey: localStorage.getItem('NARI_SESSION_ACTIVE') === 'true' ? 'session_active' : null,
+
+  clearSession: () => {
+    localStorage.removeItem('NARI_SESSION_ACTIVE');
+    set({ isAuthenticated: false, apiKey: null });
   }
 }));

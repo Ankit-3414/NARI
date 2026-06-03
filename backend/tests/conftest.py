@@ -15,6 +15,14 @@ def engine_fixture(tmp_path: Path):
         connect_args={"check_same_thread": False},
     )
     
+    from sqlalchemy import event
+    @event.listens_for(engine, "connect")
+    def connect(dbapi_connection, connection_record):
+        import sqlite_vec
+        dbapi_connection.enable_load_extension(True)
+        sqlite_vec.load(dbapi_connection)
+        dbapi_connection.enable_load_extension(False)
+    
     # Override the global engine in the session module
     old_engine = db_session.engine
     db_session.engine = engine

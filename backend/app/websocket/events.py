@@ -46,6 +46,11 @@ class EventNames(str, Enum):
     HABIT_COMPLETED = "habit_completed"
     HABIT_STREAK_UPDATED = "habit_streak_updated"
 
+    # Location events
+    LOCATION_CREATED = "location_created"
+    LOCATION_UPDATED = "location_updated"
+    LOCATION_DELETED = "location_deleted"
+
     # System events
     ACTIVITY_LOGGED = "activity_logged"
     CONTEXT_LOGGED = "context_logged"

@@ -59,6 +59,7 @@ class EntityType(str, Enum):
     REMINDER = "reminder"
     GOAL = "goal"
     HABIT = "habit"
+    LOCATION = "location"
     CONTEXT = "context"
     SYSTEM = "system"
 

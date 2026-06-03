@@ -1,8 +1,8 @@
 # NARI Technical Architecture
 
-**Version:** v1.0.0-alpha.8  
-**Status:** Stage 8.7 complete; Stage 9 in design and implementation
-**Last Updated:** 2026-05-29
+**Version:** v1.0.0-alpha.10  
+**Status:** Stage 9.5 complete (Spatial OS Map & Geofencing)
+**Last Updated:** 2026-06-03
 **Author:** Ankit Upadhyay
 **System Type:** Self-hosted personal productivity and intelligence platform  
 **Primary Server:** Server-01, Intel i5-2400S, 8GB RAM, 500GB HDD
@@ -205,7 +205,7 @@ The frontend uses these events to invalidate TanStack Query caches and refresh v
 8. **Stage 7:** Goals and habits.
 9. **Stage 8:** Behavioral analytics.
 10. **Stage 8.5:** PWA, offline cache, IndexedDB, background sync.
-11. **Stage 9:** Local AI layer.
+11. **Stage 9:** AI Co-pilot Integration.
 
 ## 14. Deployment
 
@@ -232,18 +232,18 @@ Use `setup.sh` for first-time installation and `update.sh` for production update
 10. Schema changes require Alembic migrations.
 11. Keep files under 250 lines unless there is a strong reason.
 
-## 16. Stage 9: Local AI Layer
+## 16. Stage 9: AI Co-pilot Layer
 
-Stage 9 adds intelligence on top of the existing activity and event system. The direction is a local, resource-aware AI pipeline rather than a cloud dependency.
+Stage 9 integrates high-performance cloud inference (NVIDIA NIM) and local semantic intelligence on top of the activity and event system, enabling natural-language co-pilot operations.
 
-Planned components:
+Implemented components:
 
-- **Intent Engine:** A lightweight classifier that reads Context Stream events and routes clear user intent into existing services.
-- **Semantic Memory:** Local retrieval over ActivityLog, notes, tasks, study sessions, and selected external knowledge.
-- **Nightly Consolidation:** Scheduled jobs that summarize, index, or train from the day's activity while the system is idle.
-- **Conversational Interface:** A local assistant layer that uses retrieval and memory to answer questions and suggest actions.
-
-Ollama or other local model runners may be useful for prototyping, but the architecture should keep NARI's core intelligence boundary local, replaceable, and independent of any single model provider.
+- **Intent Routing & Action Orchestration**: Fully integrated via `NIMClient` (running `meta/llama-3.1-70b-instruct`) and `tool_registry`. Automatically parses and routes user intent to execute tasks (`create_task`, `complete_task`), record preferences (`log_context`), and retrieve core facts.
+- **Local Semantic Memory**: Utilizes a SQLModel-managed SQLite database table `knowledge_nodes` compiled with the local SQLite `sqlite_vec` extension. Computes high-quality embeddings locally using SentenceTransformers (`all-MiniLM-L6-v2`) for fast vector search and retrieval.
+- **Context & Persona Retrieval**: The context builder retrieves semantic memories using local vector search, injecting them under `CORE DIRECTIVES & RETRIEVED KNOWLEDGE:` along with pending tasks, reminders, and recent activity streams to present a unified memory window to the LLM.
+- **Conversational Filtering**: Custom pre-filters bypass the tool definition pipeline for purely conversational/greeting small talk (including queries like `"alive"` or `"status check"`). Strict negative constraints prevent the AI from outputting function-calling/parameter meta-talk, maintaining a premium dialogue.
+- **Web Co-pilot Search**: Integrates a `web_search` co-pilot tool using **SearXNG**, a self-hosted meta-search engine. This provides reliable, privacy-first retrieval from 70+ sources (Google, Bing, DDG) via a structured JSON API, eliminating brittle HTML scraping.
+- **Weather Telemetry & Atmosphere Integration**: Feeds local weather context (synced via a manual location input dropdown with debounced geocoding suggestions, query caching, and AbortController control) into the AI Context Builder. Automatically drives a reactive theme HUD (Framer Motion backdrop animations mapping weather conditions like Sunny, Stormy, or Foggy) and schedules automated productivity briefings at 8:00 AM daily.
 
 ## 17. Future Roadmap
 

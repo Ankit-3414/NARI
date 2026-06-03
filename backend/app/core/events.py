@@ -33,16 +33,17 @@ class EventBus:
         logger.debug(f"Subscribed to event: {event_name}")
 
     async def emit(self, event_name: str, data: Dict[str, Any]) -> None:
-        """Emit an event and await all subscribers."""
+        """Emit an event and execute subscribers. 
+        
+        Audit logging and broadcasting are offloaded to background tasks 
+        to ensure the main request is never blocked.
+        """
         if event_name not in self._subscribers:
             return
 
-        tasks = []
         for callback in self._subscribers[event_name]:
-            tasks.append(self._safe_call(callback, event_name, data))
-        
-        if tasks:
-            await asyncio.gather(*tasks)
+            # We schedule these as tasks so they don't block each other or the caller
+            asyncio.create_task(self._safe_call(callback, event_name, data))
 
     async def _safe_call(self, callback: Callable, event_name: str, data: Dict[str, Any]) -> None:
         try:
@@ -107,6 +108,25 @@ async def _on_reminder_updated(event_name: str, payload: Dict[str, Any]) -> None
                     await task_service.update(session, task_id, TaskUpdate(status=TaskStatus.CANCELLED))
         except NariError:
             logger.warning("Linked task %s was not found while handling reminder event %s", task_id, event_name)
+
+
+async def _on_context_logged(event_name: str, payload: Dict[str, Any]) -> None:
+    """Automatically digest new context logs as they are written."""
+    from ..services.context_service import context_service
+    from ..db import session as db_session
+    from sqlmodel import Session
+
+    # Wait 1.0s to ensure the activity log writer has completed database write and commit
+    await asyncio.sleep(1.0)
+
+    with Session(db_session.engine) as session:
+        try:
+            logger.info("Auto-digesting new context log...")
+            learned = await context_service.digest_context(session)
+            if learned:
+                logger.info(f"Auto-digestion complete. Learned concepts: {learned}")
+        except Exception as e:
+            logger.error(f"Failed to auto-digest context: {e}")
 
 
 def setup_event_listeners() -> None:
@@ -174,6 +194,7 @@ def setup_event_listeners() -> None:
     # Cross-service side effects
     bus.subscribe(EventNames.REMINDER_DISMISSED.value, _on_reminder_updated)
     bus.subscribe(EventNames.REMINDER_UPDATED.value, _on_reminder_updated)
+    bus.subscribe(EventNames.CONTEXT_LOGGED.value, _on_context_logged)
 
     _listeners_setup = True
     logger.info(f"Initialized {len(activity_events)} event listeners (ActivityLog + WS)")

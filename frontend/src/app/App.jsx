@@ -26,7 +26,8 @@ const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 const GoalsPage = lazy(() => import('../pages/GoalsPage'));
 const HabitsPage = lazy(() => import('../pages/HabitsPage'));
 const ContextPage = lazy(() => import('../pages/ContextPage'));
-const ContextStreamExperimentPage = lazy(() => import('../experiments/context-stream/ContextStreamExperimentPage'));
+const WeatherPage = lazy(() => import('../pages/WeatherPage'));
+const SpatialPage = lazy(() => import('../pages/SpatialPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,7 +92,8 @@ function AppContent() {
                <Route path="goals" element={<GoalsPage />} />
                <Route path="habits" element={<HabitsPage />} />
                <Route path="context" element={<ContextPage />} />
-               <Route path="experiments/context-stream" element={<ContextStreamExperimentPage />} />
+               <Route path="weather" element={<WeatherPage />} />
+               <Route path="spatial" element={<SpatialPage />} />
              </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Core
     NARI_ENV: str = "development"
     NARI_APP_NAME: str = "NARI"
-    NARI_VERSION: str = "1.0.0-alpha.7"
+    NARI_VERSION: str = "1.0.0-alpha.10"
     NARI_SECRET_KEY: str # REQUIRED
     NARI_API_KEY: str    # REQUIRED
     NARI_ALLOWED_ORIGINS: Optional[str] = None
@@ -36,10 +36,12 @@ class Settings(BaseSettings):
     NARI_SCHEDULER_ENABLED: bool = True
 
     # AI (reserved for Stage 9)
+    NVIDIA_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     AI_PROVIDER: Optional[str] = None
     AI_ENABLED: bool = False
+    SEARXNG_URL: str = "http://localhost:8080"
 
 
 settings = Settings()

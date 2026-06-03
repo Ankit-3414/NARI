@@ -49,25 +49,35 @@ class AnalyticsService:
 
     def get_study_trends(self, session: Session, days: int = 7) -> list[dict[str, Any]]:
         """Get study time trends for the last X days."""
+        since_date = date.today() - timedelta(days=days - 1)
+        since_datetime = datetime.combine(since_date, datetime.min.time())
+        
+        statement = (
+            select(
+                func.date(StudySession.ended_at).label("day"),
+                func.sum(StudySession.duration_seconds).label("seconds")
+            )
+            .where(
+                StudySession.status == StudySessionStatus.COMPLETED,
+                StudySession.ended_at >= since_datetime
+            )
+            .group_by("day")
+        )
+        results = session.exec(statement).all()
+        daily_seconds = {r.day: r.seconds for r in results if r.day}
+        
         trends = []
         for i in range(days):
             target_date = date.today() - timedelta(days=i)
-            start_of_day = datetime.combine(target_date, datetime.min.time())
-            end_of_day = datetime.combine(target_date, datetime.max.time())
-            
-            statement = select(func.sum(StudySession.duration_seconds)).where(
-                StudySession.status == StudySessionStatus.COMPLETED,
-                StudySession.ended_at >= start_of_day,
-                StudySession.ended_at <= end_of_day
-            )
-            seconds = session.exec(statement).first() or 0
+            target_date_str = target_date.isoformat()
+            seconds = daily_seconds.get(target_date_str) or 0
             
             trends.append({
-                "date": target_date.isoformat(),
+                "date": target_date_str,
                 "minutes": round(seconds / 60, 1)
             })
             
-        return trends[::-1] # Return in chronological order
+        return trends[::-1]  # Return in chronological order
 
     def get_task_completion_rate(self, session: Session) -> dict[str, Any]:
         """Get overall task completion statistics."""
@@ -91,22 +101,29 @@ class AnalyticsService:
         """Map activity intensity by hour of day."""
         since = datetime.now() - timedelta(days=days)
         
-        # We'll use ActivityLog to track all "completed" or "started" events
-        statement = select(ActivityLog).where(
-            ActivityLog.created_at >= since,
-            or_(
-                ActivityLog.action == "completed",
-                ActivityLog.action == "started",
-                ActivityLog.action == "created"
+        statement = (
+            select(
+                func.strftime("%H", ActivityLog.created_at).label("hour_str"),
+                func.count(ActivityLog.id).label("count")
             )
+            .where(
+                ActivityLog.created_at >= since,
+                ActivityLog.action.in_(["completed", "started", "created"])
+            )
+            .group_by("hour_str")
         )
-        logs = session.exec(statement).all()
+        results = session.exec(statement).all()
         
         # Initialize buckets for 24 hours
         buckets = {h: 0 for h in range(24)}
-        for log in logs:
-            hour = log.created_at.hour
-            buckets[hour] += 1
+        for hour_str, count in results:
+            if hour_str is not None:
+                try:
+                    hour = int(hour_str)
+                    if 0 <= hour < 24:
+                        buckets[hour] = count
+                except ValueError:
+                    pass
             
         return [
             {"hour": h, "intensity": count}
@@ -133,25 +150,37 @@ class AnalyticsService:
         """Calculate energy distribution across subjects based on tasks and study time."""
         from ..models.subject import Subject
         
+        tasks_statement = (
+            select(Task.subject_id, func.count(Task.id))
+            .where(Task.status == "done", Task.subject_id != None)
+            .group_by(Task.subject_id)
+        )
+        task_counts = {
+            subject_id: count
+            for subject_id, count in session.exec(tasks_statement).all()
+            if subject_id is not None
+        }
+        
+        study_statement = (
+            select(StudySession.subject_id, func.sum(StudySession.duration_seconds))
+            .where(
+                StudySession.status == StudySessionStatus.COMPLETED,
+                StudySession.subject_id != None
+            )
+            .group_by(StudySession.subject_id)
+        )
+        study_seconds_map = {
+            subject_id: seconds
+            for subject_id, seconds in session.exec(study_statement).all()
+            if subject_id is not None
+        }
+        
         subjects = session.exec(select(Subject)).all()
         distribution = []
         
         for sub in subjects:
-            # Count completed tasks
-            task_count = session.exec(
-                select(func.count(Task.id)).where(
-                    Task.subject_id == sub.id,
-                    Task.status == "done"
-                )
-            ).first() or 0
-            
-            # Total study seconds
-            study_seconds = session.exec(
-                select(func.sum(StudySession.duration_seconds)).where(
-                    StudySession.subject_id == sub.id,
-                    StudySession.status == StudySessionStatus.COMPLETED
-                )
-            ).first() or 0
+            task_count = task_counts.get(sub.id) or 0
+            study_seconds = study_seconds_map.get(sub.id) or 0
             
             # Weighted score: 1 task = 15 mins of study (900s)
             score = task_count + (study_seconds / 900)

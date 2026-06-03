@@ -29,6 +29,33 @@ async def lifespan(app: FastAPI):
     init_db()
     setup_event_listeners()
     scheduler_manager.start()
+    
+    # Pre-load embedding model in the background so first chat query is instant
+    from .services.semantic_memory import semantic_memory
+    import asyncio
+    asyncio.create_task(asyncio.to_thread(semantic_memory._get_model))
+    
+    # Auto-digest any pending context logs on server startup/reboot
+    from .services.context_service import context_service
+    from .db.session import engine
+    from sqlmodel import Session
+    
+    async def digest_pending_context_startup():
+        # Allow 2.0s for the system startup process to fully bind & stabilize
+        await asyncio.sleep(2.0)
+        try:
+            with Session(engine) as session:
+                logger.info("Startup Lifespan: Scanning for undigested context logs...")
+                learned = await context_service.digest_context(session)
+                if learned:
+                    logger.info(f"Startup Lifespan: Ingestion complete. Concepts learned: {learned}")
+                else:
+                    logger.info("Startup Lifespan: All context logs are already digested and up to date.")
+        except Exception as e:
+            logger.error(f"Startup Lifespan: Auto-digestion query failed: {e}")
+            
+    asyncio.create_task(digest_pending_context_startup())
+    
     logger.info("NARI backend started")
     yield
     scheduler_manager.stop()

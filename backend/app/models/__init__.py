@@ -1,6 +1,7 @@
 from .activity_log import ActivityLog
 from .goal import Goal
 from .habit import Habit, HabitLog
+from .location import LocationNode
 from .note import Note, NoteVersion
 from .reminder import Reminder
 from .study_session import StudySession
@@ -13,6 +14,7 @@ __all__ = [
     "Goal",
     "Habit",
     "HabitLog",
+    "LocationNode",
     "Note",
     "NoteVersion",
     "Reminder",

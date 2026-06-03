@@ -16,6 +16,17 @@ engine = create_engine(
 )
 
 
+from sqlalchemy import event
+
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "connect")
+    def connect(dbapi_connection, connection_record):
+        import sqlite_vec
+        dbapi_connection.enable_load_extension(True)
+        sqlite_vec.load(dbapi_connection)
+        dbapi_connection.enable_load_extension(False)
+
+
 def ensure_sqlite_directory(database_url: str = settings.DATABASE_URL) -> None:
     """Create the SQLite database parent directory when using a file DB."""
     url = make_url(database_url)

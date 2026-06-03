@@ -1,4 +1,4 @@
-# Current Technical State (v1.0.0-alpha.7)
+# Current Technical State (v1.0.0-alpha.10)
 
 - **Backend Architecture:** FastAPI, SQLModel, SQLite (WAL mode), EventBus-backed ActivityLog and WebSocket broadcasting.
 - **Core Services:** Tasks, Subjects, Study Sessions, Notes, Goals, Habits, Reminders, and Analytics are implemented.

@@ -1,6 +1,6 @@
 # NARI System Verification Checklist
 
-This checklist records the current verified system surface for v1.0.0-alpha.7. It is a status reference, not a full test plan.
+This checklist records the current verified system surface for v1.0.0-alpha.10. It is a status reference, not a full test plan.
 
 ## Phase 1: Backend API and Business Logic
 
@@ -100,12 +100,29 @@ Current status: done.
 - [x] Offline actions queue for core entities.
 - [x] Reconnection reconciles queued changes with the server.
 
-## Phase 5: Stage 9 Readiness
+## Phase 5: Stage 9 (AI Co-pilot Integration)
 
-Current status: pending.
+Current status: done.
 
-- [ ] Intent engine design finalized.
-- [ ] Semantic memory storage selected.
-- [ ] Retrieval/indexing boundary defined.
-- [ ] Nightly consolidation job design finalized.
-- [ ] First useful AI suggestion workflow implemented.
+- [x] Intent routing engine fully implemented (NIMClient tool registry supporting task creation, completions, context stream logging, semantic searching, and core memory retention).
+- [x] Semantic memory storage using SQLModel `knowledge_nodes` backed by SQLite and local sqlite_vec vector database.
+- [x] Context & Persona Retrieval boundary defined and integrated in context_builder.py using SentenceTransformers (all-MiniLM-L6-v2) for local embedding generation.
+- [x] Conversational pre-filtering and system prompt negative constraints implemented to guarantee zero function-calling or parameter meta-talk.
+- [x] Web Search co-pilot tool integrated into the registry using a keyless, dependency-free DuckDuckGo HTML query scraper.
+- [x] Weather-Aware AI Intent Routing (injects current temperature, location, and conditions into LLM context window).
+- [x] Reactive Cyberpunk HUD backdrop states (Amber radial gradient for Sunny, Cyan fast scanlines for Stormy/Rainy, Blur haze overlay for Foggy).
+- [x] Neural Daily Productivity Briefing (scheduler manager auto-compiles weather/objective telemetry at 8:00 AM local time).
+- [x] Dynamic Settings suggestions geocoding dropdown (with arrow-key navigation, scrolling container, recent searches local index, and matching prefix highlighting).
+
+## Phase 6: Stage 9.5 (Spatial OS & Geofencing)
+
+Current status: done.
+
+- [x] Database: Migration added for `location_nodes` representing geofences.
+- [x] API Layer: Location CRUD endpoints implemented with activity logging and Alembic migration.
+- [x] Frontend Map Dashboard: Leaflet-powered visual interface supporting Vector, Satellite, and Hybrid layers with manual click-to-pin, address Neural Search, and high-accuracy mount auto-centering.
+- [x] Proactive Geofencing: Local geofencing background engine (`useSpatialAwareness`) calculating Haversine distance and triggering native browser alerts.
+- [x] Battery & Polling Optimizations: Adaptive geolocation polling (scales down to 30s when stationary, 5s when moving).
+- [x] Category Presets: Automated radius configuration based on categories (Home/Study=50m, Work=100m, Shopping=300m).
+- [x] AI NLP Intent: "When I Reach" natural language intent parser scheduling tasks linked directly to physical location IDs.
+

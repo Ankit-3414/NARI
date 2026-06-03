@@ -13,7 +13,7 @@ class ReminderBase(BaseModel):
     is_active: bool = True
 
 class ReminderCreate(ReminderBase):
-    pass
+    status: Optional[ReminderStatus] = None
 
 class ReminderUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=200)

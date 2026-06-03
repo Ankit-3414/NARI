@@ -13,6 +13,15 @@ db.version(1).stores({
   sync_queue: '++id, action, entity, data, timestamp' // For background sync
 });
 
+db.version(2).stores({
+  chat_sessions: '++id, title, created_at, updated_at',
+  chat_messages: '++id, session_id, role, timestamp'
+});
+
+db.version(3).stores({
+  locations: '++id, label, category, latitude, longitude, radius_meters'
+});
+
 // Helper to add to sync queue
 export const queueSync = async (action, entity, data) => {
   await db.sync_queue.add({

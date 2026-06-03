@@ -383,6 +383,17 @@ def tell_context(args: argparse.Namespace) -> None:
     print("NARI: Logged.")
 
 
+def digest_context(args: argparse.Namespace) -> None:
+    data = ensure_ok(request("POST", "/context/digest"))
+    concepts = data.get("concepts_learned", [])
+    if not concepts:
+        print("NARI: Digest completed. No new concepts learned.")
+    else:
+        print(f"NARI: Digest completed. Learned {len(concepts)} new concepts:")
+        for c in concepts:
+            print(f"  - {c}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="nari")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -390,6 +401,9 @@ def build_parser() -> argparse.ArgumentParser:
     tell = sub.add_parser("tell")
     tell.add_argument("text")
     tell.set_defaults(func=tell_context)
+
+    digest = sub.add_parser("digest", help="Process and digest new context logs to extract semantic memories.")
+    digest.set_defaults(func=digest_context)
 
     add = sub.add_parser("add")
     add.add_argument("title")

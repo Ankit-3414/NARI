@@ -15,6 +15,7 @@ from ..models.note import Note, NoteVersion
 from ..models.subject import Subject
 from ..schemas.note import NoteCreate, NoteUpdate
 from ..utils.datetime_utils import utc_now
+from ..utils.tag_utils import decode_tags, encode_tags
 from ..websocket.events import EventNames
 
 
@@ -169,14 +170,10 @@ class NoteService:
         )
 
     def _encode_tags(self, tags: list[str] | None) -> str | None:
-        if tags is None:
-            return None
-        return json.dumps(tags)
+        return encode_tags(tags)
 
     def _decode_tags(self, tags_json: str | None) -> list[str]:
-        if not tags_json:
-            return []
-        return list(json.loads(tags_json))
+        return decode_tags(tags_json)
 
 
 note_service = NoteService()

@@ -2,15 +2,32 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import Button from '../components/common/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '../components/common/Card';
+import client from '../api/client';
 
 const LoginPage = () => {
   const [key, setKey] = useState('');
-  const setApiKey = useAuthStore((state) => state.setApiKey);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const setAuthenticated = useAuthStore((state) => state.setAuthenticated);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (key.trim()) {
-      setApiKey(key.trim());
+    if (!key.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await client.post('/auth/session', { api_key: key.trim() });
+      if (response.ok) {
+        setAuthenticated(true);
+      } else {
+        setError(response.error?.message || 'Authentication failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Connection error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,8 +57,14 @@ const LoginPage = () => {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
+                disabled={isLoading}
               />
             </div>
+            {error && (
+              <p className="text-danger text-xs font-bold uppercase tracking-tight px-1">
+                {error}
+              </p>
+            )}
           </form>
         </CardContent>
         <CardFooter>
@@ -49,8 +72,9 @@ const LoginPage = () => {
             type="submit"
             form="login-form"
             className="w-full py-4 text-lg font-bold uppercase tracking-widest"
+            disabled={isLoading}
           >
-            Unlock NARI
+            {isLoading ? 'Verifying...' : 'Unlock NARI'}
           </Button>
         </CardFooter>
       </Card>

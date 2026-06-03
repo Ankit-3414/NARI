@@ -76,6 +76,12 @@ class Task(BaseModel, table=True):
         sa_column_kwargs={"nullable": False},
         description="Sort order for tasks",
     )
+    location_id: Optional[int] = Field(
+        default=None,
+        foreign_key="location_nodes.id",
+        sa_column_kwargs={"nullable": True},
+        description="Linked physical location",
+    )
     completed_at: Optional[datetime] = Field(
         default=None,
         sa_column_kwargs={"nullable": True},

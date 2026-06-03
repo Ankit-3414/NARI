@@ -6,10 +6,8 @@ import { useDashboardSummary } from '../hooks/useAnalytics';
 import { useReminders } from '../hooks/useReminders';
 import { useGoals, useUpdateGoalProgress, useDeleteGoal } from '../hooks/useGoals';
 import RealTimeClock from '../components/common/RealTimeClock';
-import ContextInput from '../components/common/ContextInput';
 import PwaInstallButton from '../components/ui/PwaInstallButton';
 import HabitWidget from '../components/habits/HabitWidget';
-import ContextMemoryPanel from '../components/context/ContextMemoryPanel';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
 import GoalForm from '../components/goals/GoalForm';
@@ -133,16 +131,6 @@ const TodayPage = () => {
           </div>
         </div>
       </motion.header>
-
-       {/* Context Input Stream */}
-       <motion.section variants={item}>
-         <ContextInput />
-       </motion.section>
-
-       {/* Context Memory Panel */}
-       <motion.section variants={item}>
-         <ContextMemoryPanel />
-       </motion.section>
 
       {/* Grid Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

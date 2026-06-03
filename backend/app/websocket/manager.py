@@ -1,4 +1,4 @@
-"""WebSocket connection manager."""
+"""WebSocket connection manager with subprotocol support."""
 
 from typing import List, Dict, Any
 from fastapi import WebSocket
@@ -16,9 +16,9 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, subprotocol: str | None = None):
         """Accept a new connection."""
-        await websocket.accept()
+        await websocket.accept(subprotocol=subprotocol)
         self.active_connections.append(websocket)
         logger.info(f"New WebSocket connection. Total: {len(self.active_connections)}")
 

@@ -1,10 +1,9 @@
-"""Web search utility for NARI using DuckDuckGo with improved parsing and error handling."""
+"""Web search utility for NARI using SearXNG (Self-hosted Meta-Search)."""
 
-import re
 import asyncio
-from typing import List, Dict, Optional
+from typing import List, Dict, Any
 import httpx
-from bs4 import BeautifulSoup
+from ..core.config import settings
 
 
 class WebSearchError(Exception):
@@ -12,25 +11,18 @@ class WebSearchError(Exception):
     pass
 
 
-class DuckDuckGoSearch:
-    """DuckDuckGo search client with improved result parsing."""
+class SearXNGSearch:
+    """SearXNG search client for self-hosted meta-search."""
     
-    def __init__(self, timeout: float = 10.0, max_results: int = 5):
+    def __init__(self, base_url: str = None, timeout: float = 15.0, max_results: int = 5):
+        self.base_url = base_url or settings.SEARXNG_URL
         self.timeout = timeout
         self.max_results = max_results
-        self.base_url = "https://html.duckduckgo.com/html/"
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        }
+        self.search_url = f"{self.base_url.rstrip('/')}/search"
     
     async def search(self, query: str) -> List[Dict[str, str]]:
         """
-        Perform a DuckDuckGo search and return parsed results.
+        Perform a SearXNG search with connection retries and return parsed results.
         
         Args:
             query: The search query string
@@ -44,101 +36,89 @@ class DuckDuckGoSearch:
         if not query or not query.strip():
             raise WebSearchError("Search query cannot be empty")
         
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    self.base_url,
-                    params={"q": query.strip()},
-                    headers=self.headers
-                )
-                
-                if response.status_code != 200:
-                    raise WebSearchError(f"HTTP {response.status_code}: Failed to retrieve search results")
-                
-                return self._parse_results(response.text)
-                
-        except httpx.TimeoutException:
-            raise WebSearchError("Search request timed out")
-        except httpx.RequestError as e:
-            raise WebSearchError(f"Network error: {str(e)}")
-        except Exception as e:
-            raise WebSearchError(f"Unexpected error during search: {str(e)}")
-    
-    def _parse_results(self, html: str) -> List[Dict[str, str]]:
-        """
-        Parse DuckDuckGo HTML results using BeautifulSoup.
+        params = {
+            "q": query.strip(),
+            "format": "json",
+            "engines": "google,bing,duckduckgo,brave,wikipedia",
+            "pageno": 1
+        }
         
-        Args:
-            html: Raw HTML response from DuckDuckGo
-            
-        Returns:
-            List of parsed search results
-        """
-        soup = BeautifulSoup(html, 'html.parser')
-        results = []
+        max_retries = 3
+        backoff = 0.5
         
-        # Find all result containers
-        result_containers = soup.find_all('div', class_='result')
-        
-        for container in result_containers[:self.max_results]:
+        for attempt in range(max_retries):
             try:
-                # Extract title and URL
-                title_element = container.find('a', class_='result__url')
-                if not title_element:
-                    # Fallback to other possible title selectors
-                    title_element = container.find('a', class_='result__a')
-                
-                if not title_element:
-                    continue
+                async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
+                    response = await client.get(self.search_url, params=params)
                     
-                title = title_element.get_text(strip=True)
-                url = title_element.get('href', '')
-                
-                # Clean up DuckDuckGo redirect URLs
-                if url.startswith('/duckgo/'):
-                    # Extract actual URL from duckduckgo redirect
-                    match = re.search(r'uddg=([^&]+)', url)
-                    if match:
-                        import urllib.parse
-                        url = urllib.parse.unquote(match.group(1))
-                    else:
-                        continue  # Skip if we can't extract the real URL
-                
-                # Extract snippet/description
-                snippet_element = container.find('a', class_='result__snippet')
-                if not snippet_element:
-                    # Fallback to other possible snippet selectors
-                    snippet_element = container.find('div', class_='result__snippet')
-                
-                snippet = snippet_element.get_text(strip=True) if snippet_element else "No description available"
-                
-                # Only add results with meaningful content
-                if title and len(title) > 3:
-                    results.append({
-                        'title': title,
-                        'url': url,
-                        'snippet': snippet
-                    })
+                    if response.status_code != 200:
+                        raise WebSearchError(f"HTTP {response.status_code}: Failed to connect to SearXNG")
                     
-            except Exception:
-                # Skip malformed results but continue processing others
-                continue
+                    data = response.json()
+                    results = data.get("results", [])
+                    
+                    if not results:
+                        raise WebSearchError("No search results returned from SearXNG")
+                    
+                    return self._process_results(results)
+                    
+            except (httpx.RequestError, httpx.TimeoutException, WebSearchError) as e:
+                if attempt == max_retries - 1:
+                    raise WebSearchError(f"Failed to connect to SearXNG after {max_retries} attempts: {str(e)}")
+                await asyncio.sleep(backoff)
+                backoff *= 2
+            except Exception as e:
+                raise WebSearchError(f"Unexpected error during search: {str(e)}")
+    
+    def _process_results(self, raw_results: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+        """Process, clean, and deduplicate raw results from SearXNG to optimize context window tokens."""
+        processed = []
+        seen_urls = set()
         
-        if not results:
-            raise WebSearchError("No valid search results found")
+        for r in raw_results:
+            if len(processed) >= self.max_results:
+                break
+                
+            title = r.get("title", "No Title").strip()
+            url = r.get("url", "")
             
-        return results
+            # Clean URL to strip common tracking queries (utm_*)
+            if "?" in url:
+                try:
+                    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+                    u = urlparse(url)
+                    clean_query = [(k, v) for k, v in parse_qsl(u.query) if not k.startswith("utm_")]
+                    url = urlunparse(u._replace(query=urlencode(clean_query)))
+                except Exception:
+                    pass # Fallback to original URL on parse error
+            
+            # Deduplicate by URL
+            if url in seen_urls:
+                continue
+                
+            snippet = r.get("content", r.get("template", "No description available."))
+            
+            # Clean snippet from HTML tags if present
+            import re
+            snippet = re.sub(r'<[^>]+>', '', snippet)
+            # Collapse multiple spaces, newlines, tabs
+            snippet = re.sub(r'\s+', ' ', snippet).strip()
+            # Truncate snippet to 300 characters to conserve LLM tokens
+            if len(snippet) > 300:
+                snippet = snippet[:297] + "..."
+            
+            if title and url:
+                processed.append({
+                    "title": title,
+                    "url": url,
+                    "snippet": snippet
+                })
+                seen_urls.add(url)
+        
+        return processed
     
     def format_results(self, results: List[Dict[str, str]]) -> str:
-        """
-        Format search results into a readable string.
-        
-        Args:
-            results: List of search result dictionaries
-            
-        Returns:
-            Formatted string representation of results
-        """
+        """Format search results into a readable string for the LLM."""
         if not results:
             return "No results found."
         
@@ -153,23 +133,9 @@ class DuckDuckGoSearch:
         return "\n".join(formatted_results)
 
 
-# Global search instance for reuse
-_web_search_instance = None
-
-
-def get_web_search_instance() -> DuckDuckGoSearch:
-    """Get or create a global web search instance."""
-    global _web_search_instance
-    if _web_search_instance is None:
-        _web_search_instance = DuckDuckGoSearch()
-    return _web_search_instance
-
-
 async def perform_web_search(query: str) -> str:
     """
-    Perform a web search and return formatted results.
-    
-    This is the main function to be used by the AI tool system.
+    Perform a web search using SearXNG and return formatted results.
     
     Args:
         query: The search query string
@@ -178,10 +144,11 @@ async def perform_web_search(query: str) -> str:
         Formatted search results string
     """
     try:
-        searcher = get_web_search_instance()
+        searcher = SearXNGSearch()
         results = await searcher.search(query)
         return searcher.format_results(results)
     except WebSearchError as e:
-        return f"Web search error: {str(e)}"
+        # Fallback message if SearXNG is not running/available
+        return f"Web search error: {str(e)}. (Ensure SearXNG is running at {settings.SEARXNG_URL})"
     except Exception as e:
         return f"Unexpected error during web search: {str(e)}"

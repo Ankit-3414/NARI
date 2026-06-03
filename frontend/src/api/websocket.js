@@ -25,17 +25,15 @@ class WebSocketClient {
       return;
     }
     this.url = url;
-    const apiKey = localStorage.getItem('NARI_API_KEY') || 
-                   import.meta.env.VITE_NARI_API_KEY;
     
-    // Construct WebSocket URL with token
+    // Construct WebSocket URL without token in the query string
     const wsUrl = new URL(url, window.location.origin.replace('http', 'ws'));
-    if (apiKey) {
-      wsUrl.searchParams.append('token', apiKey);
-    }
 
     debugLog('Connecting to WebSocket');
     useUiStore.getState().setWsStatus('connecting');
+
+    // Secure: API Key is now handled via HttpOnly cookies sent automatically by the browser.
+    // No need to pass it in subprotocols or query strings.
     this.socket = new WebSocket(wsUrl.toString());
 
     this.socket.onopen = () => {
@@ -61,7 +59,6 @@ class WebSocketClient {
 
     this.socket.onerror = (error) => {
       console.error('WebSocket error:', error);
-      // onerror is usually followed by onclose, status will be handled there
     };
   }
 
