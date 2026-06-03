@@ -109,7 +109,7 @@ EOF
             sed -i "s/secret_key: \"nari_searxng_secret_key_change_me\"/secret_key: \"$RANDOM_SECRET\"/" settings.yml
         fi
     fi
-    $DOCKER_COMPOSE pull && $DOCKER_COMPOSE up -d
+    sudo $DOCKER_COMPOSE pull && sudo $DOCKER_COMPOSE up -d
     echo "✅ SearXNG Meta-Search is online and optimized."
 fi
 
