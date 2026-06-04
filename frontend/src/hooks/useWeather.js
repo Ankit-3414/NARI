@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import client from '../api/client';
 
 // Cache expiration: 15 minutes (in milliseconds)
