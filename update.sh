@@ -17,6 +17,10 @@ echo "📍 Root: $PROJECT_ROOT"
 # 1. Pull latest code
 echo "📦 [1/6] Synchronizing Neural Repository..."
 cd "$PROJECT_ROOT"
+
+# Resolve Git Ownership (Defensive)
+git config --global --add safe.directory "$PROJECT_ROOT" || true
+
 # Check if it's a git repo
 if [ -d .git ]; then
     git fetch --all
@@ -25,6 +29,12 @@ fi
 
 # 1.5 System Dependencies (Autonomous Dependency Management)
 echo "🔧 [2/6] Ensuring System Core Dependencies..."
+# Get the original user who called sudo (for uv pathing)
+ORIGINAL_USER=${SUDO_USER:-$(whoami)}
+HOME_DIR=$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)
+
+# Ensure uv is in the path for this script
+export PATH="$HOME_DIR/.local/bin:$PATH"
 # Ensure basic build tools and required services
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update
