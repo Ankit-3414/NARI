@@ -250,10 +250,11 @@ sudo systemctl reload nginx
 
 # --- NEURAL DIAGNOSTIC PHASE ---
 echo "🧠 Initiating Post-Update Validation..."
-sleep 3 # Allow backend to bind and stabilize
+echo "⏳ Waiting 10 seconds for service stabilization..."
+sleep 10 # Allow backend and Docker containers to bind
 
 # Extract API Key for Authenticated Health Check
-EXTRACTED_KEY=$(grep "NARI_API_KEY=" "$BACKEND_DIR/.env" | cut -d'=' -f2)
+EXTRACTED_KEY=$(grep "^NARI_API_KEY=" "$BACKEND_DIR/.env" | cut -d'=' -f2- | tr -d '\r' | tr -d '"' | tr -d "'")
 PRIMARY_IP=$(hostname -I | awk '{print $1}')
 
 check_service() {
@@ -263,13 +264,15 @@ check_service() {
     local auth=$4
     
     echo -n "🔍 Testing $name... "
+    local RESPONSE=""
+    
     if [ ! -z "$auth" ]; then
-        RESPONSE=$(curl -s -H "Authorization: Bearer $auth" "$url" | grep -o "$expected" || true)
+        RESPONSE=$(curl -s -m 5 -H "Authorization: Bearer $auth" "$url" || echo "curl_failed")
     else
-        RESPONSE=$(curl -s "$url" | grep -o "$expected" || true)
+        RESPONSE=$(curl -s -m 5 "$url" || echo "curl_failed")
     fi
 
-    if [ "$RESPONSE" == "$expected" ]; then
+    if echo "$RESPONSE" | grep -q "$expected"; then
         echo -e "✅ [OK]"
         return 0
     else
@@ -280,10 +283,10 @@ check_service() {
 
 # Run diagnostics
 DIAG_ERRORS=0
-check_service "Backend Health" "http://localhost:8000/api/v1/health" "healthy" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "Database Link" "http://localhost:8000/api/v1/health" "database\": \"ok" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "Nginx Frontend" "http://localhost/index.html" "NARI" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "SearXNG (Internal)" "http://localhost:8080" "SearXNG" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Backend Health" "http://127.0.0.1:8000/api/v1/health" "healthy" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Database Link" "http://127.0.0.1:8000/api/v1/health" "database.*ok" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Nginx Frontend" "http://127.0.0.1/index.html" "NARI" "" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "SearXNG (Internal)" "http://127.0.0.1:8080" "SearXNG" "" || DIAG_ERRORS=$((DIAG_ERRORS+1))
 
 if [ $DIAG_ERRORS -eq 0 ]; then
     echo -e "🛡️  System Integrity: VERIFIED."
