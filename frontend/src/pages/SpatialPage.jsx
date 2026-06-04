@@ -20,6 +20,7 @@ import {
 } from '../hooks/useLocations';
 import { useSpatialAwareness } from '../hooks/useSpatialAwareness';
 import { motion, AnimatePresence } from 'framer-motion';
+import client from '../api/client';
 import { 
   Navigation, Plus, Trash2, Edit3, Compass, 
   MapPin, Check, X, ShieldAlert, Award, Grid, 

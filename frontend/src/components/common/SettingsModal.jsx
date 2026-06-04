@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Key, Save, Check, MapPin, Clock } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
+import client from '../../api/client';
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const { settings, updateSettings, isUpdating } = useSettings();
