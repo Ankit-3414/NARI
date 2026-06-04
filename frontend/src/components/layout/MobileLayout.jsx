@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CheckSquare, BookOpen, StickyNote, 
   Cpu, Activity, Bell, Settings, Layers, X, 
   Trash2, Edit3, Plus, Clock, Target, Zap, BarChart3, Terminal,
-  Navigation
+  Navigation, Menu
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,12 +25,13 @@ import { useWeather } from '../../hooks/useWeather';
 import { getWeatherIcon } from '../../utils/weather';
 import { useSpatialAwareness } from '../../hooks/useSpatialAwareness';
 
-const NavItem = ({ to, icon: Icon, label }) => (
+const NavItem = ({ to, icon: Icon, label, onClick }) => (
   <NavLink
     to={to}
+    onClick={onClick}
     className={({ isActive }) =>
       clsx(
-        'relative flex flex-col items-center justify-center p-2 transition-all duration-300 group',
+        'relative flex flex-col items-center justify-center p-2 transition-all duration-300 group min-w-[44px] min-h-[44px]',
         isActive ? 'text-background bg-primary shadow-[0_0_20px_rgba(0,242,255,0.6)]' : 'text-secondary hover:text-primary hover:bg-white/5'
       )
     }
@@ -43,16 +44,56 @@ const NavItem = ({ to, icon: Icon, label }) => (
           whileTap={{ scale: 0.9 }}
           className="relative z-10"
         >
-          <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+          <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
         </motion.div>
         
-        <span className="absolute -top-10 bg-surface border border-primary/20 px-2 py-1 text-[10px] font-mono font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block">
-          {`> ${label}`}
-        </span>
+        {label && (
+          <span className="absolute -top-10 bg-surface border border-primary/20 px-2 py-1 text-[10px] font-mono font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block whitespace-nowrap">
+            {`> ${label}`}
+          </span>
+        )}
       </>
     )}
   </NavLink>
 );
+
+const SystemMenu = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60]"
+      />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="fixed bottom-0 left-0 right-0 max-h-[70vh] bg-surface border-t border-primary/30 z-[70] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
+      >
+        <div className="flex justify-between items-center p-5 border-b border-white/5">
+           <h2 className="text-xs font-mono font-black uppercase tracking-[0.3em] text-primary">System_Index</h2>
+           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-secondary"><X size={20}/></button>
+        </div>
+        <div className="p-6 overflow-y-auto grid grid-cols-3 gap-4 pb-12">
+          <NavItem to="/goals" icon={Target} label="Goals" onClick={onClose} />
+          <NavItem to="/habits" icon={Zap} label="Habits" onClick={onClose} />
+          <NavItem to="/context" icon={Terminal} label="Context" onClick={onClose} />
+          <NavItem to="/analytics" icon={BarChart3} label="Insights" onClick={onClose} />
+          <NavItem to="/subjects" icon={Layers} label="Hub" onClick={onClose} />
+          <NavItem to="/notes" icon={StickyNote} label="Vault" onClick={onClose} />
+          <NavItem to="/activity" icon={Activity} label="Activity" onClick={onClose} />
+          <NavItem to="/spatial" icon={Navigation} label="Map" onClick={onClose} />
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 const AnimatedBackground = ({ weather }) => {
   const weatherCode = weather?.weatherCode;
@@ -62,7 +103,6 @@ const AnimatedBackground = ({ weather }) => {
   const isFoggy = weatherCode !== undefined && (weatherCode === 45 || weatherCode === 48);
   const isSunny = weatherCode !== undefined && (weatherCode === 0 || weatherCode === 1 || weatherCode === 2);
 
-  // Scanline properties - falls faster during rain
   const scanlineDuration = isRainy ? '1.5s' : '10s';
   const scanlineGradient = isRainy
     ? 'linear-gradient(to bottom, transparent 50%, rgba(0, 242, 255, 0.08) 50%)'
@@ -70,7 +110,6 @@ const AnimatedBackground = ({ weather }) => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Scanline overlay with dynamic animation speed */}
       <div 
         className="scanline-overlay" 
         style={{ 
@@ -78,11 +117,7 @@ const AnimatedBackground = ({ weather }) => {
           backgroundImage: scanlineGradient
         }} 
       />
-      
-      {/* Noise background */}
       <div className="absolute inset-0 bg-noise opacity-[0.05] brightness-100 contrast-150 mix-blend-overlay"></div>
-      
-      {/* Dynamic Grid Background - expands and shifts to amber when sunny */}
       <motion.div 
         animate={{ 
           backgroundSize: isSunny ? '80px 80px' : '60px 60px',
@@ -96,25 +131,18 @@ const AnimatedBackground = ({ weather }) => {
         transition={{ duration: 1.5, ease: "easeInOut" }}
         className="absolute inset-0 bg-grid"
       />
-      
-      {/* Weather Overlays */}
-      {/* Sunny: Amber Glow */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isSunny ? 1 : 0 }}
         transition={{ duration: 1.5 }}
         className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-amber-400/5 mix-blend-color-dodge pointer-events-none"
       />
-
-      {/* Rainy: Cyan Tint Glow */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isRainy ? 1 : 0 }}
         transition={{ duration: 1.5 }}
         className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-accent/5 pointer-events-none"
       />
-
-      {/* Foggy: Misty Backdrop Blur & White haze */}
       <motion.div
         initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
         animate={{ 
@@ -124,8 +152,6 @@ const AnimatedBackground = ({ weather }) => {
         transition={{ duration: 1.5 }}
         className="absolute inset-0 bg-white/[0.03] pointer-events-none"
       />
-      
-      {/* Pulse effect */}
       <motion.div 
         animate={{ 
           opacity: [0.1, 0.2, 0.1],
@@ -140,16 +166,17 @@ const AnimatedBackground = ({ weather }) => {
 const MobileLayout = () => {
   const wsStatus = useUiStore((state) => state.wsStatus);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const { weather, loading } = useWeather();
+  const { currentCoords } = useSpatialAwareness();
+  const { weather, loading } = useWeather(currentCoords);
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isRemindersOpen, setIsRemindersOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState(null);
 
-  // Initialize Neural Alarms
   const { isAlarming } = useAlarm();
   const { data: reminders } = useReminders({ include_triggered: true });
   const actions = useReminderActions();
@@ -171,7 +198,6 @@ const MobileLayout = () => {
     };
   }, []);
 
-  // Ensure AudioContext and Notifications are initialized on user interaction
   const handleUserInteraction = () => {
     alarmService.init();
     if (Notification.permission === 'default') {
@@ -191,7 +217,6 @@ const MobileLayout = () => {
     >
       <AnimatedBackground weather={weather} />
 
-      {/* Alarm Overlay for Critical Status */}
       <AnimatePresence>
         {isAlarming && (
           <motion.div 
@@ -203,52 +228,32 @@ const MobileLayout = () => {
         )}
       </AnimatePresence>
 
-      {/* Top Header / HUD */}
       <header className={clsx(
-        "fixed top-0 left-0 right-0 z-40 transition-all duration-500 px-6 h-20 flex items-center justify-between",
+        "fixed top-0 left-0 right-0 z-40 transition-all duration-500 px-4 md:px-6 h-16 md:h-20 flex items-center justify-between",
         scrolled ? "bg-background/90 backdrop-blur-md border-b border-primary/20" : "bg-transparent"
       )}>
-        <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity group">
-          <NariLogo size={44} />
+        <Link to="/" className="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity group">
+          <NariLogo size={window.innerWidth < 640 ? 32 : 44} />
           <div className="flex flex-col">
-            <span className="font-black text-2xl tracking-tighter text-white leading-none uppercase italic glitch-text group-hover:text-primary transition-colors">NARI</span>
-            <div className="flex items-center gap-2">
-              <span className="text-[8px] font-mono text-primary/60 uppercase tracking-[0.4em]">Personal_OS</span>
-              <span className="text-[8px] font-mono text-accent animate-pulse">[v1.0.0-alpha.10]</span>
-            </div>
+            <span className="font-black text-lg md:text-2xl tracking-tighter text-white leading-none uppercase italic glitch-text group-hover:text-primary transition-colors">NARI</span>
+            <span className="text-[7px] md:text-[8px] font-mono text-primary/60 uppercase tracking-[0.4em] hidden sm:block">Personal_OS</span>
           </div>
         </Link>
         
-        <div className="flex items-center gap-1.5 md:gap-5">
-          {/* Online/Offline Status */}
-          {!isOnline && (
-            <motion.div 
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-danger/10 border border-danger/50 text-danger"
-              style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)' }}
-            >
-              <Zap size={12} className="animate-pulse" />
-              <span className="text-[10px] font-black tracking-tighter uppercase">Offline Mode</span>
-            </motion.div>
-          )}
-
-          {/* Weather Widget */}
+        <div className="flex items-center gap-2 md:gap-4">
           {!loading && weather && (
             <Link 
               to="/weather"
-              aria-label={`Local weather is currently ${weather.condition} at ${weather.temperature}°C. Click for 3-day forecast details.`}
-              className="flex items-center gap-2 px-2 md:px-3 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none hover:border-primary/50 hover:bg-primary/5 transition-all group shrink-0"
+              className="flex items-center gap-2 px-2 py-1.5 bg-surface/50 border border-primary/20 rounded-lg hover:border-primary/50 transition-all group shrink-0"
             >
-              {getWeatherIcon(weather.weatherCode, weather.isDay, 14)}
-              <span className="text-[10px] font-bold text-white font-mono leading-none group-hover:text-primary transition-colors">
+              {getWeatherIcon(weather.weatherCode, weather.isDay, 12)}
+              <span className="text-[10px] font-bold text-white font-mono leading-none group-hover:text-primary transition-colors hidden sm:inline">
                 {weather.temperature}°C
               </span>
             </Link>
           )}
 
-          {/* Status Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-2 md:px-4 py-1.5 bg-surface/50 border border-primary/20 rounded-lg md:rounded-none shrink-0">
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-surface/50 border border-primary/20 rounded-lg shrink-0">
             <motion.div 
               animate={(wsStatus === 'connected' && isOnline) ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
@@ -257,31 +262,18 @@ const MobileLayout = () => {
                 (wsStatus === 'connected' && isOnline) ? 'bg-success shadow-[0_0_8px_#00FF94]' : 'bg-danger shadow-[0_0_8px_#FF0055]'
               )} 
             />
-            <span className="text-[8px] md:text-[10px] font-mono font-bold uppercase tracking-widest text-secondary">
+            <span className="text-[8px] font-mono font-bold uppercase tracking-widest text-secondary hidden lg:inline">
               {(wsStatus === 'connected' && isOnline) ? 'CONNECTED' : 'DISCONNECTED'}
             </span>
           </div>
-          
-          <Link 
-            to="/spatial"
-            className={clsx(
-              "p-1.5 md:p-2 border transition-all relative rounded-xl hover:text-primary hover:border-primary/50 shrink-0",
-              location.pathname === '/spatial' 
-                ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
-                : "border-white/10 text-secondary"
-            )}
-            title="Spatial OS Map"
-          >
-            <Navigation size={18} />
-          </Link>
           
           <motion.button 
             whileHover={{ scale: 1.1, color: '#00F2FF' }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsAssistantOpen(true)}
             className={clsx(
-              "p-1.5 md:p-2 border transition-all relative rounded-xl shrink-0",
-              isAssistantOpen ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)] animate-pulse" : "border-white/10 text-secondary"
+              "p-2 border transition-all relative rounded-xl shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isAssistantOpen ? "border-primary text-primary bg-primary/10 shadow-[0_0_15px_rgba(0,242,255,0.3)] animate-pulse" : "border-white/10 text-secondary bg-surface/50"
             )}
           >
             <Cpu size={18} />
@@ -291,7 +283,7 @@ const MobileLayout = () => {
             whileHover={{ scale: 1.1, color: '#00F2FF' }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsSettingsOpen(true)}
-            className="p-1.5 md:p-2 border border-white/10 text-secondary hover:text-white transition-all relative rounded-xl shrink-0"
+            className="p-2 border border-white/10 text-secondary hover:text-white transition-all relative rounded-xl shrink-0 bg-surface/50 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <Settings size={18} />
           </motion.button>
@@ -301,8 +293,8 @@ const MobileLayout = () => {
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsRemindersOpen(!isRemindersOpen)}
             className={clsx(
-              "p-2 border transition-all relative rounded-xl",
-              triggeredReminders.length > 0 ? "border-danger text-danger bg-danger/10 shadow-[0_0_15px_rgba(255,0,85,0.3)] animate-pulse" : "border-white/10 text-secondary"
+              "p-2 border transition-all relative rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center",
+              triggeredReminders.length > 0 ? "border-danger text-danger bg-danger/10 shadow-[0_0_15px_rgba(255,0,85,0.3)] animate-pulse" : "border-white/10 text-secondary bg-surface/50"
             )}
           >
             <Bell size={20} />
@@ -315,7 +307,6 @@ const MobileLayout = () => {
         </div>
       </header>
 
-      {/* Reminders Slide-over Panel */}
       <AnimatePresence>
         {isRemindersOpen && (
           <>
@@ -350,7 +341,7 @@ const MobileLayout = () => {
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Active Signals</span>
                   <button 
                     onClick={() => { setEditingReminder(null); setIsAddModalOpen(true); }}
-                    className="p-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-black transition-all"
+                    className="p-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary hover:text-black transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
                   >
                     <Plus size={14} />
                   </button>
@@ -385,10 +376,10 @@ const MobileLayout = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(reminder)} className="p-1 text-secondary hover:text-white">
+                          <button onClick={() => handleEdit(reminder)} className="p-2 text-secondary hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
                             <Edit3 size={12} />
                           </button>
-                          <button onClick={() => { if(window.confirm('Purge signal?')) actions.remove(reminder.id) }} className="p-1 text-secondary hover:text-danger">
+                          <button onClick={() => { if(window.confirm('Purge signal?')) actions.remove(reminder.id) }} className="p-2 text-secondary hover:text-danger min-w-[44px] min-h-[44px] flex items-center justify-center">
                             <Trash2 size={12} />
                           </button>
                         </div>
@@ -397,7 +388,7 @@ const MobileLayout = () => {
                       {reminder.status === 'triggered' && (
                         <button 
                           onClick={() => actions.dismiss(reminder.id)}
-                          className="w-full mt-3 py-1.5 bg-danger text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-white transition-colors"
+                          className="w-full mt-3 py-3 bg-danger text-black text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-white transition-colors min-h-[44px]"
                         >
                           Acknowledge
                         </button>
@@ -410,7 +401,7 @@ const MobileLayout = () => {
               <div className="mt-6 pt-6 border-t border-white/5">
                 <button 
                   onClick={() => { setEditingReminder(null); setIsAddModalOpen(true); }}
-                  className="w-full py-4 bg-surface border border-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/5 transition-all"
+                  className="w-full py-4 bg-surface border border-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-white/5 transition-all min-h-[44px]"
                 >
                   Configure New Signal
                 </button>
@@ -431,13 +422,14 @@ const MobileLayout = () => {
           <AssistantDrawer isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
         )}
       </AnimatePresence>
+      
+      <SystemMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      {/* Main Content Area */}
       <main className={clsx(
         "relative z-10 flex flex-col",
         location.pathname === '/spatial' 
-          ? "h-screen w-screen overflow-hidden pt-20 bg-background" 
-          : "min-h-screen pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto"
+          ? "h-screen w-screen overflow-hidden pt-16 bg-background" 
+          : "min-h-screen pt-20 pb-28 px-4 md:px-8 max-w-7xl mx-auto"
       )}>
         <AnimatePresence mode="wait">
           <motion.div
@@ -462,24 +454,23 @@ const MobileLayout = () => {
         </AnimatePresence>
       </main>
 
-      {/* Floating Dock Navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 pointer-events-none">
+      <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[280px] md:max-w-lg px-4 pointer-events-auto">
         <motion.nav 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.5 }}
-          className="bg-surface/80 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl flex items-center justify-between shadow-2xl shadow-black/50 pointer-events-auto"
+          className="bg-surface/90 backdrop-blur-2xl border border-primary/20 p-1.5 rounded-2xl flex items-center justify-between shadow-2xl shadow-black/50"
         >
           <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
           <NavItem to="/tasks" icon={CheckSquare} label="Tasks" />
           <NavItem to="/study" icon={BookOpen} label="Focus" />
-          <NavItem to="/goals" icon={Target} label="Goals" />
-          <NavItem to="/habits" icon={Zap} label="Habits" />
-          <NavItem to="/context" icon={Terminal} label="Context" />
-          <NavItem to="/analytics" icon={BarChart3} label="Insights" />
-          <NavItem to="/subjects" icon={Layers} label="Hub" />
-          <NavItem to="/notes" icon={StickyNote} label="Vault" />
-          <NavItem to="/activity" icon={Activity} label="Activity" />
+          <button 
+            onClick={() => setIsMenuOpen(true)}
+            className="relative flex flex-col items-center justify-center p-2 transition-all duration-300 group min-w-[44px] min-h-[44px] text-secondary hover:text-primary"
+            style={{ clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%)' }}
+          >
+            <Menu size={22} />
+          </button>
         </motion.nav>
       </div>
     </div>
