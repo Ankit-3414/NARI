@@ -139,6 +139,9 @@ echo "🔒 Enforcing strict permissions on credential and database stores..."
 [ -d "$BACKEND_DIR/data" ] && chmod 700 "$BACKEND_DIR/data"
 [ -f "$BACKEND_DIR/data/nari.db" ] && chmod 600 "$BACKEND_DIR/data/nari.db"
 
+# Ensure original user owns these files so the service can read them
+sudo chown "$ORIGINAL_USER":"$ORIGINAL_USER" "$BACKEND_DIR/.env" "$FRONTEND_DIR/.env" "$BACKEND_DIR/data/nari.db" || true
+
 # Grant Execute bits to operational scripts
 sudo chmod +x "$PROJECT_ROOT"/*.sh
 sudo chmod +x "$BACKEND_DIR"/run.py
