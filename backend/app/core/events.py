@@ -113,13 +113,13 @@ async def _on_reminder_updated(event_name: str, payload: Dict[str, Any]) -> None
 async def _on_context_logged(event_name: str, payload: Dict[str, Any]) -> None:
     """Automatically digest new context logs as they are written."""
     from ..services.context_service import context_service
-    from ..db import session as db_session
+    from ..db.session import engine
     from sqlmodel import Session
 
     # Wait 1.0s to ensure the activity log writer has completed database write and commit
     await asyncio.sleep(1.0)
 
-    with Session(db_session.engine) as session:
+    with Session(engine) as session:
         try:
             logger.info("Auto-digesting new context log...")
             learned = await context_service.digest_context(session)
@@ -198,3 +198,4 @@ def setup_event_listeners() -> None:
 
     _listeners_setup = True
     logger.info(f"Initialized {len(activity_events)} event listeners (ActivityLog + WS)")
+")
