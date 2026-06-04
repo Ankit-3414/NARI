@@ -126,11 +126,14 @@ fi
 # 3. Robust Permission Protocol
 echo "🛡️ [4/6] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
-# Force Ownership to current user
-sudo chown -R $(whoami):$(whoami) "$PROJECT_ROOT"
+
+# Ensure root owns system paths, but ORIGINAL_USER owns application paths
+# First, set everything to the original user
+sudo chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
+
 # Set standard Directory (755) and File (644) permissions
-sudo find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
-sudo find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
+find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
+find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
 
 # Lock down sensitive environment files and database files (Security Enhancement)
 echo "🔒 Enforcing strict permissions on credential and database stores..."
@@ -139,17 +142,14 @@ echo "🔒 Enforcing strict permissions on credential and database stores..."
 [ -d "$BACKEND_DIR/data" ] && chmod 700 "$BACKEND_DIR/data"
 [ -f "$BACKEND_DIR/data/nari.db" ] && chmod 600 "$BACKEND_DIR/data/nari.db"
 
-# Ensure original user owns these files so the service can read them
-sudo chown "$ORIGINAL_USER":"$ORIGINAL_USER" "$BACKEND_DIR/.env" "$FRONTEND_DIR/.env" "$BACKEND_DIR/data/nari.db" || true
-
 # Grant Execute bits to operational scripts
-sudo chmod +x "$PROJECT_ROOT"/*.sh
-sudo chmod +x "$BACKEND_DIR"/run.py
-sudo chmod +x "$PROJECT_ROOT"/cli/nari.py
+chmod +x "$PROJECT_ROOT"/*.sh
+chmod +x "$BACKEND_DIR"/run.py
+chmod +x "$PROJECT_ROOT"/cli/nari.py
 
 # AUTHORIZE BINARIES (Python & Node)
-[ -d "$BACKEND_DIR/.venv/bin" ] && sudo chmod +x "$BACKEND_DIR"/.venv/bin/* || true
-[ -d "$FRONTEND_DIR/node_modules/.bin" ] && sudo chmod +x "$FRONTEND_DIR"/node_modules/.bin/* || true
+[ -d "$BACKEND_DIR/.venv/bin" ] && chmod +x "$BACKEND_DIR"/.venv/bin/* || true
+[ -d "$FRONTEND_DIR/node_modules/.bin" ] && chmod +x "$FRONTEND_DIR"/node_modules/.bin/* || true
 
 # 4. Update Backend
 echo "🧠 [5/6] Recalibrating Backend & Database..."
