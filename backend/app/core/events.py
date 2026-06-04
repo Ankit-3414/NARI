@@ -86,7 +86,7 @@ async def _on_reminder_updated(event_name: str, payload: Dict[str, Any]) -> None
     from ..services.task_service import task_service
     from ..schemas.task import TaskUpdate
     from ..core.constants import TaskStatus
-    from ..db.session import db_session
+    from ..db.session import engine
     from sqlmodel import Session
     from ..core.errors import NariError
     from ..websocket.events import EventNames
@@ -97,7 +97,7 @@ async def _on_reminder_updated(event_name: str, payload: Dict[str, Any]) -> None
     if not task_id:
         return
 
-    with Session(db_session.engine) as session:
+    with Session(engine) as session:
         try:
             task = task_service.get(session, task_id)
             if event_name == EventNames.REMINDER_DISMISSED.value:
@@ -198,4 +198,3 @@ def setup_event_listeners() -> None:
 
     _listeners_setup = True
     logger.info(f"Initialized {len(activity_events)} event listeners (ActivityLog + WS)")
-")

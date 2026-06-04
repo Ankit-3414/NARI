@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png'],
+      includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.png', 'icons/*.png'],
       manifest: {
         name: 'NARI (Not A Random Intelligence)',
         short_name: 'NARI',
         description: 'Personal Operating System & Intelligence Platform',
-        theme_color: '#000000',
-        background_color: '#000000',
+        theme_color: '#020617',
+        background_color: '#020617',
         display: 'standalone',
         start_url: '/',
         icons: [
