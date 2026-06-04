@@ -32,9 +32,10 @@ class WebSocketClient {
     debugLog('Connecting to WebSocket');
     useUiStore.getState().setWsStatus('connecting');
 
-    // Secure: API Key is now handled via HttpOnly cookies sent automatically by the browser.
-    // No need to pass it in subprotocols or query strings.
-    this.socket = new WebSocket(wsUrl.toString());
+    // Secure: API Key is passed as a subprotocol to avoid query params.
+    // This handles dev environments (Vite proxy) where cookies aren't automatically forwarded.
+    const apiKey = localStorage.getItem('NARI_API_KEY') || import.meta.env.VITE_NARI_API_KEY;
+    this.socket = new WebSocket(wsUrl.toString(), apiKey ? [apiKey] : []);
 
     this.socket.onopen = () => {
       debugLog('WebSocket connected');

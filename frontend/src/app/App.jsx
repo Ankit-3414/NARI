@@ -77,28 +77,26 @@ function AppContent() {
         onDismiss={handleDismissAlert} 
       />
       <PreFlightIntercept />
-      <BrowserRouter>
-        <Suspense fallback={null}>
-          <Routes>
-             <Route path="/" element={<MobileLayout />}>
-               <Route index element={<TodayPage />} />
-               <Route path="tasks" element={<TasksPage />} />
-               <Route path="study" element={<StudyPage />} />
-               <Route path="notes" element={<NotesPage />} />
-               <Route path="subjects" element={<SubjectsPage />} />
-               <Route path="reminders" element={<RemindersPage />} />
-               <Route path="analytics" element={<AnalyticsPage />} />
-               <Route path="activity" element={<ActivityPage />} />
-               <Route path="goals" element={<GoalsPage />} />
-               <Route path="habits" element={<HabitsPage />} />
-               <Route path="context" element={<ContextPage />} />
-               <Route path="weather" element={<WeatherPage />} />
-               <Route path="spatial" element={<SpatialPage />} />
-             </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <Suspense fallback={null}>
+        <Routes>
+           <Route path="/" element={<MobileLayout />}>
+             <Route index element={<TodayPage />} />
+             <Route path="tasks" element={<TasksPage />} />
+             <Route path="study" element={<StudyPage />} />
+             <Route path="notes" element={<NotesPage />} />
+             <Route path="subjects" element={<SubjectsPage />} />
+             <Route path="reminders" element={<RemindersPage />} />
+             <Route path="analytics" element={<AnalyticsPage />} />
+             <Route path="activity" element={<ActivityPage />} />
+             <Route path="goals" element={<GoalsPage />} />
+             <Route path="habits" element={<HabitsPage />} />
+             <Route path="context" element={<ContextPage />} />
+             <Route path="weather" element={<WeatherPage />} />
+             <Route path="spatial" element={<SpatialPage />} />
+           </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }
@@ -126,17 +124,19 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ReloadPrompt />
-      <AnimatePresence mode="wait">
-        {showEntrance ? (
-          <NeuralEntrance
-            key="entrance"
-            onComplete={handleEntranceComplete}
-          />
-        ) : (
-          <AppContent key="content" />
-        )}
-      </AnimatePresence>
+      <BrowserRouter>
+        <ReloadPrompt />
+        <AnimatePresence mode="wait">
+          {showEntrance ? (
+            <NeuralEntrance
+              key="entrance"
+              onComplete={handleEntranceComplete}
+            />
+          ) : (
+            <AppContent key="content" />
+          )}
+        </AnimatePresence>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

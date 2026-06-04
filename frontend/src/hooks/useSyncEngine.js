@@ -88,9 +88,15 @@ export const useSyncEngine = () => {
           console.log(`Neural Sync: Event ${event.id} synchronized successfully.`);
         } catch (error) {
           console.error(`Neural Sync: Failed to synchronize event ${event.id}`, error);
-          // If it's a permanent error (e.g. 400), we might want to remove it anyway
-          // For now, we'll keep it in queue to retry
-          break; 
+          
+          const status = error?.response?.status || error?.status;
+          if (status >= 400 && status < 500) {
+            console.warn(`Neural Sync: Permanent error (${status}) for event ${event.id}. Dropping from queue.`);
+            await db.sync_queue.delete(event.id);
+          } else {
+            // Transient error (Network, 5xx), keep in queue and stop processing for now
+            break; 
+          }
         }
       }
 
