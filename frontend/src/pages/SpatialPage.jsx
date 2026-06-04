@@ -78,8 +78,12 @@ function MapClickHandler({ onClick }) {
 function MapController({ center, zoom }) {
   const map = useMapEvents({});
   useEffect(() => {
-    if (center) {
-      map.setView(center, zoom || map.getZoom(), { animate: true });
+    // Validate coordinates to prevent fatal Leaflet crashes
+    if (center && Array.isArray(center) && center.length === 2) {
+      const [lat, lng] = center;
+      if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
+        map.setView(center, zoom || map.getZoom(), { animate: true });
+      }
     }
   }, [center, zoom, map]);
   return null;
@@ -87,7 +91,7 @@ function MapController({ center, zoom }) {
 
 // Distance calculation utility for the UI
 const getDistanceDisplay = (lat1, lon1, lat2, lon2) => {
-  if (!lat1 || !lon1) return '---';
+  if (!lat1 || !lon1 || isNaN(lat1) || isNaN(lon1)) return '---';
   const R = 6371e3;
   const φ1 = lat1 * Math.PI/180;
   const φ2 = lat2 * Math.PI/180;
@@ -111,8 +115,9 @@ const SpatialPage = () => {
   const currentGpsIcon = React.useMemo(() => createCustomIcon('#F59E0B', true), []);
   const tempPinIcon = React.useMemo(() => createCustomIcon('#00FF94'), []);
 
-  // Map state
-  const [mapCenter, setMapCenter] = useState([22.8046, 86.2029]);
+  // Map state (Always initialized with valid fallback coordinates)
+  const fallbackCoords = [22.8046, 86.2029];
+  const [mapCenter, setMapCenter] = useState(fallbackCoords);
   const [mapZoom, setMapZoom] = useState(13);
   const [currentGps, setCurrentGps] = useState(null);
   const [tempPin, setTempPin] = useState(null);
@@ -139,6 +144,15 @@ const SpatialPage = () => {
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Safely extract coordinates from an array, ensuring they are numbers
+  const safeCoords = (coords) => {
+    if (!coords || !Array.isArray(coords) || coords.length !== 2) return null;
+    const lat = Number(coords[0]);
+    const lng = Number(coords[1]);
+    if (isNaN(lat) || isNaN(lng)) return null;
+    return [lat, lng];
+  };
 
   useEffect(() => {
     const query = addressQuery.trim();
@@ -175,31 +189,40 @@ const SpatialPage = () => {
 
   // Auto-center on current GPS location on mount, falling back to first saved location
   useEffect(() => {
-    if (currentCoords && !hasAutoCentered) {
-      setMapCenter(currentCoords);
-      setCurrentGps(currentCoords);
+    const validCurrent = safeCoords(currentCoords);
+    if (validCurrent && !hasAutoCentered) {
+      setMapCenter(validCurrent);
+      setCurrentGps(validCurrent);
       setMapZoom(16);
       setHasAutoCentered(true);
     } else if (!hasAutoCentered && locations && locations.length > 0) {
-      setMapCenter([locations[0].latitude, locations[0].longitude]);
+      const validSaved = safeCoords([locations[0].latitude, locations[0].longitude]);
+      if (validSaved) {
+        setMapCenter(validSaved);
+      }
     }
   }, [currentCoords, locations, hasAutoCentered]);
 
   const handleCaptureGps = () => {
-    const canUseGPS = window.isSecureContext || window.location.hostname === 'localhost';
+    const canUseGPS = window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     if (!canUseGPS) {
       setGpsCaptureError('GPS restricted to Secure Context (HTTPS). Trying NARI-Proxied IP fallback...');
       setLoadingGps(true);
       client.get('/utils/geolocate').then(res => {
         if (res && res.ok && res.data) {
-          const { latitude, longitude } = res.data;
-          setCurrentGps([latitude, longitude]);
-          setMapCenter([latitude, longitude]);
-          setMapZoom(14);
-          setFormLat(latitude.toFixed(6));
-          setFormLng(longitude.toFixed(6));
-          setHasAutoCentered(true);
+          const latitude = Number(res.data.latitude);
+          const longitude = Number(res.data.longitude);
+          if (!isNaN(latitude) && !isNaN(longitude)) {
+            setCurrentGps([latitude, longitude]);
+            setMapCenter([latitude, longitude]);
+            setMapZoom(14);
+            setFormLat(latitude.toFixed(6));
+            setFormLng(longitude.toFixed(6));
+            setHasAutoCentered(true);
+          } else {
+             setGpsCaptureError('Geolocation API returned invalid coordinates.');
+          }
         } else {
           setGpsCaptureError('Geolocation failed. Please drop a pin or enter coordinates.');
         }
@@ -210,34 +233,42 @@ const SpatialPage = () => {
     }
 
     if (!navigator.geolocation) {
-      setGpsCaptureError('Geolocation is not supported.');
+      setGpsCaptureError('Geolocation is not supported by your browser.');
       return;
     }
+    
     setLoadingGps(true);
     setGpsCaptureError('');
+    
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCurrentGps([latitude, longitude]);
-        setMapCenter([latitude, longitude]);
-        setMapZoom(16);
-        setFormLat(latitude.toFixed(6));
-        setFormLng(longitude.toFixed(6));
+        const latitude = Number(pos.coords.latitude);
+        const longitude = Number(pos.coords.longitude);
+        if (!isNaN(latitude) && !isNaN(longitude)) {
+          setCurrentGps([latitude, longitude]);
+          setMapCenter([latitude, longitude]);
+          setMapZoom(16);
+          setFormLat(latitude.toFixed(6));
+          setFormLng(longitude.toFixed(6));
+          setHasAutoCentered(true);
+        }
         setLoadingGps(false);
-        setHasAutoCentered(true);
       },
       (err) => {
         setGpsCaptureError(`GPS Capture failed: ${err.message}. Trying IP fallback...`);
         // Fallback to proxy
         client.get('/utils/geolocate').then(res => {
           if (res && res.ok && res.data) {
-             const { latitude, longitude } = res.data;
-             setCurrentGps([latitude, longitude]);
-             setMapCenter([latitude, longitude]);
+             const latitude = Number(res.data.latitude);
+             const longitude = Number(res.data.longitude);
+             if (!isNaN(latitude) && !isNaN(longitude)) {
+               setCurrentGps([latitude, longitude]);
+               setMapCenter([latitude, longitude]);
+             }
           }
         }).finally(() => setLoadingGps(false));
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
