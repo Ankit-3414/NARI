@@ -243,10 +243,54 @@ npm run build
 sudo chmod -R 755 "$FRONTEND_DIR/dist"
 
 # 6. Pulse & Cleanup
-echo "⚡ Pulsing System Services..."
+echo "⚡ [7/7] Pulsing System Services & Neural Diagnostic..."
 sudo systemctl daemon-reload
 sudo systemctl restart nari
 sudo systemctl reload nginx
+
+# --- NEURAL DIAGNOSTIC PHASE ---
+echo "🧠 Initiating Post-Update Validation..."
+sleep 3 # Allow backend to bind and stabilize
+
+# Extract API Key for Authenticated Health Check
+EXTRACTED_KEY=$(grep "NARI_API_KEY=" "$BACKEND_DIR/.env" | cut -d'=' -f2)
+PRIMARY_IP=$(hostname -I | awk '{print $1}')
+
+check_service() {
+    local name=$1
+    local url=$2
+    local expected=$3
+    local auth=$4
+    
+    echo -n "🔍 Testing $name... "
+    if [ ! -z "$auth" ]; then
+        RESPONSE=$(curl -s -H "Authorization: Bearer $auth" "$url" | grep -o "$expected" || true)
+    else
+        RESPONSE=$(curl -s "$url" | grep -o "$expected" || true)
+    fi
+
+    if [ "$RESPONSE" == "$expected" ]; then
+        echo -e "✅ [OK]"
+        return 0
+    else
+        echo -e "❌ [FAILED]"
+        return 1
+    fi
+}
+
+# Run diagnostics
+DIAG_ERRORS=0
+check_service "Backend Health" "http://localhost:8000/api/v1/health" "healthy" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Database Link" "http://localhost:8000/api/v1/health" "database\": \"ok" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Nginx Frontend" "http://localhost/index.html" "NARI" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "SearXNG (Internal)" "http://localhost:8080" "SearXNG" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+
+if [ $DIAG_ERRORS -eq 0 ]; then
+    echo -e "🛡️  System Integrity: VERIFIED."
+else
+    echo -e "⚠️  System Integrity: ANOMALIES DETECTED ($DIAG_ERRORS errors)."
+    echo "Check logs with: journalctl -u nari -f"
+fi
 
 echo "🧹 Purging Tactical Remnants..."
 cd "$PROJECT_ROOT"
