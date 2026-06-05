@@ -173,9 +173,10 @@ class ContextBuilder:
                             
             roadmap_str = "\n".join(roadmap_lines) if roadmap_lines else "No roadmap found."
             
+            from ..core.config import settings
             meta = (
                 "NARI ARCHITECTURE & ROADMAP:\n"
-                "- Current version: 1.0.0-alpha.10\n"
+                f"- Current version: {settings.NARI_VERSION}\n"
                 "- Self-hosted environment: Ubuntu Server 24.04, Nginx proxy, systemd process supervisor\n"
                 "- Active specifications:\n"
                 f"{roadmap_str}\n"

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Core
     NARI_ENV: str = "development"
     NARI_APP_NAME: str = "NARI"
-    NARI_VERSION: str = "1.0.0-alpha.10"
+    NARI_VERSION: str = "1.0.0-alpha.11"
     NARI_SECRET_KEY: str # REQUIRED
     NARI_API_KEY: str    # REQUIRED
     NARI_ALLOWED_ORIGINS: Optional[str] = None
