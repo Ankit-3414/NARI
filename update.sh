@@ -218,6 +218,8 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml;
 }"
 echo "$NGINX_CONF" | sudo tee /etc/nginx/sites-available/nari > /dev/null
+sudo ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 echo "✅ Nginx configuration updated."
 
 echo "📦 Synchronizing Python dependencies and AI models (this may take a few minutes)..."
