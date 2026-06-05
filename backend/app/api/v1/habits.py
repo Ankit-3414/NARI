@@ -75,7 +75,7 @@ def list_habit_logs(
         {
             "id": log.id,
             "habit_id": log.habit_id,
-            "completed_at": log.completed_at.isoformat(),
+            "completed_at": log.created_at.isoformat(),
             "note": log.note
         } for log in logs
     ])

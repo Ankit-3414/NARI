@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, X, Send, Terminal, Sparkles, AlertCircle, Plus, Trash2, Clock, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { X, Send, Terminal, Sparkles, Plus, Trash2, Clock, ChevronLeft, MessageSquare } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAiChat } from '../../hooks/useAi';
 import client from '../../api/client';
@@ -195,7 +195,15 @@ const AssistantDrawer = ({ isOpen, onClose }) => {
       loadSessions();
 
       // 3. Request LLM response
-      const response = await aiChat.mutateAsync(query);
+      const historyPayload = messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.text
+        }));
+
+      const response = await aiChat.mutateAsync({ message: query, history: historyPayload });
+
       
       let text = 'LINK ERROR: No response payload received.';
       let action = null;

@@ -1,12 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import client from '../api/client';
+import { db, queueSync } from '../db/db';
 
 export const useReminders = (params = {}, queryOptions = {}) => {
   return useQuery({
     queryKey: ['reminders', params],
     queryFn: async () => {
-      const response = await client.get('/reminders', { params });
-      return response.data;
+      try {
+        const response = await client.get('/reminders', { params });
+        const reminders = response.data;
+        
+        await db.reminders.clear();
+        await db.reminders.bulkAdd(reminders);
+        
+        return reminders;
+      } catch (error) {
+        if (!navigator.onLine) {
+          return await db.reminders.toArray();
+        }
+        throw error;
+      }
     },
     ...queryOptions,
   });
@@ -17,6 +30,11 @@ export const useReminderActions = () => {
 
   const createMutation = useMutation({
     mutationFn: async (payload) => {
+      if (!navigator.onLine) {
+        const id = await db.reminders.add({ ...payload, status: 'scheduled', created_at: new Date().toISOString() });
+        await queueSync('CREATE', 'reminders', { ...payload, tempId: id });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.post('/reminders', payload);
       return response.data;
     },
@@ -25,6 +43,11 @@ export const useReminderActions = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...payload }) => {
+      if (!navigator.onLine) {
+        await db.reminders.update(id, payload);
+        await queueSync('UPDATE', 'reminders', { id, ...payload });
+        return { id, ...payload, _offline: true };
+      }
       const response = await client.patch(`/reminders/${id}`, payload);
       return response.data;
     },
@@ -33,6 +56,13 @@ export const useReminderActions = () => {
 
   const snoozeMutation = useMutation({
     mutationFn: async ({ id, minutes }) => {
+      if (!navigator.onLine) {
+        const now = new Date();
+        const snoozedUntil = new Date(now.getTime() + minutes * 60000).toISOString();
+        await db.reminders.update(id, { status: 'snoozed', snoozed_until: snoozedUntil });
+        await queueSync('SNOOZE', 'reminders', { id, minutes });
+        return { id, status: 'snoozed', snoozed_until: snoozedUntil, _offline: true };
+      }
       const response = await client.post(`/reminders/${id}/snooze`, null, { params: { minutes } });
       return response.data;
     },
@@ -41,6 +71,11 @@ export const useReminderActions = () => {
 
   const dismissMutation = useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.reminders.update(id, { status: 'dismissed' });
+        await queueSync('DISMISS', 'reminders', { id });
+        return { id, status: 'dismissed', _offline: true };
+      }
       const response = await client.post(`/reminders/${id}/dismiss`);
       return response.data;
     },
@@ -75,6 +110,11 @@ export const useReminderActions = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.reminders.delete(id);
+        await queueSync('DELETE', 'reminders', { id });
+        return { id, _offline: true };
+      }
       const response = await client.delete(`/reminders/${id}`);
       return response.data;
     },
@@ -83,6 +123,11 @@ export const useReminderActions = () => {
 
   const lockInMutation = useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.reminders.update(id, { is_locked_in: true, locked_in_at: new Date().toISOString() });
+        await queueSync('LOCK_IN', 'reminders', { id });
+        return { id, is_locked_in: true, _offline: true };
+      }
       const response = await client.post(`/reminders/${id}/lock-in`);
       return response.data;
     },
@@ -91,6 +136,11 @@ export const useReminderActions = () => {
 
   const skipMutation = useMutation({
     mutationFn: async (id) => {
+      if (!navigator.onLine) {
+        await db.reminders.update(id, { status: 'skipped' });
+        await queueSync('SKIP', 'reminders', { id });
+        return { id, status: 'skipped', _offline: true };
+      }
       const response = await client.post(`/reminders/${id}/skip`);
       return response.data;
     },

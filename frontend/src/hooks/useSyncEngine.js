@@ -80,8 +80,35 @@ export const useSyncEngine = () => {
             } else if (action === 'DELETE') {
               response = await client.delete(`/subjects/${data.id}`);
             }
+          } else if (entity === 'reminders') {
+            if (action === 'CREATE') {
+              const { tempId, ...payload } = data;
+              response = await client.post('/reminders', payload);
+            } else if (action === 'UPDATE') {
+              const { id, ...payload } = data;
+              response = await client.patch(`/reminders/${id}`, payload);
+            } else if (action === 'DELETE') {
+              response = await client.delete(`/reminders/${data.id}`);
+            } else if (action === 'SNOOZE') {
+              response = await client.post(`/reminders/${data.id}/snooze`, null, { params: { minutes: data.minutes } });
+            } else if (action === 'DISMISS') {
+              response = await client.post(`/reminders/${data.id}/dismiss`);
+            } else if (action === 'LOCK_IN') {
+              response = await client.post(`/reminders/${data.id}/lock-in`);
+            } else if (action === 'SKIP') {
+              response = await client.post(`/reminders/${data.id}/skip`);
+            }
+          } else if (entity === 'study') {
+            if (action === 'START') {
+              response = await client.post('/study/start', data);
+            } else if (action === 'PAUSE') {
+              response = await client.post('/study/active/pause');
+            } else if (action === 'RESUME') {
+              response = await client.post('/study/active/resume');
+            } else if (action === 'STOP') {
+              response = await client.post('/study/active/stop', null, { params: { notes: data.notes } });
+            }
           }
-          // Add other entities here (notes, goals, etc.)
 
           // If successful, remove from queue
           await db.sync_queue.delete(event.id);

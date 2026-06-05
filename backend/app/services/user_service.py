@@ -39,7 +39,7 @@ class UserService:
                 preferences = {}
 
         # Mask sensitive keys for frontend display
-        for key in ["nvidia_api_key", "groq_api_key", "anthropic_api_key"]:
+        for key in ["nvidia_api_key"]:
             if key in preferences:
                 val = decrypt_content(preferences[key])
                 if val and len(val) > 8:
@@ -57,8 +57,6 @@ class UserService:
         """Update user settings, securely encrypting sensitive keys."""
         ALLOWED_KEYS = {
             "nvidia_api_key",
-            "groq_api_key",
-            "anthropic_api_key",
             "ai_model",
             "weather_city",
             "weather_temp",
@@ -82,7 +80,7 @@ class UserService:
                 preferences = {}
 
         # Handle sensitive keys explicitly
-        for key in ["nvidia_api_key", "groq_api_key", "anthropic_api_key"]:
+        for key in ["nvidia_api_key"]:
             if key in filtered_settings:
                 raw_key = filtered_settings.pop(key)
                 if raw_key and raw_key.strip():
@@ -117,7 +115,7 @@ class UserService:
             return None
             
         # These keys are known to be encrypted
-        if key in ["nvidia_api_key", "anthropic_api_key", "groq_api_key"]:
+        if key in ["nvidia_api_key"]:
             return decrypt_content(value)
             
         return value

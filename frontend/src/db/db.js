@@ -22,6 +22,10 @@ db.version(3).stores({
   locations: '++id, label, category, latitude, longitude, radius_meters'
 });
 
+db.version(4).stores({
+  reminders: '++id, title, due_at, status'
+});
+
 // Helper to add to sync queue
 export const queueSync = async (action, entity, data) => {
   await db.sync_queue.add({

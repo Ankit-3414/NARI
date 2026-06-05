@@ -3,6 +3,7 @@
  */
 
 import { useUiStore } from '../store/uiStore';
+import { useAuthStore } from '../store/authStore';
 
 const debugLog = (...args) => {
   if (import.meta.env.DEV) {
@@ -34,7 +35,7 @@ class WebSocketClient {
 
     // Secure: API Key is passed as a subprotocol to avoid query params.
     // This handles dev environments (Vite proxy) where cookies aren't automatically forwarded.
-    const apiKey = localStorage.getItem('NARI_API_KEY') || import.meta.env.VITE_NARI_API_KEY;
+    const apiKey = useAuthStore.getState().apiKey || import.meta.env.VITE_NARI_API_KEY;
     this.socket = new WebSocket(wsUrl.toString(), apiKey ? [apiKey] : []);
 
     this.socket.onopen = () => {
@@ -66,8 +67,9 @@ class WebSocketClient {
   attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      debugLog(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${this.reconnectTimeout}ms...`);
-      setTimeout(() => this.connect(this.url), this.reconnectTimeout);
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+      debugLog(`Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms...`);
+      setTimeout(() => this.connect(this.url), delay);
     } else {
       console.error('Max WebSocket reconnect attempts reached');
     }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const client = axios.create({
   baseURL: '/api/v1',
@@ -8,9 +9,9 @@ const client = axios.create({
   },
 });
 
-// Attach API key from local storage or environment
+// Attach API key from memory or environment
 client.interceptors.request.use((config) => {
-  let apiKey = localStorage.getItem('NARI_API_KEY');
+  let apiKey = useAuthStore.getState().apiKey;
   
   if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
     apiKey = import.meta.env.VITE_NARI_API_KEY;
@@ -21,6 +22,7 @@ client.interceptors.request.use((config) => {
   }
   return config;
 });
+
 
 // Standard response unwrapper to match NARI contract
 client.interceptors.response.use(

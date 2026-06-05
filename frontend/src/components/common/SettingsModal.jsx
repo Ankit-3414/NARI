@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Key, Save, Check, MapPin, Clock } from 'lucide-react';
+import { X, Key, Save, Check, MapPin, Clock, Bell } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
 import client from '../../api/client';
+import { notificationService } from '../../utils/notificationService';
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const { settings, updateSettings, isUpdating } = useSettings();
@@ -17,6 +18,26 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const searchCacheRef = useRef({});
   const [openUpward, setOpenUpward] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+
+  // Web Push Subscription states
+  const [pushLoading, setPushLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [pushStatus, setPushStatus] = useState('unknown');
+
+  // Verify existing subscription when modal is opened
+  useEffect(() => {
+    if (isOpen && 'serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.pushManager.getSubscription().then((subscription) => {
+          if (subscription) {
+            setPushStatus('enabled');
+          } else {
+            setPushStatus('disabled');
+          }
+        }).catch(() => setPushStatus('disabled'));
+      }).catch(() => setPushStatus('disabled'));
+    }
+  }, [isOpen]);
 
   // Local storage for indexing and caching recent successful searches
   const [recentLocations, setRecentLocations] = useState(() => {
@@ -334,6 +355,52 @@ const SettingsModal = ({ isOpen, onClose }) => {
               )}
             </div>
           </div>
+          
+          <div className="space-y-2 border-t border-white/5 pt-4">
+            <label className="text-sm text-nari-teal uppercase font-bold tracking-wider flex items-center gap-1.5">
+              <Bell size={14} /> Device Notifications
+            </label>
+            <p className="text-xs text-nari-gray">Subscribe to receive system reminders and briefings natively on your mobile phone or browser.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setPushLoading(true);
+                  const ok = await notificationService.subscribeToPush();
+                  setPushLoading(false);
+                  if (ok) {
+                    setPushStatus('enabled');
+                    alert("Notification channel established! Reminders will now push to this device.");
+                  } else {
+                    alert("Failed to subscribe. Verify you are using HTTPS, your browser supports Web Push, and notification access has been granted.");
+                  }
+                }}
+                disabled={pushLoading || pushStatus === 'enabled'}
+                className="px-3 py-2 bg-black/40 border border-nari-teal/30 hover:border-nari-teal text-white text-xs font-mono transition-colors disabled:opacity-50 flex-1 min-w-[140px] text-center"
+              >
+                {pushLoading ? 'SUBSCRIBING...' : pushStatus === 'enabled' ? 'ALERTS_ENABLED ✓' : 'ENABLE_ALERTS'}
+              </button>
+              
+              <button
+                type="button"
+                onClick={async () => {
+                  setTestLoading(true);
+                  const ok = await notificationService.testPushNotification();
+                  setTestLoading(false);
+                  if (ok) {
+                    alert("Test notification dispatched! Check your device alerts.");
+                  } else {
+                    alert("No active subscription. Click 'Enable Alerts' first before testing connection.");
+                  }
+                }}
+                disabled={testLoading}
+                className="px-3 py-2 bg-black/40 border border-nari-pink/30 hover:border-nari-pink text-white text-xs font-mono transition-colors disabled:opacity-50 flex-1 min-w-[140px] text-center"
+              >
+                {testLoading ? 'SENDING...' : 'TEST_CONNECTION'}
+              </button>
+            </div>
+          </div>
+
           <div className="flex justify-end pt-4 border-t border-white/5">
             <button
               onClick={handleSave}

@@ -48,6 +48,16 @@ class ActivityLog(BaseModel, table=True):
         sa_column_kwargs={"nullable": True},
         description="Full context snapshot as JSON",
     )
+    raw_content: Optional[str] = Field(
+        default=None,
+        sa_column_kwargs={"nullable": True},
+        description="Raw or unredacted content block for FTS indexing",
+    )
+    is_encrypted: bool = Field(
+        default=False,
+        sa_column_kwargs={"nullable": False, "server_default": "0"},
+        description="Whether the payload is encrypted",
+    )
     source: str = Field(
         default="api",
         sa_column_kwargs={"nullable": False},

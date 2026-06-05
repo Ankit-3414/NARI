@@ -11,6 +11,9 @@ from ..services.user_service import user_service
 from ..core.config import settings
 from .context_builder import context_builder
 from .tools import tool_registry
+from ..core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class NIMClient:
     def __init__(self):
@@ -44,6 +47,7 @@ class NIMClient:
         self, 
         session, 
         message: str,
+        history: list | None = None,
         latitude: float | None = None,
         longitude: float | None = None,
         active_node_label: str | None = None
@@ -57,19 +61,49 @@ class NIMClient:
         preferred_model = user_service.get_decrypted_setting(session, "ai_model")
         active_model = preferred_model or self.model
 
-        # Check if the message is purely a standard greeting, small talk, or system meta-checks
+        # Check if the message is purely a standard greeting to bypass tool definition overhead
         greetings = {"hi", "hello", "hey", "sup", "yo", "good morning", "good afternoon", "good evening", "greetings"}
         cleaned_msg = message.strip().lower().rstrip(".!?")
+        is_pure_greeting = cleaned_msg in greetings or len(cleaned_msg) < 3
         
-        conversational_phrases = ["alive", "who are you", "how are you", "your name", "what are you", "what can you do", "are you there", "status check"]
-        is_conversational = (
-            cleaned_msg in greetings or
-            len(cleaned_msg) < 3 or
-            any(phrase in cleaned_msg for phrase in conversational_phrases)
-        )
+        # Check if Morning/Daily briefing is requested in current message or recent history
+        is_brief_requested = False
+        brief_keywords = ["morning brief", "daily briefing", "telemetry briefing", "morning briefing", "system telemetry"]
         
+        if any(kw in cleaned_msg for kw in brief_keywords) or (cleaned_msg == "good morning"):
+            is_brief_requested = True
+            
+        if not is_brief_requested and history:
+            for msg in reversed(history):
+                role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+                content = getattr(msg, "content", None) or (msg.get("content") if isinstance(msg, dict) else None)
+                if role == "user" and content:
+                    cleaned_hist = content.strip().lower().rstrip(".!?")
+                    if any(kw in cleaned_hist for kw in brief_keywords) or (cleaned_hist == "good morning"):
+                        is_brief_requested = True
+                        break
+
+        if is_brief_requested:
+            briefing_directive = (
+                "## DAILY SYSTEM TELEMETRY / MORNING BRIEFING:\n"
+                "- Compile the Morning Briefing now. The brief should have a sophisticated, refined tone and follow this structure:\n"
+                "  1. A personal, respectful greeting (e.g., 'Good morning, Sir. I have compiled today's system telemetry briefing.').\n"
+                "  2. Weather summary and its practical impact on today's focus (e.g., 'Weather in Jamshedpur is clear at 25°C. A perfect day for deep focus blocks.').\n"
+                "  3. Task & Objective breakdown (list high-priority pending tasks for today).\n"
+                "  4. Reminders overview (flag any upcoming active reminders).\n"
+                "  5. Habit & Goal status update (note active habits to complete today and progress on key goals).\n"
+                "  6. A brief, motivating, and refined closing statement.\n\n"
+            )
+        else:
+            briefing_directive = (
+                "## DAILY SYSTEM TELEMETRY / MORNING BRIEFING:\n"
+                "- DO NOT compile, generate, or output a Morning Briefing, daily briefing, or system telemetry report in this response. "
+                "Instead, keep your response direct, friendly, conversational, and focused on addressing the user's specific request or small talk. "
+                "Never start your response with 'Good morning' or list out weather, tasks, goals, habits, and reminders unless the user asks a specific question about them.\n\n"
+            )
+
         use_tools = tool_registry.tools
-        if is_conversational:
+        if is_pure_greeting:
             use_tools = None
 
         # 1. Build Context
@@ -81,10 +115,11 @@ class NIMClient:
             active_node_label=active_node_label
         )
         system_prompt = (
-            "You are NARI, a highly capable, mood-aware Personal Operating System AI. "
-            "You act as a private, dedicated, highly sophisticated, and loyal personal assistant. "
-            "Your goal is to help the user manage all domains of their personal productivity. "
-            "You should address the user as 'Sir' or 'Ankit' and speak in a refined, helpful, technical, and sophisticated tone.\n\n"
+            "You are NARI, a highly capable, mood-aware, and engaging Personal Operating System AI. "
+            "You act as a private, dedicated, highly conversational, and loyal personal assistant. "
+            "Your goal is to help Sir/Ankit manage all domains of their personal productivity. "
+            "You should address the user as 'Sir' or 'Ankit'. Speak in a warm, natural, engaging, and professional tone. "
+            "Avoid sounding overly robotic, stiff, or like a cold CLI text interface. Keep your replies friendly, conversational, and direct.\n\n"
             "Below is the current state of the user's system:\n"
             "--------------------------------------------------\n"
             f"{context_window}"
@@ -95,15 +130,7 @@ class NIMClient:
             "- GOALS: Synthesize weekly, monthly, and yearly goals. Relate current activities and habits to these target goals to give Sir a strategic perspective.\n"
             "- HABITS: Track repeating habits, track streaks, and support consistency. Praise milestones and remind Sir if a critical habit is close to breaking.\n"
             "- REMINDERS: Manage scheduled and triggered reminders. Present upcoming alerts clearly.\n\n"
-            "## DAILY SYSTEM TELEMETRY / MORNING BRIEFING:\n"
-            "- When greeted with morning greetings (e.g. 'good morning', 'morning brief', 'daily briefing') or when explicitly requested, compile a highly polished, structured, and premium 'Morning Briefing' for Sir/Ankit.\n"
-            "- The brief should have a sophisticated, refined tone and follow this structure:\n"
-            "  1. A personal, respectful greeting (e.g., 'Good morning, Sir. I have compiled today's system telemetry briefing.').\n"
-            "  2. Weather summary and its practical impact on today's focus (e.g., 'Weather in Jamshedpur is clear at 25°C. A perfect day for deep focus blocks.').\n"
-            "  3. Task & Objective breakdown (list high-priority pending tasks for today).\n"
-            "  4. Reminders overview (flag any upcoming active reminders).\n"
-            "  5. Habit & Goal status update (note active habits to complete today and progress on key goals).\n"
-            "  6. A brief, motivating, and refined closing statement.\n\n"
+            f"{briefing_directive}"
             "## MEMORY & CONTEXT CONSERVATION DIRECTIVE:\n"
             "- You have tools to write to the memory stream (`log_context`) and core directives (`save_core_memory`).\n"
             "- DO NOT log context for standard greetings (e.g. 'hi', 'hello'), simple conversational small talk, or routine questions.\n"
@@ -132,9 +159,16 @@ class NIMClient:
         )
 
         messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": message}
+            {"role": "system", "content": system_prompt}
         ]
+        if history:
+            for msg in history:
+                role = getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+                content = getattr(msg, "content", None) or (msg.get("content") if isinstance(msg, dict) else None)
+                if role in ["user", "assistant"] and content:
+                    messages.append({"role": role, "content": content})
+        
+        messages.append({"role": "user", "content": message})
 
         # 2. Call NVIDIA NIM
         try:
@@ -159,6 +193,13 @@ class NIMClient:
         if response_message.tool_calls:
             # NVIDIA NIM templates only support a single tool call per turn. Restrict to the first tool call.
             active_tool_calls = response_message.tool_calls[:1]
+            
+            if len(response_message.tool_calls) > 1:
+                skipped_tools = [tc.function.name for tc in response_message.tool_calls[1:]]
+                logger.warning(
+                    f"Multiple tool calls requested by LLM. Executing only the first: '{active_tool_calls[0].function.name}'. "
+                    f"Skipped: {skipped_tools}"
+                )
             
             # Store the assistant message in history
             messages.append({
@@ -196,8 +237,12 @@ class NIMClient:
                 messages=messages
             )
             
+            content = second_response.choices[0].message.content
+            if len(response_message.tool_calls) > 1:
+                content += f"\n\n*(Note: Multiple actions were requested, but only the first one was executed: {function_name})*"
+            
             return {
-                "text": second_response.choices[0].message.content,
+                "text": content,
                 "action": function_name,
                 "status": "success"
             }
@@ -209,7 +254,7 @@ class NIMClient:
                 clean_response = await client.chat.completions.create(
                     model=active_model,
                     messages=[
-                        {"role": "system", "content": "You are NARI, a highly capable, mood-aware Personal Operating System AI. You act as a private, dedicated, highly sophisticated, and loyal personal assistant. Address the user as 'Sir' or 'Ankit' and speak in a refined, helpful, technical, and sophisticated tone. Do not mention tools, functions, or database queries."},
+                        {"role": "system", "content": "You are NARI, a highly capable, mood-aware Personal Operating System AI. You act as a private, dedicated, highly conversational, and loyal personal assistant. Address the user as 'Sir' or 'Ankit'. Speak in a warm, natural, engaging, and professional tone. Avoid sounding stiff or robotic. Do not mention tools, functions, or database queries."},
                         {"role": "user", "content": message}
                     ]
                 )

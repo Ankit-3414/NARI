@@ -32,12 +32,13 @@ class SchedulerManager:
         # Add the reminder check job
         self.scheduler.add_job(
             self.check_reminders,
-            trigger=IntervalTrigger(seconds=1),
+            trigger=IntervalTrigger(seconds=15),
             id="check_reminders",
             replace_existing=True,
             max_instances=1,
             coalesce=True,
         )
+
 
         # Add the auto-resolution job (Ghost Protocol)
         self.scheduler.add_job(
@@ -74,7 +75,7 @@ class SchedulerManager:
 
     async def check_reminders(self):
         """Poll the database for due reminders."""
-        now = datetime.now(UTC)
+        now = datetime.now(UTC).replace(tzinfo=None)
         
         # We need a new session for each check
         with Session(db_session.engine) as session:
@@ -105,7 +106,7 @@ class SchedulerManager:
 
     async def resolve_triggered_reminders(self):
         """Auto-resolve reminders that have been ringing too long (Ghost Protocol)."""
-        now = datetime.now(UTC)
+        now = datetime.now(UTC).replace(tzinfo=None)
         
         with Session(db_session.engine) as session:
             # Find all triggered reminders
@@ -116,10 +117,9 @@ class SchedulerManager:
                 if not reminder.triggered_at:
                     continue
                 
-                # Force UTC for comparison
                 t_at = reminder.triggered_at
-                if t_at.tzinfo is None:
-                    t_at = t_at.replace(tzinfo=UTC)
+                if t_at.tzinfo is not None:
+                    t_at = t_at.replace(tzinfo=None)
 
                 # Flow 1: Attended (Auto-Dismiss if Locked-In)
                 # Production: Auto-dismiss after 2 minutes
@@ -134,6 +134,7 @@ class SchedulerManager:
                     if now > (t_at + timedelta(minutes=5)):
                         logger.info(f"Marking ghosted reminder as MISSED ID: {reminder.id}")
                         await reminder_service.dismiss(session, reminder.id, resolution=ReminderStatus.MISSED)
+
 
     async def trigger_daily_briefing(self):
         """Compile and trigger the Daily Telemetry Briefing."""

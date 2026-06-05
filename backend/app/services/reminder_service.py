@@ -110,6 +110,19 @@ class ReminderService:
         session.refresh(reminder)
         
         await self._emit_event(EventNames.REMINDER_TRIGGERED, reminder)
+
+        # Dispatch Web Push
+        try:
+            from .push_service import push_service
+            # Run async push notifications in background or await them
+            await push_service.send_push_notification(
+                session,
+                title=f"NARI Reminder: {reminder.title}",
+                body=reminder.message or "Objective due time reached."
+            )
+        except Exception as e:
+            logger.warning(f"Failed to dispatch Web Push for reminder {reminder.id}: {e}")
+
         return reminder
 
     async def lock_in(self, session: Session, reminder_id: int) -> Reminder:
@@ -159,9 +172,11 @@ class ReminderService:
         # Handle Recurrence
         if reminder.repeat_rule:
             try:
-                # Calculate next occurrence based on the ORIGINAL due_at
-                rule = rrulestr(reminder.repeat_rule, dtstart=reminder.due_at)
-                next_occurrence = rule.after(reminder.due_at)
+                # Calculate next occurrence strictly after max of due_at and current time to prevent drift and backlog
+                now_naive = utc_now().replace(tzinfo=None) if utc_now().tzinfo else utc_now()
+                due_naive = reminder.due_at.replace(tzinfo=None) if reminder.due_at.tzinfo else reminder.due_at
+                rule = rrulestr(reminder.repeat_rule, dtstart=due_naive)
+                next_occurrence = rule.after(max(due_naive, now_naive))
                 
                 if next_occurrence:
                     # Reset current reminder to next occurrence
@@ -175,6 +190,7 @@ class ReminderService:
                     reminder.updated_at = utc_now()
             except Exception as e:
                 logger.warning("Failed to calculate next reminder occurrence for %s: %s", reminder.id, e)
+
         
         session.add(reminder)
         session.commit()

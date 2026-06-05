@@ -20,7 +20,7 @@ const LoginPage = () => {
     try {
       const response = await client.post('/auth/session', { api_key: key.trim() });
       if (response.ok) {
-        setAuthenticated(true);
+        setAuthenticated(true, key.trim());
       } else {
         setError(response.error?.message || 'Authentication failed');
       }

@@ -72,7 +72,7 @@ class HabitService:
         # Create log entry
         log = HabitLog(
             habit_id=habit_id,
-            completed_at=now,
+            created_at=now,
             note=payload.note
         )
         session.add(log)
@@ -93,7 +93,7 @@ class HabitService:
 
     def list_logs(self, session: Session, habit_id: int, limit: int = 30) -> list[HabitLog]:
         """Get completion logs for a habit."""
-        statement = select(HabitLog).where(HabitLog.habit_id == habit_id).order_by(HabitLog.completed_at.desc()).limit(limit)
+        statement = select(HabitLog).where(HabitLog.habit_id == habit_id).order_by(HabitLog.created_at.desc()).limit(limit)
         return list(session.exec(statement).all())
 
     def _update_streak(self, habit: Habit, completion_time: datetime) -> None:

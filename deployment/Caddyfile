@@ -1,0 +1,22 @@
+# NARI Caddy Reverse Proxy Configuration
+# Caddy handles Let's Encrypt SSL certificates automatically out-of-the-box.
+# Just download caddy.exe and run: caddy run --config Caddyfile
+
+nari-home.duckdns.org {
+    # Proxy WebSocket connections (WebSockets require HTTP upgrade, handled by Caddy automatically)
+    reverse_proxy /ws* 127.0.0.1:8000
+
+    # Proxy backend API endpoints
+    reverse_proxy /api* 127.0.0.1:8000
+
+    # Proxy frontend static server / dev server
+    reverse_proxy * 127.0.0.1:3000
+
+    # Optional: Log file configuration
+    log {
+        output file CaddyAccess.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

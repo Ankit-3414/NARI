@@ -20,6 +20,7 @@ dependencies = [
     "sqlite-vec>=0.1.0",
     "numpy>=1.26.0",
     "scipy>=1.13.0",
+    "pywebpush>=1.14.0",
 ]
 
 [dependency-groups]

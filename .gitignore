@@ -18,13 +18,25 @@ __pycache__/
 frontend_v8.7_backup/
 frontend/dev-dist/
 dist/
+test_location_voter.mjs
+backend/check_key.py
+backend/create_vec_table.py
+backend/repair_vec_table.py
+backend/test_ai_loop.py
+backend/test_locations_api.py
+backend/test_weather_upgrade.py
+
 
 # Local Data
 backend/data/*.db
 backend/data/*.db-journal
 backend/data/*.db-wal
+backend/data/*.db-shm
 backend/data/*.log
+backend/dev_server.log
 data/nari.db
+*.log
+
 
 # Secrets
 .env

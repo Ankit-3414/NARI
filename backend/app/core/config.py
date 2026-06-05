@@ -37,9 +37,6 @@ class Settings(BaseSettings):
 
     # AI (reserved for Stage 9)
     NVIDIA_API_KEY: Optional[str] = None
-    GROQ_API_KEY: Optional[str] = None
-    ANTHROPIC_API_KEY: Optional[str] = None
-    AI_PROVIDER: Optional[str] = None
     AI_ENABLED: bool = False
     SEARXNG_URL: str = "http://localhost:8080"
 

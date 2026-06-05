@@ -1,3 +1,6 @@
+import os
+os.environ["NARI_ENV"] = "testing"
+
 import pytest
 from pathlib import Path
 from typing import Iterator
@@ -33,6 +36,7 @@ def engine_fixture(tmp_path: Path):
     
     # Restore the global engine
     db_session.engine = old_engine
+    engine.dispose()
 
 @pytest.fixture(name="session")
 def session_fixture(engine):

@@ -25,7 +25,7 @@ import { useWeather } from '../../hooks/useWeather';
 import { getWeatherIcon } from '../../utils/weather';
 import { useSpatialAwareness } from '../../hooks/useSpatialAwareness';
 
-const NavItem = ({ to, icon: Icon, label, onClick }) => (
+const NavItem = ({ to, icon: Icon, label, showLabel = false, onClick }) => (
   <NavLink
     to={to}
     onClick={onClick}
@@ -47,10 +47,19 @@ const NavItem = ({ to, icon: Icon, label, onClick }) => (
           <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
         </motion.div>
         
-        {label && (
-          <span className="absolute -top-10 bg-surface border border-primary/20 px-2 py-1 text-[10px] font-mono font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block whitespace-nowrap">
-            {`> ${label}`}
+        {showLabel ? (
+          <span className={clsx(
+            "text-[9px] font-mono font-bold uppercase tracking-wider mt-1 transition-colors relative z-10",
+            isActive ? "text-background" : "text-secondary group-hover:text-primary"
+          )}>
+            {label}
           </span>
+        ) : (
+          label && (
+            <span className="absolute -top-10 bg-surface border border-primary/20 px-2 py-1 text-[10px] font-mono font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block whitespace-nowrap">
+              {`> ${label}`}
+            </span>
+          )
         )}
       </>
     )}
@@ -81,14 +90,14 @@ const SystemMenu = ({ isOpen, onClose }) => {
            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-secondary"><X size={20}/></button>
         </div>
         <div className="p-6 overflow-y-auto grid grid-cols-3 gap-4 pb-12">
-          <NavItem to="/goals" icon={Target} label="Goals" onClick={onClose} />
-          <NavItem to="/habits" icon={Zap} label="Habits" onClick={onClose} />
-          <NavItem to="/context" icon={Terminal} label="Context" onClick={onClose} />
-          <NavItem to="/analytics" icon={BarChart3} label="Insights" onClick={onClose} />
-          <NavItem to="/subjects" icon={Layers} label="Hub" onClick={onClose} />
-          <NavItem to="/notes" icon={StickyNote} label="Vault" onClick={onClose} />
-          <NavItem to="/activity" icon={Activity} label="Activity" onClick={onClose} />
-          <NavItem to="/spatial" icon={Navigation} label="Map" onClick={onClose} />
+          <NavItem to="/goals" icon={Target} label="Goals" showLabel onClick={onClose} />
+          <NavItem to="/habits" icon={Zap} label="Habits" showLabel onClick={onClose} />
+          <NavItem to="/context" icon={Terminal} label="Context" showLabel onClick={onClose} />
+          <NavItem to="/analytics" icon={BarChart3} label="Insights" showLabel onClick={onClose} />
+          <NavItem to="/subjects" icon={Layers} label="Hub" showLabel onClick={onClose} />
+          <NavItem to="/notes" icon={StickyNote} label="Vault" showLabel onClick={onClose} />
+          <NavItem to="/activity" icon={Activity} label="Activity" showLabel onClick={onClose} />
+          <NavItem to="/spatial" icon={Navigation} label="Map" showLabel onClick={onClose} />
         </div>
       </motion.div>
     </AnimatePresence>

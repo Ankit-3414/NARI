@@ -26,35 +26,42 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Prepare runtime dependencies for the app."""
     setup_logging()
+    
+    # Secure: Verify that we are not running with default API keys in production
+    if settings.NARI_API_KEY == "neural_link_established":
+        logger.warning("SECURITY ALERT: Running with default API key ('neural_link_established'). Change NARI_API_KEY for production deployments.")
+
     init_db()
     setup_event_listeners()
     scheduler_manager.start()
-    
+
     # Pre-load embedding model in the background so first chat query is instant
-    from .services.semantic_memory import semantic_memory
-    import asyncio
-    asyncio.create_task(asyncio.to_thread(semantic_memory._get_model))
+    if settings.NARI_ENV != "testing":
+        from .services.semantic_memory import semantic_memory
+        import asyncio
+        asyncio.create_task(asyncio.to_thread(semantic_memory._get_model))
     
     # Auto-digest any pending context logs on server startup/reboot
-    from .services.context_service import context_service
-    from .db.session import engine
-    from sqlmodel import Session
-    
-    async def digest_pending_context_startup():
-        # Allow 2.0s for the system startup process to fully bind & stabilize
-        await asyncio.sleep(2.0)
-        try:
-            with Session(engine) as session:
-                logger.info("Startup Lifespan: Scanning for undigested context logs...")
-                learned = await context_service.digest_context(session)
-                if learned:
-                    logger.info(f"Startup Lifespan: Ingestion complete. Concepts learned: {learned}")
-                else:
-                    logger.info("Startup Lifespan: All context logs are already digested and up to date.")
-        except Exception as e:
-            logger.error(f"Startup Lifespan: Auto-digestion query failed: {e}")
-            
-    asyncio.create_task(digest_pending_context_startup())
+    if settings.NARI_ENV != "testing":
+        from .services.context_service import context_service
+        from .db.session import engine
+        from sqlmodel import Session
+        
+        async def digest_pending_context_startup():
+            # Allow 2.0s for the system startup process to fully bind & stabilize
+            await asyncio.sleep(2.0)
+            try:
+                with Session(engine) as session:
+                    logger.info("Startup Lifespan: Scanning for undigested context logs...")
+                    learned = await context_service.digest_context(session)
+                    if learned:
+                        logger.info(f"Startup Lifespan: Ingestion complete. Concepts learned: {learned}")
+                    else:
+                        logger.info("Startup Lifespan: All context logs are already digested and up to date.")
+            except Exception as e:
+                logger.error(f"Startup Lifespan: Auto-digestion query failed: {e}")
+                
+        asyncio.create_task(digest_pending_context_startup())
     
     logger.info("NARI backend started")
     yield
@@ -77,8 +84,11 @@ def create_app() -> FastAPI:
         "http://localhost",
         "http://127.0.0.1",
         "http://nari.local",
+        "http://nari.local:3000",
         "http://192.168.1.100",
-        "http://192.168.1.100:3000"
+        "http://192.168.1.100:3000",
+        "http://server-01.local",
+        "http://server-01.local:3000"
     ]
     
     if settings.NARI_ALLOWED_ORIGINS:
