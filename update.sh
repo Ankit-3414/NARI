@@ -187,8 +187,8 @@ fi
 echo "🌐 Synchronizing Nginx Identity..."
 NGINX_CONF="
 server {
-    listen 80;
-    server_name nari.local server-01.local $PRIMARY_IP;
+    listen 80 default_server;
+    server_name _;
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;
     location / {

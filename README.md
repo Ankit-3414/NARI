@@ -55,6 +55,23 @@ sudo ./update.sh
 
 The update script refreshes the deployment, reapplies permissions, restarts the backend and Nginx, and removes temporary artifacts.
 
+### Secure Remote Access & Web Push (CGNAT Bypass)
+
+If your home internet is behind Carrier-Grade NAT (CGNAT) and standard port-forwarding fails, you can expose NARI securely via HTTPS for free using **ngrok**:
+
+1. Install ngrok via snap and configure your authtoken:
+   ```bash
+   sudo snap install ngrok
+   ngrok config add-authtoken YOUR_AUTHTOKEN
+   ```
+2. Enable the tunnel 24/7 as a background service:
+   Set up `/etc/systemd/system/ngrok.service` to run:
+   `ngrok http 80 --domain=your-subdomain.ngrok-free.dev`
+3. Add your ngrok URL to `NARI_ALLOWED_ORIGINS` in `backend/.env` and restart NARI.
+4. Open the ngrok link in your browser to access NARI securely and enable native Web Push alerts!
+
+For detailed configuration instructions, see [docs/DEPLOY.md](file:///H:/NARI/docs/DEPLOY.md#7-bypassing-cgnat-and-exposing-securely-ngrok).
+
 ---
 
 ## CLI Usage

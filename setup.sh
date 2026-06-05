@@ -101,8 +101,8 @@ PRIMARY_IP=$(hostname -I | awk '{print $1}')
 
 NGINX_CONF="
 server {
-    listen 80;
-    server_name nari.local $PRIMARY_IP;
+    listen 80 default_server;
+    server_name _;
 
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;
