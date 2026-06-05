@@ -75,6 +75,9 @@ class ContextBuilder:
                 print(f"KNOWLEDGE RETRIEVAL ERROR: {e}")
                 context += f"(Knowledge retrieval offline)\n\n"
 
+        # 2b. Project Roadmap & Self-Awareness
+        context += self._get_project_meta() + "\n"
+
         # 3. Today's Tasks
         today_tasks = task_service.today(session)
         context += "TODAY'S TASKS:\n"
@@ -142,5 +145,43 @@ class ContextBuilder:
             context += "- No recent activity.\n"
 
         return redact_text_pii(context)
+
+    def _get_project_meta(self) -> str:
+        """Reads NARI's own README.md and PRODUCT.md to extract product purpose and roadmap features."""
+        import os
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            readme_path = os.path.join(base_dir, "README.md")
+            
+            roadmap_lines = []
+            if os.path.exists(readme_path):
+                with open(readme_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                
+                in_roadmap = False
+                for line in lines:
+                    if "## Roadmap" in line:
+                        in_roadmap = True
+                        continue
+                    if in_roadmap:
+                        # Stop at next major heading (except subheadings like ### Phase)
+                        if line.startswith("## ") and not line.startswith("### ") and not "Roadmap" in line:
+                            break
+                        stripped = line.strip()
+                        if stripped:
+                            roadmap_lines.append(stripped)
+                            
+            roadmap_str = "\n".join(roadmap_lines) if roadmap_lines else "No roadmap found."
+            
+            meta = (
+                "NARI ARCHITECTURE & ROADMAP:\n"
+                "- Current version: 1.0.0-alpha.10\n"
+                "- Self-hosted environment: Ubuntu Server 24.04, Nginx proxy, systemd process supervisor\n"
+                "- Active specifications:\n"
+                f"{roadmap_str}\n"
+            )
+            return meta
+        except Exception as e:
+            return f"NARI ARCHITECTURE & ROADMAP: (Unable to read project files: {str(e)})\n"
 
 context_builder = ContextBuilder()
