@@ -930,7 +930,6 @@ class ToolRegistry:
                 from sqlmodel import select
                 
                 if target == "knowledge":
-                    from ..services.semantic_memory import semantic_memory
                     results = semantic_memory.search_knowledge(session, query, limit=5)
                     if not results:
                         return "No matching knowledge nodes found in semantic memory."
