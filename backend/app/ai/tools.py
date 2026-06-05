@@ -38,6 +38,11 @@ class ToolRegistry:
                                 "enum": ["low", "normal", "high", "urgent"],
                                 "description": "The priority of the task."
                             },
+                            "status": {
+                                "type": "string",
+                                "enum": ["pending", "done", "cancelled"],
+                                "description": "The current status of the task. Set to 'done' or 'cancelled' if logging a completed/cancelled historical activity."
+                            },
                             "location_id": {
                                 "type": "integer",
                                 "description": "Optional ID of a saved physical location (e.g. Home, Gym) to link this task to."
@@ -872,9 +877,17 @@ class ToolRegistry:
                 except ValueError:
                     priority = TaskPriority.NORMAL
                 
+                # Ensure status is valid
+                status_arg = arguments.get("status", "pending")
+                try:
+                    status = TaskStatus(status_arg)
+                except ValueError:
+                    status = TaskStatus.PENDING
+                
                 payload = TaskCreate(
                     title=arguments["title"],
                     priority=priority,
+                    status=status,
                     location_id=arguments.get("location_id")
                 )
                 task = await task_service.create(session, payload)

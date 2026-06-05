@@ -12,6 +12,7 @@ class TaskBase(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
     priority: TaskPriority = TaskPriority.NORMAL
+    status: Optional[TaskStatus] = None
     due_date: Optional[date] = None
     subject_id: Optional[int] = None
     tags: Optional[list[str]] = None

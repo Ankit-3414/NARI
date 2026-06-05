@@ -36,6 +36,9 @@ class TaskService(BaseService[Task, TaskCreate, TaskUpdate]):
         tags = data.pop("tags", None)
         task = Task(**data, tags_json=encode_tags(tags))
 
+        if task.status == TaskStatus.DONE and task.completed_at is None:
+            task.completed_at = utc_now()
+
         session.add(task)
         session.flush()
         self._add_history(session, task, "created", None, self.to_data(task))
