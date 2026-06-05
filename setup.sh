@@ -140,7 +140,7 @@ server {
 
 echo "$NGINX_CONF" | tee /etc/nginx/sites-available/nari > /dev/null
 ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home
 nginx -t && systemctl restart nginx
 
 # 5. Systemd Service Configuration

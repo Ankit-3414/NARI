@@ -219,7 +219,7 @@ server {
 }"
 echo "$NGINX_CONF" | sudo tee /etc/nginx/sites-available/nari > /dev/null
 sudo ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home
 echo "✅ Nginx configuration updated."
 
 echo "📦 Synchronizing Python dependencies and AI models (this may take a few minutes)..."
