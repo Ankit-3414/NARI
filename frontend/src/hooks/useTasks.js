@@ -8,18 +8,32 @@ export const useTasks = (filters = {}) => {
     queryFn: async () => {
       try {
         const response = await client.get('/tasks', { params: filters });
-        const tasks = response.data;
+        const tasks = Array.isArray(response?.data) 
+          ? response.data 
+          : (Array.isArray(response) ? response : []);
         
-        // Sync to local DB
-        await db.tasks.clear();
-        await db.tasks.bulkAdd(tasks);
+        // Sync to local DB defensively
+        try {
+          if (Array.isArray(tasks)) {
+            await db.tasks.clear();
+            if (tasks.length > 0) {
+              await db.tasks.bulkPut(tasks);
+            }
+          }
+        } catch (dbErr) {
+          console.warn('[IndexedDB Sync Error]', dbErr);
+        }
         
         return tasks;
       } catch (error) {
-        // If offline, fallback to local DB
-        if (!navigator.onLine) {
+        // Fallback to local DB if offline or request fails
+        try {
           const localTasks = await db.tasks.toArray();
-          return localTasks;
+          if (localTasks && localTasks.length > 0) {
+            return localTasks;
+          }
+        } catch (dbReadErr) {
+          console.warn('[IndexedDB Read Error]', dbReadErr);
         }
         throw error;
       }
@@ -33,12 +47,18 @@ export const useTodayTasks = () => {
     queryFn: async () => {
       try {
         const response = await client.get('/tasks/today');
-        return response.data;
+        const tasks = Array.isArray(response?.data) 
+          ? response.data 
+          : (Array.isArray(response) ? response : []);
+        return tasks;
       } catch (error) {
-        if (!navigator.onLine) {
-          // Approximate "today" from local tasks
+        try {
           const localTasks = await db.tasks.toArray();
-          return localTasks.filter(t => t.status !== 'done');
+          if (localTasks && localTasks.length > 0) {
+            return localTasks.filter(t => t.status !== 'done');
+          }
+        } catch (dbReadErr) {
+          console.warn('[IndexedDB Read Error]', dbReadErr);
         }
         throw error;
       }

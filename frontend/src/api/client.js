@@ -6,6 +6,7 @@ const client = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -28,6 +29,9 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => {
     const res = response.data;
+    if (typeof res === 'string' && (res.includes('<!DOCTYPE html>') || res.includes('<html'))) {
+      return Promise.reject({ code: 'PROXY_INTERSTITIAL', message: 'Received HTML from proxy/tunnel instead of API response.' });
+    }
     if (res && res.ok === false) {
       return Promise.reject(res.error || { code: 'API_ERROR', message: 'API response was not ok' });
     }
