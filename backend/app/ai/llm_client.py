@@ -184,7 +184,7 @@ class NIMClient:
                         tools=use_tools,
                         tool_choice="auto",
                     ),
-                    timeout=12.0
+                    timeout=7.0
                 )
             else:
                 response = await asyncio.wait_for(
@@ -192,11 +192,12 @@ class NIMClient:
                         model=active_model,
                         messages=messages,
                     ),
-                    timeout=12.0
+                    timeout=7.0
                 )
         except Exception as e:
             if active_model != self.fallback_model:
                 logger.warning(f"Primary model '{active_model}' failed or timed out ({e}). Falling back to '{self.fallback_model}'...")
+                active_model = self.fallback_model
                 try:
                     if use_tools:
                         response = await asyncio.wait_for(
@@ -206,7 +207,7 @@ class NIMClient:
                                 tools=use_tools,
                                 tool_choice="auto",
                             ),
-                            timeout=25.0
+                            timeout=15.0
                         )
                     else:
                         response = await asyncio.wait_for(
@@ -214,7 +215,7 @@ class NIMClient:
                                 model=self.fallback_model,
                                 messages=messages,
                             ),
-                            timeout=25.0
+                            timeout=15.0
                         )
                 except Exception as fb_err:
                     return {"error": f"NVIDIA NIM API Error: {str(fb_err)}"}
@@ -265,11 +266,28 @@ class NIMClient:
                 "content": tool_result
             })
             
-            # Call LLM again to get conversational reply after tool execution
-            second_response = await client.chat.completions.create(
-                model=active_model,
-                messages=messages
-            )
+            # Call LLM again to get conversational reply after tool execution with timeout and fallback
+            try:
+                second_response = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=active_model,
+                        messages=messages
+                    ),
+                    timeout=15.0
+                )
+            except Exception as sec_err:
+                if active_model != self.fallback_model:
+                    logger.warning(f"Second response with '{active_model}' timed out ({sec_err}). Falling back to '{self.fallback_model}'...")
+                    active_model = self.fallback_model
+                    second_response = await asyncio.wait_for(
+                        client.chat.completions.create(
+                            model=self.fallback_model,
+                            messages=messages
+                        ),
+                        timeout=18.0
+                    )
+                else:
+                    raise sec_err
             
             content = second_response.choices[0].message.content
             if len(response_message.tool_calls) > 1:
@@ -285,12 +303,15 @@ class NIMClient:
         meta_talk_keywords = ["function call", "tool call", "calling a tool", "calling a function", "no tool is needed", "no function is needed"]
         if content and any(kw in content.lower() for kw in meta_talk_keywords):
             try:
-                clean_response = await client.chat.completions.create(
-                    model=active_model,
-                    messages=[
-                        {"role": "system", "content": "You are NARI, Sir's Sovereign Personal AGI. You act as a private, dedicated, loyal, and extraordinarily capable command intelligence. Address the user as 'Sir' or 'Ankit'. Speak in a calm, confident, warm, and professional executive tone. Avoid sounding stiff or robotic. Do not mention tools, functions, or database queries."},
-                        {"role": "user", "content": message}
-                    ]
+                clean_response = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=active_model,
+                        messages=[
+                            {"role": "system", "content": "You are NARI, Sir's Sovereign Personal AGI. You act as a private, dedicated, loyal, and extraordinarily capable command intelligence. Address the user as 'Sir' or 'Ankit'. Speak in a calm, confident, warm, and professional executive tone. Avoid sounding stiff or robotic. Do not mention tools, functions, or database queries."},
+                            {"role": "user", "content": message}
+                        ]
+                    ),
+                    timeout=10.0
                 )
                 content = clean_response.choices[0].message.content
             except Exception:

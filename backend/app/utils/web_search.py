@@ -320,7 +320,7 @@ class WebResearchEngine:
                                 max_tokens=350,
                                 temperature=0.2,
                             ),
-                            timeout=10.0,
+                            timeout=6.0,
                         )
                     except Exception as model_err:
                         if model != fallback_model:
@@ -332,7 +332,7 @@ class WebResearchEngine:
                                     max_tokens=350,
                                     temperature=0.2,
                                 ),
-                                timeout=35.0,
+                                timeout=18.0,
                             )
                         else:
                             raise model_err
