@@ -137,6 +137,7 @@ log "[5/6] Deploying Nginx Web Server..."
 cat > /etc/nginx/sites-available/nari <<NGINX
 server {
     listen 80 default_server;
+    listen [::]:80 default_server;
     server_name _;
 
     root ${PROJECT_ROOT}/frontend/dist;

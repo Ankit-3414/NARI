@@ -177,6 +177,7 @@ log "Synchronizing Nginx configuration..."
 cat > /tmp/nari_nginx.conf <<NGINX
 server {
     listen 80 default_server;
+    listen [::]:80 default_server;
     server_name _;
 
     root ${PROJECT_ROOT}/frontend/dist;
