@@ -1,6 +1,13 @@
 # NARI Codebase Audit (Claude Code Review)
 
-This document contains the detailed findings and action items compiled from the Claude Code codebase audit of the NARI platform.
+This document contains the historical findings from the earlier Claude Code audit.
+
+> [!NOTE]
+> **Audit Status as of 2026-10-15 (v1.0.0-alpha.11):**
+> 16 of the 18 issues identified below have been verified and **resolved** in the codebase (including habit field mapping, scheduler naive datetime comparison, conversation history forwarding, `digest_context` lock, localStorage API key removal, login auth key passing, 15s scheduler polling, AI CRUD tools expansion, offline sync engine handlers, and WebSocket automatic reconnection).
+> 
+> For the comprehensive verification report and current status table, see:
+> 👉 [docs/report/audit_and_modification_plan.md](file:///H:/NARI/docs/report/audit_and_modification_plan.md)
 
 ---
 

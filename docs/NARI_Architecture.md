@@ -1,8 +1,8 @@
 # NARI Technical Architecture
 
-**Version:** v1.0.0-alpha.10  
-**Status:** Stage 9.5 complete (Spatial OS Map & Geofencing)
-**Last Updated:** 2026-06-03
+**Version:** v1.0.0-alpha.11  
+**Status:** Stage 9.5 complete (Spatial OS Map & Geofencing, Full Tool Registry)
+**Last Updated:** 2026-10-15
 **Author:** Ankit Upadhyay
 **System Type:** Self-hosted personal productivity and intelligence platform  
 **Primary Server:** Server-01, Intel i5-2400S, 8GB RAM, 500GB HDD
@@ -238,7 +238,7 @@ Stage 9 integrates high-performance cloud inference (NVIDIA NIM) and local seman
 
 Implemented components:
 
-- **Intent Routing & Action Orchestration**: Fully integrated via `NIMClient` (running `meta/llama-3.1-70b-instruct`) and `tool_registry`. Automatically parses and routes user intent to execute tasks (`create_task`, `complete_task`), record preferences (`log_context`), and retrieve core facts.
+- **Intent Routing & Action Orchestration**: Fully integrated via `NIMClient` (running `meta/llama-3.1-70b-instruct`) and `ToolRegistry` (28+ tools). Automatically parses and routes user intent to execute tasks (`create_task`, `update_task`, `complete_task`, `reopen_task`, `delete_task`), manage notes (`create_note`, `update_note`, `delete_note`), habits (`create_habit`, `update_habit`, `complete_habit`, `delete_habit`), goals (`create_goal`, `update_goal`, `increment_goal_progress`, `delete_goal`), reminders (`create_reminder`, `update_reminder`, `snooze_reminder`, `dismiss_reminder`, `lock_in_reminder`, `skip_reminder`, `delete_reminder`), study sessions (`start_study_session`, `pause_study_session`, `resume_study_session`, `stop_study_session`, `get_active_study_session`, `get_study_stats`), subjects (`create_subject`, `list_subjects`, `update_subject`, `delete_subject`), locations (`list_locations`, `create_location`), record preferences (`log_context`, `save_core_memory`), inspect system telemetry (`get_server_health`, `get_activity_log`), and run maintenance (`run_server_cleanup`).
 - **Local Semantic Memory**: Utilizes a SQLModel-managed SQLite database table `knowledge_nodes` compiled with the local SQLite `sqlite_vec` extension. Computes high-quality embeddings locally using SentenceTransformers (`all-MiniLM-L6-v2`) for fast vector search and retrieval.
 - **Context & Persona Retrieval**: The context builder retrieves semantic memories using local vector search, injecting them under `CORE DIRECTIVES & RETRIEVED KNOWLEDGE:` along with pending tasks, reminders, and recent activity streams to present a unified memory window to the LLM.
 - **Conversational Filtering**: Custom pre-filters bypass the tool definition pipeline for purely conversational/greeting small talk (including queries like `"alive"` or `"status check"`). Strict negative constraints prevent the AI from outputting function-calling/parameter meta-talk, maintaining a premium dialogue.

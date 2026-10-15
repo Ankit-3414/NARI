@@ -1,6 +1,6 @@
 # NARI System Verification Checklist
 
-This checklist records the current verified system surface for v1.0.0-alpha.10. It is a status reference, not a full test plan.
+This checklist records the current verified system surface for v1.0.0-alpha.11. It is a status reference, not a full test plan.
 
 ## Phase 1: Backend API and Business Logic
 
@@ -104,11 +104,12 @@ Current status: done.
 
 Current status: done.
 
-- [x] Intent routing engine fully implemented (NIMClient tool registry supporting task creation, completions, context stream logging, semantic searching, and core memory retention).
+- [x] Intent routing engine fully implemented (NIMClient ToolRegistry with 28+ tools supporting full CRUD across tasks, notes, habits, goals, reminders, subjects, study sessions, physical locations, context stream logging, semantic searching, core memory retention, server health inspection, and maintenance).
+- [x] Multi-turn conversation history forwarded from frontend IndexedDB storage through `useAiChat` to NVIDIA NIM completions.
 - [x] Semantic memory storage using SQLModel `knowledge_nodes` backed by SQLite and local sqlite_vec vector database.
 - [x] Context & Persona Retrieval boundary defined and integrated in context_builder.py using SentenceTransformers (all-MiniLM-L6-v2) for local embedding generation.
 - [x] Conversational pre-filtering and system prompt negative constraints implemented to guarantee zero function-calling or parameter meta-talk.
-- [x] Web Search co-pilot tool integrated into the registry using a keyless, dependency-free DuckDuckGo HTML query scraper.
+- [x] Web Search co-pilot tool integrated into the registry using SearXNG meta-search API.
 - [x] Weather-Aware AI Intent Routing (injects current temperature, location, and conditions into LLM context window).
 - [x] Reactive Cyberpunk HUD backdrop states (Amber radial gradient for Sunny, Cyan fast scanlines for Stormy/Rainy, Blur haze overlay for Foggy).
 - [x] Neural Daily Productivity Briefing (scheduler manager auto-compiles weather/objective telemetry at 8:00 AM local time).
