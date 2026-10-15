@@ -115,22 +115,21 @@ fi
 # ─────────────────────────────────────────────
 log "[4/7] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
-sudo chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
-find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
-find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
+sudo chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT" 2>/dev/null || true
+find "$PROJECT_ROOT" -name ".git" -prune -o -name ".venv" -prune -o -name "node_modules" -prune -o -type d -exec chmod 755 {} + 2>/dev/null || true
+find "$PROJECT_ROOT" -name ".git" -prune -o -name ".venv" -prune -o -name "node_modules" -prune -o -type f -exec chmod 644 {} + 2>/dev/null || true
 
 # Sensitive files
-[ -f "$BACKEND_DIR/.env" ]        && chmod 600 "$BACKEND_DIR/.env"
-[ -f "$FRONTEND_DIR/.env" ]       && chmod 600 "$FRONTEND_DIR/.env"
-[ -d "$BACKEND_DIR/data" ]        && chmod 700 "$BACKEND_DIR/data"
-[ -f "$BACKEND_DIR/data/nari.db" ] && chmod 600 "$BACKEND_DIR/data/nari.db"
+[ -f "$BACKEND_DIR/.env" ]        && chmod 600 "$BACKEND_DIR/.env" || true
+[ -f "$FRONTEND_DIR/.env" ]       && chmod 600 "$FRONTEND_DIR/.env" || true
+[ -d "$BACKEND_DIR/data" ]        && chmod 700 "$BACKEND_DIR/data" || true
+[ -f "$BACKEND_DIR/data/nari.db" ] && chmod 600 "$BACKEND_DIR/data/nari.db" || true
 
 # Executable bits
-chmod +x "$PROJECT_ROOT"/*.sh
-chmod +x "$BACKEND_DIR/run.py"
-[ -f "$PROJECT_ROOT/cli/nari.py" ] && chmod +x "$PROJECT_ROOT/cli/nari.py"
-[ -d "$BACKEND_DIR/.venv/bin" ] && chmod +x "$BACKEND_DIR"/.venv/bin/* || true
-[ -d "$FRONTEND_DIR/node_modules/.bin" ] && chmod +x "$FRONTEND_DIR"/node_modules/.bin/* || true
+chmod +x "$PROJECT_ROOT"/*.sh 2>/dev/null || true
+chmod +x "$BACKEND_DIR/run.py" 2>/dev/null || true
+[ -f "$PROJECT_ROOT/cli/nari.py" ] && chmod +x "$PROJECT_ROOT/cli/nari.py" 2>/dev/null || true
+[ -d "$FRONTEND_DIR/node_modules/.bin" ] && chmod +x "$FRONTEND_DIR"/node_modules/.bin/* 2>/dev/null || true
 ok "Permissions calibrated."
 
 # ─────────────────────────────────────────────
