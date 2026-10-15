@@ -17,7 +17,7 @@
 - **Behavioral HUD:** Analytics for tasks, study, habits, goals, and activity patterns.
 - **Neural Offline Protocol:** PWA installation, local caching, IndexedDB persistence, and background sync for core entities.
 - **Neural Link:** API-first architecture with WebSocket-driven real-time UI updates.
-- **Web Co-pilot:** Live meta-search capability (via **SearXNG**) allowing NARI to search 70+ sources for coding documentation, news, or general knowledge autonomously and privately.
+- **Web Research & Reasoning Engine:** Keyless, container-free online intelligence (DuckDuckGo + Jina Reader + LLaMA 3.1) capable of fetching live articles, documentation, or news and synthesizing reasoned conclusions with verified source links.
 - **Spatial Awareness & Geofencing:** Interactive Leaflet-powered tactical views (Vector, Satellite, Hybrid), automatic high-accuracy GPS positioning on mount, category-based geofence radii, and "When I Reach" natural language directives.
 
 ---

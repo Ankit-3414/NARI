@@ -15,7 +15,7 @@ Conduct a thorough audit of the NARI platform across all technical specification
 ## 2. Comprehensive Codebase Audit
 
 ### 2.1 Current System State (v1.0.0-alpha.11)
-NARI is currently at Stage 9.5 (Spatial Awareness & Geofencing) with extensive Sovereign AGI functionality integrated via NVIDIA NIM (LLaMA 3.1 70B), local semantic memory (SQLite + `sqlite_vec`), SearXNG meta-search, APScheduler background jobs, and reactive UI overlays.
+NARI is currently at Stage 9.5 (Spatial Awareness & Geofencing) with extensive Sovereign AGI functionality integrated via NVIDIA NIM (LLaMA 3.1 70B), local semantic memory (SQLite + `sqlite_vec`), Keyless Web Research & Reasoning Engine, APScheduler background jobs, and reactive UI overlays.
 
 ### 2.2 Verification of Past Audit Items (`AUDIT_CLAUDE.md`)
 A deep verification of the 18 issues documented in `AUDIT_CLAUDE.md` revealed that the majority have been successfully remediated in recent iterations:
@@ -33,7 +33,7 @@ A deep verification of the 18 issues documented in `AUDIT_CLAUDE.md` revealed th
 | 9 | Single tool call per turn constraint | **INTENTIONAL** | Restricted to 1 per turn (`llm_client.py:197`) due to NVIDIA NIM template constraint. |
 | 10 | Recurring reminder drift | **RESOLVED** | `reminder_service.py:179` uses `rule.after(max(due_naive, now_naive))`. |
 | 11 | Scheduler 1-second polling overhead | **RESOLVED** | `manager.py:35` adjusted to 15s interval for reminders, 10s for ghosting, 8:00 AM for daily briefing. |
-| 12 | Dead GROQ/Anthropic config variables | **RESOLVED** | Cleared out of `config.py`; only NVIDIA NIM and SearXNG are retained. |
+| 12 | Dead GROQ/Anthropic config variables | **RESOLVED** | Cleared out of `config.py`; only NVIDIA NIM and Keyless Web Engine are retained. |
 | 13 | `search_memory` using plain SQL `LIKE` | **RESOLVED** | `tools.py:933` routes knowledge queries through `semantic_memory.search_knowledge`. |
 | 14 | Missing AI CRUD tools | **RESOLVED** | `tools.py` expanded from 5 tools to 28+ tools covering tasks, notes, habits, goals, reminders, subjects, study sessions, locations, and server health. |
 | 15 | `useSyncEngine` missing reminders/study | **RESOLVED** | `useSyncEngine.js:83-111` includes full offline sync handlers for reminders and study sessions. |

@@ -101,7 +101,8 @@ class ContextService:
                 raise ValueError("AI Client is offline (API Key not configured).")
 
             preferred_model = user_service.get_decrypted_setting(session, "ai_model")
-            active_model = preferred_model or "meta/llama-3.1-8b-instruct"
+            active_model = preferred_model or "deepseek-ai/deepseek-v4.1-flash"
+            fallback_model = "meta/llama-3.2-11b-vision-instruct"
 
             prompt = (
                 "You are NARI's cognitive memory consolidation parser. Your mission is to process raw experiential and behavioral context entries "
@@ -118,13 +119,27 @@ class ContextService:
             )
 
             try:
-                response = await client.chat.completions.create(
-                    model=active_model,
-                    messages=[
-                        {"role": "system", "content": "You are a precise backend JSON generator. You only output valid JSON arrays. Never wrap your output in ```json or any other text."},
-                        {"role": "user", "content": prompt}
-                    ]
-                )
+                try:
+                    response = await client.chat.completions.create(
+                        model=active_model,
+                        messages=[
+                            {"role": "system", "content": "You are a precise backend JSON generator. You only output valid JSON arrays. Never wrap your output in ```json or any other text."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        timeout=20.0
+                    )
+                except Exception as model_err:
+                    if active_model != fallback_model:
+                        response = await client.chat.completions.create(
+                            model=fallback_model,
+                            messages=[
+                                {"role": "system", "content": "You are a precise backend JSON generator. You only output valid JSON arrays. Never wrap your output in ```json or any other text."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            timeout=20.0
+                        )
+                    else:
+                        raise model_err
                 raw_response = response.choices[0].message.content.strip()
                 
                 # Clean possible markdown wrapping if the LLM ignored instructions

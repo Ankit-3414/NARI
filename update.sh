@@ -85,53 +85,24 @@ if command -v ufw &>/dev/null; then
 fi
 
 # ─────────────────────────────────────────────
-# [3/7] SearXNG (Optional — skip if not present)
+# [3/7] Legacy Container Teardown
 # ─────────────────────────────────────────────
-log "[3/7] Synchronizing Local Meta-Search (SearXNG)..."
-
-if ! command -v docker &>/dev/null; then
-    warn "Docker not found. Installing..."
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh get-docker.sh
-    sudo usermod -aG docker "$ORIGINAL_USER"
-    rm get-docker.sh
-    ok "Docker installed."
+if [ -d "$PROJECT_ROOT/deploy/searxng" ] || (command -v docker &>/dev/null && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "searxng"); then
+    log "[3/7] Decommissioning legacy SearXNG Docker container..."
+    if [ -d "$PROJECT_ROOT/deploy/searxng" ]; then
+        cd "$PROJECT_ROOT/deploy/searxng"
+        if command -v docker &>/dev/null; then
+            docker compose down -v 2>/dev/null || docker-compose down -v 2>/dev/null || true
+        fi
+        cd "$PROJECT_ROOT"
+        rm -rf "$PROJECT_ROOT/deploy/searxng"
+    elif command -v docker &>/dev/null; then
+        docker stop searxng 2>/dev/null || true
+        docker rm searxng 2>/dev/null || true
+    fi
+    ok "SearXNG container decommissioned (freed server RAM)."
 fi
 
-DOCKER_COMPOSE="docker compose"
-if ! docker compose version &>/dev/null 2>&1; then
-    if command -v docker-compose &>/dev/null; then
-        DOCKER_COMPOSE="docker-compose"
-    else
-        sudo apt install -y docker-compose-v2 || true
-    fi
-fi
-
-if [ -d "$PROJECT_ROOT/deploy/searxng" ]; then
-    cd "$PROJECT_ROOT/deploy/searxng"
-    if [ ! -f settings.yml ]; then
-        warn "SearXNG settings missing — reconstructing from template..."
-        cat > settings.yml <<EOF
-use_default_settings: true
-server:
-  port: 8080
-  bind_address: "0.0.0.0"
-  secret_key: "$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32)"
-  base_url: http://localhost:8080/
-search:
-  formats: [html, json]
-EOF
-    fi
-    if grep -q "nari_searxng_secret_key_change_me" settings.yml 2>/dev/null; then
-        RANDOM_SECRET=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32)
-        sed -i "s/secret_key: \"nari_searxng_secret_key_change_me\"/secret_key: \"$RANDOM_SECRET\"/" settings.yml
-        ok "SearXNG: generated new secret key."
-    fi
-    sudo $DOCKER_COMPOSE pull && sudo $DOCKER_COMPOSE up -d
-    ok "SearXNG online @ :8080"
-else
-    warn "deploy/searxng not found — skipping SearXNG."
-fi
 
 # ─────────────────────────────────────────────
 # [4/7] Permissions
@@ -169,10 +140,10 @@ cd "$BACKEND_DIR"
 # additive for any extra origins the user set manually.
 # Only ensure required keys exist without clobbering existing values.
 if [ -f .env ]; then
-    # Add SEARXNG_URL if missing
-    if ! grep -q "^SEARXNG_URL=" .env; then
-        echo "SEARXNG_URL=http://localhost:8080" >> .env
-        ok "Added SEARXNG_URL to .env"
+    # Remove deprecated SEARXNG_URL if present
+    if grep -q "^SEARXNG_URL=" .env; then
+        sed -i '/^SEARXNG_URL=/d' .env
+        ok "Removed deprecated SEARXNG_URL from .env"
     fi
 
     # Add AI_ENABLED if missing
@@ -309,7 +280,6 @@ DIAG_ERRORS=0
 check_service "Backend Health"   "http://127.0.0.1:8000/api/v1/health" "healthy"    "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
 check_service "Database"         "http://127.0.0.1:8000/api/v1/health" "database"   "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
 check_service "Nginx → Frontend" "http://127.0.0.1/index.html"         "nari\|NARI" ""               || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "SearXNG"          "http://127.0.0.1:8080"               "searxng\|SearXNG" ""          || DIAG_ERRORS=$((DIAG_ERRORS+1))
 
 echo ""
 if [ $DIAG_ERRORS -eq 0 ]; then
@@ -347,5 +317,5 @@ fi
 echo ""
 echo -e " ${BLUE}API Key:${NC}      ${GREEN}$EXTRACTED_KEY${NC}"
 echo -e " ${BLUE}Logs:${NC}         journalctl -u nari -f"
-echo -e " ${BLUE}Web Search:${NC}   SearXNG @ :8080"
+echo -e " ${BLUE}Web Research:${NC} Keyless Engine (DDG + Jina + LLaMA Reasoning)"
 echo ""

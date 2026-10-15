@@ -179,7 +179,7 @@ sudo journalctl -u nari -f
 - [x] Stage 8: Analytics HUD.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB, and background sync.
 - [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
-- [ ] Stage 9: Local AI layer provides useful suggestions, intent routing, and private web retrieval via SearXNG.
+- [x] Stage 9: Sovereign AI layer provides useful suggestions, intent routing, semantic vector memory, auto-digestion, and keyless web research & reasoning engine.
 
 ## Response Contract
 

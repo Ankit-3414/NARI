@@ -35,10 +35,9 @@ class Settings(BaseSettings):
     # Scheduler
     NARI_SCHEDULER_ENABLED: bool = True
 
-    # AI (reserved for Stage 9)
+    # AI (Stage 9)
     NVIDIA_API_KEY: Optional[str] = None
     AI_ENABLED: bool = False
-    SEARXNG_URL: str = "http://localhost:8080"
 
 
 settings = Settings()

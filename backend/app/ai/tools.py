@@ -480,7 +480,7 @@ class ToolRegistry:
                 "type": "function",
                 "function": {
                     "name": "web_search",
-                    "description": "Search the live web for current information, news, or general reference details using SearXNG.",
+                    "description": "Search the live web for current information, news, research papers, or documentation. Fetches webpage content and returns a reasoned, synthesized report with citations.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -1149,7 +1149,7 @@ class ToolRegistry:
             
             elif name == "web_search":
                 query = arguments["query"]
-                return await perform_web_search(query)
+                return await perform_web_search(query, session=session)
 
             elif name == "update_task":
                 from ..schemas.task import TaskUpdate

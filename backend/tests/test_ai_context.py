@@ -315,7 +315,7 @@ async def test_web_search_tool_execution(session: Session):
             "query": "pytest test query"
         })
         assert "Test Search Result" in result
-        mock_search.assert_called_once_with("pytest test query")
+        mock_search.assert_called_once_with("pytest test query", session=session)
 
 
 @pytest.mark.anyio

@@ -18,7 +18,8 @@ logger = get_logger(__name__)
 class NIMClient:
     def __init__(self):
         self.base_url = "https://integrate.api.nvidia.com/v1"
-        self.model = "meta/llama-3.1-8b-instruct" # Ultra-fast default model (configurable in settings)
+        self.model = "deepseek-ai/deepseek-v4.1-flash" # DeepSeek v4.1 Flash (configurable in settings)
+        self.fallback_model = "meta/llama-3.2-11b-vision-instruct"
 
     def _get_client(self, session) -> AsyncOpenAI | None:
         """Initialize the client using the securely stored key or environment fallback."""
@@ -172,22 +173,52 @@ class NIMClient:
         
         messages.append({"role": "user", "content": message})
 
-        # 2. Call NVIDIA NIM
+        # 2. Call NVIDIA NIM with resilient fallback
         try:
             if use_tools:
-                response = await client.chat.completions.create(
-                    model=active_model,
-                    messages=messages,
-                    tools=use_tools,
-                    tool_choice="auto"
+                response = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=active_model,
+                        messages=messages,
+                        tools=use_tools,
+                        tool_choice="auto",
+                    ),
+                    timeout=12.0
                 )
             else:
-                response = await client.chat.completions.create(
-                    model=active_model,
-                    messages=messages
+                response = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=active_model,
+                        messages=messages,
+                    ),
+                    timeout=12.0
                 )
         except Exception as e:
-            return {"error": f"NVIDIA NIM API Error: {str(e)}"}
+            if active_model != self.fallback_model:
+                logger.warning(f"Primary model '{active_model}' failed or timed out ({e}). Falling back to '{self.fallback_model}'...")
+                try:
+                    if use_tools:
+                        response = await asyncio.wait_for(
+                            client.chat.completions.create(
+                                model=self.fallback_model,
+                                messages=messages,
+                                tools=use_tools,
+                                tool_choice="auto",
+                            ),
+                            timeout=25.0
+                        )
+                    else:
+                        response = await asyncio.wait_for(
+                            client.chat.completions.create(
+                                model=self.fallback_model,
+                                messages=messages,
+                            ),
+                            timeout=25.0
+                        )
+                except Exception as fb_err:
+                    return {"error": f"NVIDIA NIM API Error: {str(fb_err)}"}
+            else:
+                return {"error": f"NVIDIA NIM API Error: {str(e)}"}
 
         response_message = response.choices[0].message
 

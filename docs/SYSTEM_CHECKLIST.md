@@ -109,7 +109,7 @@ Current status: done.
 - [x] Semantic memory storage using SQLModel `knowledge_nodes` backed by SQLite and local sqlite_vec vector database.
 - [x] Context & Persona Retrieval boundary defined and integrated in context_builder.py using SentenceTransformers (all-MiniLM-L6-v2) for local embedding generation.
 - [x] Conversational pre-filtering and system prompt negative constraints implemented to guarantee zero function-calling or parameter meta-talk.
-- [x] Web Search co-pilot tool integrated into the registry using SearXNG meta-search API.
+- [x] Web Research & Reasoning co-pilot tool integrated into the registry using keyless DuckDuckGo search + Jina Reader markdown extraction + LLaMA 3.1 synthesis.
 - [x] Weather-Aware AI Intent Routing (injects current temperature, location, and conditions into LLM context window).
 - [x] Reactive Cyberpunk HUD backdrop states (Amber radial gradient for Sunny, Cyan fast scanlines for Stormy/Rainy, Blur haze overlay for Foggy).
 - [x] Neural Daily Productivity Briefing (scheduler manager auto-compiles weather/objective telemetry at 8:00 AM local time).
