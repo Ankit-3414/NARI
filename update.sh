@@ -87,18 +87,24 @@ fi
 # ─────────────────────────────────────────────
 # [3/7] Legacy Container Teardown
 # ─────────────────────────────────────────────
-if [ -d "$PROJECT_ROOT/deploy/searxng" ] || (command -v docker &>/dev/null && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "searxng"); then
+SEARXNG_CONTAINERS=""
+if command -v docker &>/dev/null; then
+    SEARXNG_CONTAINERS=$(sudo docker ps -a --filter "name=searxng" -q 2>/dev/null || true)
+fi
+
+if [ -d "$PROJECT_ROOT/deploy/searxng" ] || [ -n "$SEARXNG_CONTAINERS" ]; then
     log "[3/7] Decommissioning legacy SearXNG Docker container..."
     if [ -d "$PROJECT_ROOT/deploy/searxng" ]; then
         cd "$PROJECT_ROOT/deploy/searxng"
         if command -v docker &>/dev/null; then
-            docker compose down -v 2>/dev/null || docker-compose down -v 2>/dev/null || true
+            sudo docker compose down -v 2>/dev/null || sudo docker-compose down -v 2>/dev/null || true
         fi
         cd "$PROJECT_ROOT"
         rm -rf "$PROJECT_ROOT/deploy/searxng"
-    elif command -v docker &>/dev/null; then
-        docker stop searxng 2>/dev/null || true
-        docker rm searxng 2>/dev/null || true
+    fi
+    if [ -n "$SEARXNG_CONTAINERS" ]; then
+        sudo docker stop $SEARXNG_CONTAINERS 2>/dev/null || true
+        sudo docker rm -f $SEARXNG_CONTAINERS 2>/dev/null || true
     fi
     ok "SearXNG container decommissioned (freed server RAM)."
 fi
