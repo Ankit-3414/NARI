@@ -1,7 +1,7 @@
 # NARI Frontend Redesign: "Living OS" Overhaul
 
 ## 1. Core Philosophy
-NARI is transitioning from a mobile-first, paginated application to a **desktop-first, modular "Living OS" dashboard**. The aesthetic bridges the gap between a high-tech "movie UI" (Jarvis) and a highly logical, data-dense precision instrument. 
+NARI is transitioning from a mobile-first, paginated application to a **desktop-first, modular command interface**. The aesthetic bridges the gap between an advanced cinematic command intelligence and a highly logical, data-dense precision instrument. 
 
 ### Key Metaphors:
 *   **Precision Instrument:** No unnecessary decoration. Every line and pixel serves a function.

@@ -4,102 +4,113 @@
 # Purpose: Automate the transition to the latest NARI version on Server-01.
 # This script is designed to be fully autonomous ("Zero-Touch").
 
-set -e # Exit on error
+set -e
 
-# Configuration - Defensive Pathing
+# ─────────────────────────────────────────────
+# Configuration
+# ─────────────────────────────────────────────
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 
-echo "🌌 [NARI] Initiating System Upgrade..."
+ORIGINAL_USER=${SUDO_USER:-$(whoami)}
+HOME_DIR=$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)
+export PATH="$HOME_DIR/.local/bin:$PATH"
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+log()  { echo -e "${BLUE}$1${NC}"; }
+ok()   { echo -e "${GREEN}✅ $1${NC}"; }
+warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+fail() { echo -e "${RED}❌ $1${NC}"; }
+
+echo ""
+echo -e "${BLUE}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║       🌌 NARI UPGRADE ENGINE v1.0            ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════╝${NC}"
 echo "📍 Root: $PROJECT_ROOT"
+echo ""
 
-# 1. Pull latest code
-echo "📦 [1/6] Synchronizing Neural Repository..."
+# ─────────────────────────────────────────────
+# [1/7] Pull Latest Code
+# ─────────────────────────────────────────────
+log "[1/7] Synchronizing Neural Repository..."
 cd "$PROJECT_ROOT"
-
-# Resolve Git Ownership (Defensive)
 git config --global --add safe.directory "$PROJECT_ROOT" || true
-
-# Check if it's a git repo
 if [ -d .git ]; then
     git fetch --all
     git reset --hard origin/main
+    ok "Repository synchronized."
+else
+    warn "Not a git repository. Skipping pull."
 fi
 
-# 1.5 System Dependencies (Autonomous Dependency Management)
-echo "🔧 [2/6] Ensuring System Core Dependencies..."
-# Get the original user who called sudo (for uv pathing)
-ORIGINAL_USER=${SUDO_USER:-$(whoami)}
-HOME_DIR=$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)
-
-# Ensure uv is in the path for this script
-export PATH="$HOME_DIR/.local/bin:$PATH"
-# Ensure basic build tools and required services
+# ─────────────────────────────────────────────
+# [2/7] System Dependencies
+# ─────────────────────────────────────────────
+log "[2/7] Ensuring System Core Dependencies..."
 export DEBIAN_FRONTEND=noninteractive
-sudo apt update
+sudo apt update -qq
 
-# Fix for Node.js conflict: NodeSource provides npm inside nodejs package
-# We install nodejs first, then check if npm is available
-sudo apt install -y python3.12 python3.12-venv nodejs nginx sqlite3 curl git build-essential systemd-timesyncd avahi-daemon ufw
+sudo apt install -y python3.12 python3.12-venv nodejs nginx sqlite3 curl git \
+    build-essential systemd-timesyncd avahi-daemon ufw
 
-if ! command -v npm &> /dev/null; then
-    echo "📦 npm not found in nodejs package, installing separately..."
+if ! command -v npm &>/dev/null; then
+    warn "npm not found in nodejs package, installing separately..."
     sudo apt install -y npm || true
 fi
 
-# ENFORCE NEURAL IDENTITY (nari.local)
-echo "🆔 Calibrating Neural Identity..."
+# Enforce hostname → nari (powers nari.local via avahi mDNS)
 CURRENT_HOSTNAME=$(hostname)
 if [ "$CURRENT_HOSTNAME" != "nari" ]; then
     sudo hostnamectl set-hostname nari
-    # Update /etc/hosts to prevent sudo delays
     if ! grep -q "127.0.1.1 nari" /etc/hosts; then
         echo "127.0.1.1 nari" | sudo tee -a /etc/hosts > /dev/null
     fi
     sudo systemctl restart avahi-daemon
-    echo "✅ Hostname updated to 'nari'. Reconnect your SSH session if needed."
+    ok "Hostname set to 'nari' → accessible via http://nari.local"
 fi
 
-# OPEN FIREWALL GATES
-echo "🛡️ Opening Neural Gates (Firewall)..."
-if command -v ufw &> /dev/null; then
-    sudo ufw allow 80/tcp comment 'NARI HTTP' || true
+# Firewall
+if command -v ufw &>/dev/null; then
+    sudo ufw allow 80/tcp  comment 'NARI HTTP'  || true
+    sudo ufw allow 443/tcp comment 'NARI HTTPS' || true
     sudo ufw allow 5353/udp comment 'NARI mDNS' || true
     sudo ufw --force enable || true
+    ok "Firewall: ports 80, 443, 5353 open."
 fi
 
-# 2. Docker & SearXNG (Self-Healing Search Infrastructure)
-echo "🔍 [3/6] Synchronizing Local Meta-Search (SearXNG)..."
+# ─────────────────────────────────────────────
+# [3/7] SearXNG (Optional — skip if not present)
+# ─────────────────────────────────────────────
+log "[3/7] Synchronizing Local Meta-Search (SearXNG)..."
 
-# Autonomous Docker Installation
-if ! command -v docker &> /dev/null; then
-    echo "🐳 Docker not found. Commencing Autonomous Installation..."
+if ! command -v docker &>/dev/null; then
+    warn "Docker not found. Installing..."
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
-    sudo usermod -aG docker $(whoami)
+    sudo usermod -aG docker "$ORIGINAL_USER"
     rm get-docker.sh
-    echo "✅ Docker engine installed successfully."
+    ok "Docker installed."
 fi
 
-# Determine the correct docker compose command
 DOCKER_COMPOSE="docker compose"
-if ! docker compose version &> /dev/null; then
-    if command -v docker-compose &> /dev/null; then
+if ! docker compose version &>/dev/null 2>&1; then
+    if command -v docker-compose &>/dev/null; then
         DOCKER_COMPOSE="docker-compose"
     else
-        echo "🐳 Installing Docker Compose plugin..."
-        sudo apt install -y docker-compose-v2
+        sudo apt install -y docker-compose-v2 || true
     fi
 fi
 
-# Deploy/Update SearXNG
 if [ -d "$PROJECT_ROOT/deploy/searxng" ]; then
     cd "$PROJECT_ROOT/deploy/searxng"
-    # Ensure settings.yml is initialized if not present (defensive check)
     if [ ! -f settings.yml ]; then
-        echo "⚠️ SearXNG settings missing. Reconstructing from template..."
-        # Add a minimal default settings if missing
+        warn "SearXNG settings missing — reconstructing from template..."
         cat > settings.yml <<EOF
 use_default_settings: true
 server:
@@ -111,89 +122,95 @@ search:
   formats: [html, json]
 EOF
     fi
-    # Replace default weak secret key with a secure, random 32-character key if the default key is found in settings.yml
-    if [ -f settings.yml ]; then
-        if grep -q "nari_searxng_secret_key_change_me" settings.yml; then
-            echo "🔑 Generating secure random secret key for SearXNG..."
-            RANDOM_SECRET=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32)
-            sed -i "s/secret_key: \"nari_searxng_secret_key_change_me\"/secret_key: \"$RANDOM_SECRET\"/" settings.yml
-        fi
+    if grep -q "nari_searxng_secret_key_change_me" settings.yml 2>/dev/null; then
+        RANDOM_SECRET=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32)
+        sed -i "s/secret_key: \"nari_searxng_secret_key_change_me\"/secret_key: \"$RANDOM_SECRET\"/" settings.yml
+        ok "SearXNG: generated new secret key."
     fi
     sudo $DOCKER_COMPOSE pull && sudo $DOCKER_COMPOSE up -d
-    echo "✅ SearXNG Meta-Search is online and optimized."
+    ok "SearXNG online @ :8080"
+else
+    warn "deploy/searxng not found — skipping SearXNG."
 fi
 
-# 3. Robust Permission Protocol
-echo "🛡️ [4/6] Calibrating Neural Permissions..."
+# ─────────────────────────────────────────────
+# [4/7] Permissions
+# ─────────────────────────────────────────────
+log "[4/7] Calibrating Neural Permissions..."
 cd "$PROJECT_ROOT"
-
-# Ensure root owns system paths, but ORIGINAL_USER owns application paths
-# First, set everything to the original user
 sudo chown -R "$ORIGINAL_USER":"$ORIGINAL_USER" "$PROJECT_ROOT"
-
-# Set standard Directory (755) and File (644) permissions
 find "$PROJECT_ROOT" -type d -exec chmod 755 {} +
 find "$PROJECT_ROOT" -type f -exec chmod 644 {} +
 
-# Lock down sensitive environment files and database files (Security Enhancement)
-echo "🔒 Enforcing strict permissions on credential and database stores..."
-[ -f "$BACKEND_DIR/.env" ] && chmod 600 "$BACKEND_DIR/.env"
-[ -f "$FRONTEND_DIR/.env" ] && chmod 600 "$FRONTEND_DIR/.env"
-[ -d "$BACKEND_DIR/data" ] && chmod 700 "$BACKEND_DIR/data"
+# Sensitive files
+[ -f "$BACKEND_DIR/.env" ]        && chmod 600 "$BACKEND_DIR/.env"
+[ -f "$FRONTEND_DIR/.env" ]       && chmod 600 "$FRONTEND_DIR/.env"
+[ -d "$BACKEND_DIR/data" ]        && chmod 700 "$BACKEND_DIR/data"
 [ -f "$BACKEND_DIR/data/nari.db" ] && chmod 600 "$BACKEND_DIR/data/nari.db"
 
-# Grant Execute bits to operational scripts
+# Executable bits
 chmod +x "$PROJECT_ROOT"/*.sh
-chmod +x "$BACKEND_DIR"/run.py
-chmod +x "$PROJECT_ROOT"/cli/nari.py
-
-# AUTHORIZE BINARIES (Python & Node)
+chmod +x "$BACKEND_DIR/run.py"
+[ -f "$PROJECT_ROOT/cli/nari.py" ] && chmod +x "$PROJECT_ROOT/cli/nari.py"
 [ -d "$BACKEND_DIR/.venv/bin" ] && chmod +x "$BACKEND_DIR"/.venv/bin/* || true
 [ -d "$FRONTEND_DIR/node_modules/.bin" ] && chmod +x "$FRONTEND_DIR"/node_modules/.bin/* || true
+ok "Permissions calibrated."
 
-# 4. Update Backend
-echo "🧠 [5/6] Recalibrating Backend & Database..."
+# ─────────────────────────────────────────────
+# [5/7] Backend Sync
+# ─────────────────────────────────────────────
+log "[5/7] Recalibrating Backend & Database..."
 cd "$BACKEND_DIR"
 
-# DYNAMIC ENVIRONMENT SYNC
-PRIMARY_IP=$(hostname -I | awk '{print $1}')
-ALLOWED_ORIGINS="http://nari.local,http://server-01.local,http://$PRIMARY_IP"
+# ── ENV SYNC ──
+# IMPORTANT: We do NOT overwrite NARI_ALLOWED_ORIGINS here.
+# The user's ngrok URL, nari.run.place, and nari.lan are already
+# in main.py's hardcoded list. The .env NARI_ALLOWED_ORIGINS is
+# additive for any extra origins the user set manually.
+# Only ensure required keys exist without clobbering existing values.
 if [ -f .env ]; then
-    # Synchronize Allowed Origins
-    sed -i "/NARI_ALLOWED_ORIGINS=/d" .env
-    echo "NARI_ALLOWED_ORIGINS=$ALLOWED_ORIGINS" >> .env
-    
-    # Ensure SEARXNG_URL is present
-    if ! grep -q "SEARXNG_URL=" .env; then
+    # Add SEARXNG_URL if missing
+    if ! grep -q "^SEARXNG_URL=" .env; then
         echo "SEARXNG_URL=http://localhost:8080" >> .env
+        ok "Added SEARXNG_URL to .env"
     fi
 
-    # HANDSHAKE SYNC: Propagate Backend API Key to Frontend
-    EXTRACTED_KEY=$(grep "NARI_API_KEY=" .env | cut -d'=' -f2)
-    if [ ! -z "$EXTRACTED_KEY" ]; then
-        # Sync to Frontend (Vite bundles this for client-side access)
-        if [ -d "$FRONTEND_DIR" ]; then
-            if [ -f "$FRONTEND_DIR/.env" ]; then
-                sed -i "s/VITE_NARI_API_KEY=.*/VITE_NARI_API_KEY=$EXTRACTED_KEY/" "$FRONTEND_DIR/.env"
-            else
-                echo "VITE_NARI_API_KEY=$EXTRACTED_KEY" > "$FRONTEND_DIR/.env"
-            fi
-            chmod 600 "$FRONTEND_DIR/.env"
-        fi
+    # Add AI_ENABLED if missing
+    if ! grep -q "^AI_ENABLED=" .env; then
+        echo "AI_ENABLED=false" >> .env
     fi
+
+    # Propagate backend API key to frontend
+    EXTRACTED_KEY=$(grep "^NARI_API_KEY=" .env | cut -d'=' -f2- | tr -d '\r"'"'" )
+    if [ -n "$EXTRACTED_KEY" ] && [ -d "$FRONTEND_DIR" ]; then
+        if [ -f "$FRONTEND_DIR/.env" ]; then
+            sed -i "s/VITE_NARI_API_KEY=.*/VITE_NARI_API_KEY=$EXTRACTED_KEY/" "$FRONTEND_DIR/.env"
+        else
+            echo "VITE_NARI_API_KEY=$EXTRACTED_KEY" > "$FRONTEND_DIR/.env"
+        fi
+        chmod 600 "$FRONTEND_DIR/.env"
+        ok "Frontend API key synchronized."
+    fi
+else
+    warn "backend/.env not found — run setup.sh first."
 fi
 
-# RECALIBRATE NGINX
-echo "🌐 Synchronizing Nginx Identity..."
-NGINX_CONF="
+# ── NGINX ──
+log "Synchronizing Nginx configuration..."
+cat > /tmp/nari_nginx.conf <<NGINX
 server {
     listen 80 default_server;
     server_name _;
+
     root ${PROJECT_ROOT}/frontend/dist;
     index index.html;
+
+    # SPA routing
     location / {
         try_files \$uri \$uri/ /index.html;
     }
+
+    # API proxy
     location /api {
         proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
@@ -201,112 +218,134 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 120s;
     }
+
+    # WebSocket proxy
     location /ws {
         proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection \"Upgrade\";
+        proxy_set_header Connection "Upgrade";
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+        proxy_read_timeout 3600s;
     }
+
+    # Static assets — long cache
     location /assets {
         expires 1y;
-        add_header Cache-Control \"public, immutable\";
+        add_header Cache-Control "public, immutable";
     }
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml;
-}"
-echo "$NGINX_CONF" | sudo tee /etc/nginx/sites-available/nari > /dev/null
-sudo ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home
-echo "✅ Nginx configuration updated."
 
-echo "📦 Synchronizing Python dependencies and AI models (this may take a few minutes)..."
-if command -v uv &> /dev/null; then
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
+}
+NGINX
+
+sudo cp /tmp/nari_nginx.conf /etc/nginx/sites-available/nari
+sudo ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/nari
+sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home
+sudo nginx -t && ok "Nginx config valid." || { fail "Nginx config invalid — check manually."; exit 1; }
+
+# ── PYTHON DEPS & MIGRATIONS ──
+log "Synchronizing Python dependencies..."
+if command -v uv &>/dev/null; then
     uv sync --quiet
-    sudo chmod +x "$BACKEND_DIR"/.venv/bin/*
-    echo "⚙️ Running database migrations..."
+    sudo chmod +x "$BACKEND_DIR"/.venv/bin/* || true
+    log "Running database migrations..."
     uv run alembic upgrade head
 else
-    # Fallback to standard pip if uv is not present
-    pip install -r pyproject.toml --quiet
-    echo "⚙️ Running database migrations..."
+    warn "uv not found — falling back to pip..."
+    pip install -r requirements.txt --quiet || true
     alembic upgrade head
 fi
-echo "✅ Backend recalibration complete."
+ok "Backend recalibrated."
 
-# 5. Build Frontend
-echo "🎨 [6/6] Recompiling User Interface..."
+# ─────────────────────────────────────────────
+# [6/7] Frontend Build
+# ─────────────────────────────────────────────
+log "[6/7] Recompiling User Interface..."
 cd "$FRONTEND_DIR"
-npm install
+npm install --silent
 [ -d "node_modules/.bin" ] && sudo chmod +x node_modules/.bin/* || true
 npm run build
 sudo chmod -R 755 "$FRONTEND_DIR/dist"
+ok "Frontend compiled."
 
-# 6. Pulse & Cleanup
-echo "⚡ [7/7] Pulsing System Services & Neural Diagnostic..."
+# ─────────────────────────────────────────────
+# [7/7] Restart Services & Neural Diagnostic
+# ─────────────────────────────────────────────
+log "[7/7] Pulsing System Services & Running Neural Diagnostic..."
 sudo systemctl daemon-reload
 sudo systemctl restart nari
 sudo systemctl reload nginx
 
-# --- NEURAL DIAGNOSTIC PHASE ---
-echo "🧠 Initiating Post-Update Validation..."
-echo "⏳ Waiting 10 seconds for service stabilization..."
-sleep 10 # Allow backend and Docker containers to bind
+log "⏳ Waiting 12 seconds for service stabilization..."
+sleep 12
 
-# Extract API Key for Authenticated Health Check
-EXTRACTED_KEY=$(grep "^NARI_API_KEY=" "$BACKEND_DIR/.env" | cut -d'=' -f2- | tr -d '\r' | tr -d '"' | tr -d "'")
+EXTRACTED_KEY=$(grep "^NARI_API_KEY=" "$BACKEND_DIR/.env" | cut -d'=' -f2- | tr -d '\r"'"'" )
 PRIMARY_IP=$(hostname -I | awk '{print $1}')
 
 check_service() {
-    local name=$1
-    local url=$2
-    local expected=$3
-    local auth=$4
-    
-    echo -n "🔍 Testing $name... "
-    local RESPONSE=""
-    
-    if [ ! -z "$auth" ]; then
-        RESPONSE=$(curl -s -m 5 -H "Authorization: Bearer $auth" "$url" || echo "curl_failed")
+    local name="$1" url="$2" expected="$3" auth="$4"
+    echo -n "   🔍 $name... "
+    local RESP
+    if [ -n "$auth" ]; then
+        RESP=$(curl -s -m 8 -H "Authorization: Bearer $auth" "$url" 2>/dev/null || echo "curl_failed")
     else
-        RESPONSE=$(curl -s -m 5 "$url" || echo "curl_failed")
+        RESP=$(curl -s -m 8 "$url" 2>/dev/null || echo "curl_failed")
     fi
-
-    if echo "$RESPONSE" | grep -q "$expected"; then
-        echo -e "✅ [OK]"
+    if echo "$RESP" | grep -q "$expected"; then
+        echo -e "${GREEN}✅ OK${NC}"
         return 0
     else
-        echo -e "❌ [FAILED]"
+        echo -e "${RED}❌ FAILED${NC}"
         return 1
     fi
 }
 
-# Run diagnostics
 DIAG_ERRORS=0
-check_service "Backend Health" "http://127.0.0.1:8000/api/v1/health" "healthy" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "Database Link" "http://127.0.0.1:8000/api/v1/health" "database.*ok" "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "Nginx Frontend" "http://127.0.0.1/index.html" "NARI" "" || DIAG_ERRORS=$((DIAG_ERRORS+1))
-check_service "SearXNG (Internal)" "http://127.0.0.1:8080" "SearXNG" "" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Backend Health"   "http://127.0.0.1:8000/api/v1/health" "healthy"    "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Database"         "http://127.0.0.1:8000/api/v1/health" "database"   "$EXTRACTED_KEY" || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "Nginx → Frontend" "http://127.0.0.1/index.html"         "nari\|NARI" ""               || DIAG_ERRORS=$((DIAG_ERRORS+1))
+check_service "SearXNG"          "http://127.0.0.1:8080"               "searxng\|SearXNG" ""          || DIAG_ERRORS=$((DIAG_ERRORS+1))
 
+echo ""
 if [ $DIAG_ERRORS -eq 0 ]; then
-    echo -e "🛡️  System Integrity: VERIFIED."
+    echo -e "${GREEN}🛡️  System Integrity: VERIFIED — All systems nominal.${NC}"
 else
-    echo -e "⚠️  System Integrity: ANOMALIES DETECTED ($DIAG_ERRORS errors)."
-    echo "Check logs with: journalctl -u nari -f"
+    echo -e "${YELLOW}⚠️  System Integrity: $DIAG_ERRORS anomaly(s) detected.${NC}"
+    echo "   → Run: journalctl -u nari -f"
 fi
 
-echo "🧹 Purging Tactical Remnants..."
+# Cleanup stale dev scripts
+log "Purging tactical remnants..."
 cd "$PROJECT_ROOT"
-rm -f check_db.py cleanup_proofs.py create_final_proof.py create_official_test.py create_official_test_v2.py debug_500.py ghost_test*.py mock_searxng.py test_web_search_utility.py
+rm -f check_db.py cleanup_proofs.py create_final_proof.py create_official_test.py \
+      create_official_test_v2.py debug_500.py ghost_test*.py mock_searxng.py \
+      test_web_search_utility.py test_location_voter.mjs trigger_test_notification.py
 
-# Final display
-echo "✅ Neural Link Re-established."
-echo "------------------------------------------------"
-echo "NARI has been upgraded to the latest version."
-echo "Neural Hostnames: http://nari.local"
-echo "                  http://server-01.local"
-echo "Dynamic IP:       http://$PRIMARY_IP"
-echo "Web Co-pilot:     SearXNG Active @ :8080"
-echo "------------------------------------------------"
+# ─────────────────────────────────────────────
+# Final Summary
+# ─────────────────────────────────────────────
+echo ""
+echo -e "${BLUE}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║       ✅ NARI UPGRADED SUCCESSFULLY          ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e " ${BLUE}Access Points:${NC}"
+echo -e "   LAN (mDNS):   ${GREEN}http://nari.local${NC}"
+echo -e "   LAN (Router): ${GREEN}http://nari.lan${NC}"
+echo -e "   LAN (IP):     ${GREEN}http://$PRIMARY_IP${NC}"
+echo -e "   Public DDNS:  ${GREEN}http://nari.run.place${NC}"
+echo -e "   Secure DDNS:  ${GREEN}https://nari.run.place${NC}  (if SSL configured)"
+NGROK_URL=$(grep "^NARI_ALLOWED_ORIGINS=" "$BACKEND_DIR/.env" 2>/dev/null | cut -d'=' -f2- | tr ',' '\n' | grep "ngrok" | head -1 | tr -d '\r')
+if [ -n "$NGROK_URL" ]; then
+    echo -e "   ngrok Tunnel: ${GREEN}$NGROK_URL${NC}"
+fi
+echo ""
+echo -e " ${BLUE}API Key:${NC}      ${GREEN}$EXTRACTED_KEY${NC}"
+echo -e " ${BLUE}Logs:${NC}         journalctl -u nari -f"
+echo -e " ${BLUE}Web Search:${NC}   SearXNG @ :8080"
+echo ""

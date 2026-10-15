@@ -4,9 +4,9 @@ This document provides project context and development rules for Gemini CLI in t
 
 ## Project Overview
 
-**NARI (Not A Random Intelligence)** is a self-hosted, local-first personal productivity platform for one user. It integrates task management, study tracking, notes, goals, habits, reminders, offline access, and behavioral analytics into a private personal operating system.
+**NARI (Not A Random Intelligence)** is a Sovereign Personal AGI in its foundational evolutionary architecture. Operating privately on dedicated server infrastructure for one user, it unifies task management, deep focus study tracking, neural notes, goals, habits, reminders, offline access, spatial awareness, and behavioral telemetry into a single, cohesive command intelligence.
 
-**Philosophy:** AI-ready but AI-deferred. Every meaningful action is logged through `ActivityLog` so Stage 9 can build on real behavioral history. The product must remain useful without AI.
+**Philosophy:** Cognitive Grounding from Day Zero. Every meaningful action is logged through `ActivityLog` so NARI's reasoning models evolve from authentic historical context and behavioral reality.
 
 ## Current Status
 

@@ -85,7 +85,7 @@ const AssistantDrawer = ({ isOpen, onClose }) => {
           {
             id: 'welcome',
             role: 'system',
-            text: 'SYSTEM BOOT: NARI Operational. Core services synchronized. Ready for directives.',
+            text: 'SYSTEM BOOT: NARI Cognitive Core online. Subsystems synchronized. Standing by for directives.',
             timestamp: new Date()
           }
         ]);
@@ -393,10 +393,10 @@ const AssistantDrawer = ({ isOpen, onClose }) => {
 
               <div>
                 <h2 className="text-md font-black uppercase tracking-tight text-white flex items-center gap-2">
-                  NARI CO-PILOT
+                  NARI INTELLIGENCE
                   <span className="text-[7px] border border-success text-success bg-success/5 px-1 py-0.5 tracking-widest animate-pulse-slow">ONLINE</span>
                 </h2>
-                <p className="text-[8px] font-mono text-secondary uppercase tracking-widest">Neural assistant interface</p>
+                <p className="text-[8px] font-mono text-secondary uppercase tracking-widest">Sovereign Cognitive Interface</p>
               </div>
             </div>
 

@@ -9,6 +9,7 @@ This bundle captures the next major vision for NARI.
 - `NARI_V1_Intelligence_Implementation_Plan.md` — concrete schema specifications, jobs, and build order for memory, reflection, and identity
 - `DESIGN_OVERHAUL.md` — living OS desktop dashboard layout and modular widget structure
 - `NARI_Android_Port_Plan.md` — mobile packaging and deployment pathway
+- `AGI_REPOSITIONING_PLAN.md` — Sovereign Personal AGI reframing across docs, prompts, and interface
 - `../report/audit_and_modification_plan.md` — baseline codebase audit and modification tracks
 
 ## Boundary

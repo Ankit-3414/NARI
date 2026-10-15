@@ -2,7 +2,7 @@
 **NARI = Not A Random Intelligence**
 
 ## Purpose
-NARI v1 is the first release that should feel like a calm, continuous intelligence rather than a feature-heavy productivity app. The interface exists to reveal awareness, not to dump data.
+NARI v1 is the foundational release of a Sovereign Personal AGI that feels like a calm, continuous intelligence. The interface exists to reveal awareness, reflect long-term memory, and orchestrate execution without dumping raw data.
 
 ## Core Design Philosophy
 - **Presence before interface**

@@ -39,8 +39,8 @@ const LoginPage = () => {
             <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-purple-500">
               NARI
             </h1>
-            <p className="text-secondary text-sm font-medium uppercase tracking-widest">
-              Access Intelligence
+            <p className="text-secondary text-xs font-semibold uppercase tracking-widest text-center">
+              Sovereign Personal AGI
             </p>
           </div>
         </CardHeader>
@@ -74,7 +74,7 @@ const LoginPage = () => {
             className="w-full py-4 text-lg font-bold uppercase tracking-widest"
             disabled={isLoading}
           >
-            {isLoading ? 'Verifying...' : 'Unlock NARI'}
+            {isLoading ? 'Verifying...' : 'Initialize Neural Link'}
           </Button>
         </CardFooter>
       </Card>

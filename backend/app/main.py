@@ -85,8 +85,10 @@ def create_app() -> FastAPI:
         "http://127.0.0.1",
         "http://nari.local",
         "http://nari.local:3000",
-        "http://192.168.1.100",
-        "http://192.168.1.100:3000",
+        "http://nari.lan",
+        "https://nari.lan",
+        "http://nari.run.place",
+        "https://nari.run.place",
         "http://server-01.local",
         "http://server-01.local:3000"
     ]

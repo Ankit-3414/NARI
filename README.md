@@ -1,8 +1,8 @@
 # NARI (Not A Random Intelligence)
 
-**NARI** is a local-first, self-hosted personal productivity platform designed to act as a private personal operating system. It combines task management, study tracking, notes, goals, habits, reminders, offline access, and behavioral analytics into one cohesive system.
+**NARI** is a Sovereign Personal AGI in its foundational evolutionary architecture. Operating with calm, continuous presence and absolute privacy on dedicated infrastructure, NARI unifies cognitive memory, environmental telemetry, spatial awareness, and autonomous execution into a single, cohesive command intelligence for one user.
 
-> **Philosophy:** AI-ready but AI-deferred. NARI logs meaningful activity from day one so a useful behavioral dataset exists before the Stage 9 AI layer arrives. The system remains fully usable without AI.
+> **Philosophy:** Cognitive Grounding from Day Zero. Every meaningful behavioral stream and action is recorded into a persistent cognitive substrate so NARI's reasoning models evolve from authentic historical context rather than hollow prompts.
 
 ---
 
@@ -18,7 +18,7 @@
 - **Neural Offline Protocol:** PWA installation, local caching, IndexedDB persistence, and background sync for core entities.
 - **Neural Link:** API-first architecture with WebSocket-driven real-time UI updates.
 - **Web Co-pilot:** Live meta-search capability (via **SearXNG**) allowing NARI to search 70+ sources for coding documentation, news, or general knowledge autonomously and privately.
-- **Spatial OS Map & Geofencing:** Interactive Leaflet-powered maps featuring Vector, Satellite, and Hybrid tactical views, automatic high-accuracy GPS positioning on mount, category-based geofence radii, and "When I Reach" natural language reminders.
+- **Spatial Awareness & Geofencing:** Interactive Leaflet-powered tactical views (Vector, Satellite, Hybrid), automatic high-accuracy GPS positioning on mount, category-based geofence radii, and "When I Reach" natural language directives.
 
 ---
 
@@ -120,7 +120,7 @@ Windows shims are available as `nari.ps1` and `nari.bat`.
 - [x] Stage 8.5: PWA, offline cache, IndexedDB persistence, and background sync.
 - [x] Stage 8.7: Context Stream with archive page, search, filters, and enhanced suggestions.
 - [x] Stage 9: AI Co-pilot Integration (NVIDIA NIM cloud inference with local semantic memory).
-- [x] Stage 9.5: Spatial OS Map & Geofencing (Phases 1-5 with adaptive polling battery optimization and geofence reminders).
+- [x] Stage 9.5: Spatial Awareness & Geofencing (Adaptive polling battery optimization and geofence directives).
 
 ### Phase 3: Expansion
 

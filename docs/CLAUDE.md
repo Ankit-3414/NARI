@@ -2,9 +2,9 @@
 
 ## Project Context
 
-NARI (Not A Random Intelligence) is a self-hosted, local-first personal productivity platform. It combines task management, study tracking, notes, goals, habits, reminders, offline access, and behavioral analytics.
+NARI (Not A Random Intelligence) is a Sovereign Personal AGI in its foundational evolutionary architecture. Operating privately on dedicated server infrastructure for one user, it unifies task management, deep focus study tracking, neural notes, goals, habits, reminders, offline access, spatial awareness, and behavioral telemetry into a single, cohesive command intelligence.
 
-**Current status:** Stage 8.5 complete. NARI has analytics, PWA installation, offline caching, IndexedDB persistence, and background sync. Stage 9, the local AI layer, is next.
+**Current status:** v1.0.0-alpha.11 (Stage 9.5 complete). NARI has a 28+ CRUD tool registry, cloud inference (NVIDIA NIM), local semantic memory (`sqlite_vec`), SearXNG meta-search, Spatial Awareness & Geofencing, and PWA offline synchronization.
 
 **Hardware:** Intel i5-2400S, 8 GB RAM, 500 GB HDD, Ubuntu Server 24.04 LTS.
 **Backend:** Python 3.12, FastAPI, SQLModel, SQLite WAL, Alembic, APScheduler.

@@ -104,8 +104,8 @@ class ContextService:
             active_model = preferred_model or "meta/llama-3.1-8b-instruct"
 
             prompt = (
-                "You are NARI's backend context parser. Your job is to process a list of raw user behavioral context entries "
-                "and extract permanent personal facts, identity definitions, operational rules, goals, habits, or core preferences about the user (Sir/Ankit).\n\n"
+                "You are NARI's cognitive memory consolidation parser. Your mission is to process raw experiential and behavioral context entries "
+                "and extract permanent personal facts, identity definitions, operational directives, goals, habits, or core preferences about Sir/Ankit.\n\n"
                 "Here are the raw context logs:\n"
                 "----------------------------\n"
                 + "\n".join(context_texts) +

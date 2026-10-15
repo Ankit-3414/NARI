@@ -1,28 +1,28 @@
 # NARI Technical Architecture
 
 **Version:** v1.0.0-alpha.11  
-**Status:** Stage 9.5 complete (Spatial OS Map & Geofencing, Full Tool Registry)
+**Status:** Stage 9.5 complete (Spatial Awareness & Geofencing, Full Tool Registry)
 **Last Updated:** 2026-10-15
 **Author:** Ankit Upadhyay
-**System Type:** Self-hosted personal productivity and intelligence platform  
+**System Type:** Sovereign Personal AGI (Foundational Architecture)  
 **Primary Server:** Server-01, Intel i5-2400S, 8GB RAM, 500GB HDD
 
 ---
 
 ## 1. Project Overview
 
-NARI (Not A Random Intelligence) is a local-first personal operating system for one person. It combines task management, study tracking, notes, reminders, goals, habits, offline access, and analytics into a system that runs on a home server and is accessed through a browser or CLI.
+NARI (Not A Random Intelligence) is a Sovereign Personal AGI in its foundational evolutionary architecture. Designed for one sovereign individual, NARI unifies cognitive memory, environmental telemetry, spatial awareness, focus tracking, and autonomous execution into a single, cohesive command intelligence.
 
-The system is designed to be useful before AI exists. Every meaningful action is logged so the later AI layer can learn from real historical behavior instead of starting from an empty profile.
+The architecture emphasizes **Cognitive Grounding from Day Zero**: every meaningful behavioral action, thought entry, and state transition is captured in an append-only cognitive substrate (`ActivityLog`), ensuring the reasoning models evolve from authentic historical context rather than ephemeral prompts.
 
 ## 2. Design Principles
 
-1. **Local-first:** User data stays on Server-01.
-2. **API-first:** The frontend and CLI use the same REST API.
-3. **AI-ready:** ActivityLog, Context Stream, and event boundaries prepare the system for Stage 9.
-4. **Time-aware:** Store timestamps in UTC and convert at presentation boundaries.
-5. **Auditable:** State changes emit ActivityLog entries.
-6. **Daily-use first:** Each stage should end in a usable workflow.
+1. **Absolute Sovereignty:** Cognitive models, vector memory, and user data remain on Server-01 under exclusive personal control.
+2. **API-First Neural Link:** The presentation surfaces (The Bridge, CLI) interact through a unified REST and real-time WebSocket protocol.
+3. **Cognitive Grounding:** ActivityLog, Context Stream, and event boundaries feed continuous behavioral learning into semantic vector memory.
+4. **Time-Aware Intelligence:** Strict UTC storage with presentation-boundary temporal alignment.
+5. **Auditable Reasoning:** All state modifications emit immutable ActivityLog events for complete operational transparency.
+6. **Presence Before Interface:** Calm, continuous awareness takes precedence over noisy, cluttered dashboards.
 
 ## 3. Hardware Profile
 
