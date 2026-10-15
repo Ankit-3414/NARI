@@ -1,9 +1,10 @@
 """Web search and online research reasoning utility for NARI.
 
 Operates keyless and container-free:
-1. Performs search via DuckDuckGo (HTML / Lite / API).
-2. Fetches full page content in clean markdown via Jina Reader (r.jina.ai).
-3. Synthesizes and reasons over the findings using NARI's cognitive LLM (LLaMA 3.1 70B/8B).
+1. Performs search via DuckDuckGo (HTML / Lite / API) with recency detection and time filters.
+2. Intelligent URL scoring prioritizing deep article permalinks over generic category/homepages.
+3. Fetches full page content in clean markdown via Jina Reader (r.jina.ai).
+4. Synthesizes and reasons over the findings using NARI's cognitive LLM (LLaMA 3.2 11B / DeepSeek v4.1).
 """
 
 import asyncio
@@ -32,16 +33,98 @@ class WebSearchError(Exception):
 class WebResearchEngine:
     """Keyless, container-free web search and reasoning engine."""
 
-    def __init__(self, max_search_results: int = 4, max_pages_to_scrape: int = 2):
+    def __init__(self, max_search_results: int = 6, max_pages_to_scrape: int = 3):
         self.max_search_results = max_search_results
         self.max_pages_to_scrape = max_pages_to_scrape
 
+    def _preprocess_query(self, query: str) -> tuple[str, Optional[str]]:
+        """
+        Clean conversational query and detect recency intent for DuckDuckGo time filters.
+        Returns: (optimized_query, df_filter)
+        where df_filter can be 'd' (day), 'w' (week), 'm' (month), or None.
+        """
+        raw = query.strip()
+        lower = raw.lower()
+
+        # 1. Detect time-sensitivity intent
+        df: Optional[str] = None
+        if re.search(r"\b(today|past\s+24\s*hours?|last\s+24\s*hours?|past\s+day)\b", lower):
+            df = "d"
+        elif re.search(r"\b(this\s+week|past\s+week|last\s+week|past\s+7\s*days?|weekly)\b", lower):
+            df = "w"
+        elif re.search(r"\b(this\s+month|past\s+month|last\s+month|recently?|latest|newest|breakthroughs?|developments?)\b", lower):
+            df = "m"
+
+        # 2. Strip conversational query prefixes and filler words
+        cleaned = re.sub(
+            r"^(?:what\s+(?:are\s+the|is\s+the|are|is)|tell\s+me\s+about|can\s+you\s+(?:find|tell\s+me\s+about|search\s+for)|give\s+me\s+(?:the\s+)?(?:latest\s+)?(?:news|updates?|information)\s+on|search\s+(?:for)?|look\s+up)\s+",
+            "",
+            raw,
+            flags=re.IGNORECASE,
+        ).strip()
+
+        # Remove trailing question marks and punctuation
+        cleaned = re.sub(r"[\?\.\!]+$", "", cleaned).strip()
+
+        # If time-sensitive and query lacks "news/developments", append "news" to reinforce recency
+        if df and not re.search(r"\b(news|updates?|developments?)\b", cleaned, re.IGNORECASE):
+            cleaned = f"{cleaned} news"
+
+        return cleaned if cleaned else raw, df
+
+    def _score_url(self, url: str) -> int:
+        """Score candidate URLs to prioritize deep news/article permalinks over homepages/categories."""
+        try:
+            parsed = urlparse(url)
+            netloc = parsed.netloc.lower()
+            path = parsed.path.strip("/")
+
+            # Penalize blocked or non-article platforms
+            blocked_domains = {
+                "twitter.com", "x.com", "instagram.com", "facebook.com",
+                "linkedin.com", "youtube.com", "tiktok.com", "reddit.com"
+            }
+            if any(b in netloc for b in blocked_domains):
+                return -100
+
+            # Penalize root domain homepages (e.g. https://cultamu.com/)
+            if not path or path == "":
+                return -50
+
+            # Penalize generic category, tag, or archive listing hubs
+            if re.search(r"^(category|categories|tag|tags|topics|archive|archives|page|feed|login|signup)(/.*)?$", path, re.I):
+                return -30
+
+            score = 10
+            # Reward deep paths with article slugs (slug has words/hyphens or dates)
+            if "/" in path:
+                score += 20
+            if re.search(r"\b202[4-9]\b", path):  # recent year
+                score += 35
+            if "-" in path or "_" in path:
+                score += 25
+
+            # Bonus for established robotics & tech news authorities
+            authoritative_domains = {
+                "theverge.com", "techcrunch.com", "wired.com", "reuters.com", "bloomberg.com",
+                "therobotreport.com", "spectrum.ieee.org", "arstechnica.com", "venturebeat.com",
+                "technologyreview.com", "engadget.com", "nature.com", "sciencedaily.com",
+                "bbc.com", "apnews.com", "forbes.com", "zdnet.com", "ieee.org"
+            }
+            if any(dom in netloc for dom in authoritative_domains):
+                score += 30
+
+            return score
+        except Exception:
+            return 0
+
     async def search(self, query: str) -> List[Dict[str, str]]:
-        """Search DuckDuckGo with fallback mechanisms."""
+        """Search DuckDuckGo with query preprocessing and fallback mechanisms."""
         if not query or not query.strip():
             raise WebSearchError("Search query cannot be empty")
 
-        clean_query = query.strip()
+        clean_query, df_filter = self._preprocess_query(query)
+        logger.info(f"Web search: query='{clean_query}' (raw='{query}'), time_filter='{df_filter}'")
         results: List[Dict[str, str]] = []
 
         headers = {
@@ -52,26 +135,36 @@ class WebResearchEngine:
         }
 
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers=headers) as client:
-            # 1. Try DuckDuckGo HTML endpoint
+            # 1. Try DuckDuckGo HTML endpoint with time-filter if available
             try:
-                resp = await client.post(
-                    "https://html.duckduckgo.com/html/",
-                    data={"q": clean_query, "b": ""},
-                )
+                payload = {"q": clean_query, "b": ""}
+                if df_filter:
+                    payload["df"] = df_filter
+                resp = await client.post("https://html.duckduckgo.com/html/", data=payload)
                 if resp.status_code == 200:
                     results = self._parse_ddg_html(resp.text)
+
+                # If time filter yielded 0 results, retry HTML search without time filter
+                if not results and df_filter:
+                    resp = await client.post("https://html.duckduckgo.com/html/", data={"q": clean_query, "b": ""})
+                    if resp.status_code == 200:
+                        results = self._parse_ddg_html(resp.text)
             except Exception as e:
                 logger.warning(f"DDG HTML search failed: {e}")
 
             # 2. Fallback to DuckDuckGo Lite endpoint if needed
             if not results:
                 try:
-                    resp = await client.post(
-                        "https://lite.duckduckgo.com/lite/",
-                        data={"q": clean_query},
-                    )
+                    lite_payload = {"q": clean_query}
+                    if df_filter:
+                        lite_payload["df"] = df_filter
+                    resp = await client.post("https://lite.duckduckgo.com/lite/", data=lite_payload)
                     if resp.status_code == 200:
                         results = self._parse_ddg_lite(resp.text)
+                    if not results and df_filter:
+                        resp = await client.post("https://lite.duckduckgo.com/lite/", data={"q": clean_query})
+                        if resp.status_code == 200:
+                            results = self._parse_ddg_lite(resp.text)
                 except Exception as e:
                     logger.warning(f"DDG Lite search failed: {e}")
 
@@ -122,9 +215,6 @@ class WebResearchEngine:
     def _parse_ddg_html(self, html_content: str) -> List[Dict[str, str]]:
         """Parse search results from DuckDuckGo HTML page."""
         results = []
-        # Pattern for HTML result blocks
-        # <a class="result__url" href="..."> or <a class="result__snippet" ...>
-        # Result titles are inside <a class="result__a" href="...">title</a>
         matches = re.findall(
             r'<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
             html_content,
@@ -145,9 +235,7 @@ class WebResearchEngine:
             if not url.startswith("http"):
                 continue
 
-            # Strip HTML tags from title
             clean_title = html.unescape(re.sub(r"<[^>]+>", "", raw_title)).strip()
-            
             clean_snippet = "No summary available."
             if i < len(snippets):
                 clean_snippet = html.unescape(re.sub(r"<[^>]+>", "", snippets[i])).strip()
@@ -164,7 +252,6 @@ class WebResearchEngine:
     def _parse_ddg_lite(self, html_content: str) -> List[Dict[str, str]]:
         """Parse search results from DuckDuckGo Lite page."""
         results = []
-        # In lite view, results are in table rows with class="result-link" and class="result-snippet"
         link_matches = re.findall(
             r'<a[^>]+class="[^"]*result-link[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
             html_content,
@@ -217,9 +304,9 @@ class WebResearchEngine:
                     content = resp.text.strip()
                     # Strip excessive blank lines and markdown noise
                     content = re.sub(r"\n{3,}", "\n\n", content)
-                    # Limit each page to 2,000 chars to conserve context window
-                    if len(content) > 2000:
-                        content = content[:1950] + "\n...[truncated]"
+                    # Limit each page to 2,500 chars to conserve context window
+                    if len(content) > 2500:
+                        content = content[:2450] + "\n...[truncated]"
                     return content
         except Exception as e:
             logger.warning(f"Jina Reader fetch failed for {url}: {e}")
@@ -230,14 +317,12 @@ class WebResearchEngine:
                 resp = await client.get(url)
                 if resp.status_code == 200:
                     text = resp.text
-                    # Remove scripts and styles
                     text = re.sub(r"<(script|style)[^>]*>.*?</\1>", "", text, flags=re.DOTALL | re.IGNORECASE)
-                    # Extract paragraph text
                     paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", text, flags=re.DOTALL | re.IGNORECASE)
                     clean_paragraphs = [html.unescape(re.sub(r"<[^>]+>", "", p)).strip() for p in paragraphs if p.strip()]
-                    joined = "\n\n".join(clean_paragraphs[:5])
+                    joined = "\n\n".join(clean_paragraphs[:6])
                     if joined:
-                        return joined[:1500]
+                        return joined[:1800]
         except Exception as e:
             logger.warning(f"Direct page scrape fallback failed for {url}: {e}")
 
@@ -246,35 +331,44 @@ class WebResearchEngine:
     async def research_and_synthesize(self, query: str, session=None) -> str:
         """
         Execute the full research pipeline:
-        1. Query search engine
-        2. Fetch deep page markdown for top pages
-        3. Reason and synthesize through NARI's LLaMA model
+        1. Query search engine with recency heuristics
+        2. Rank URLs to select deep article permalinks
+        3. Fetch deep page markdown for top article candidates
+        4. Reason and synthesize through NARI's LLaMA model
         """
         # Step 1: Search
         search_results = await self.search(query)
 
-        # Step 2: Fetch deep content concurrently for the top results
-        enriched_pages = []
-        scrape_targets = search_results[:self.max_pages_to_scrape]
+        # Step 2: Prioritize deep article permalinks over homepages / category hubs
+        sorted_candidates = sorted(
+            search_results,
+            key=lambda r: self._score_url(r["url"]),
+            reverse=True,
+        )
+
+        scrape_targets = [r for r in sorted_candidates if self._score_url(r["url"]) > -50][:self.max_pages_to_scrape]
+        if not scrape_targets:
+            scrape_targets = search_results[:self.max_pages_to_scrape]
+
         scrape_tasks = [self.fetch_page_content(res["url"]) for res in scrape_targets]
         scraped_contents = await asyncio.gather(*scrape_tasks, return_exceptions=True)
 
+        scraped_map = {}
         for res, deep_content in zip(scrape_targets, scraped_contents):
-            actual_content = deep_content if isinstance(deep_content, str) and deep_content else res["snippet"]
-            enriched_pages.append({
-                "title": res["title"],
-                "url": res["url"],
-                "snippet": res["snippet"],
-                "full_content": actual_content,
-            })
+            if isinstance(deep_content, str) and len(deep_content.strip()) >= 150:
+                words = deep_content.split()
+                if len(words) >= 30:
+                    scraped_map[res["url"]] = deep_content
+                    continue
+            scraped_map[res["url"]] = res["snippet"]
 
-        # Add remaining snippets that weren't scraped deeply
-        for res in search_results[self.max_pages_to_scrape:]:
+        enriched_pages = []
+        for res in search_results:
             enriched_pages.append({
                 "title": res["title"],
                 "url": res["url"],
                 "snippet": res["snippet"],
-                "full_content": res["snippet"],
+                "full_content": scraped_map.get(res["url"], res["snippet"]),
             })
 
         # Step 3: Synthesis & Reasoning via LLaMA (if session & client available)
@@ -289,21 +383,34 @@ class WebResearchEngine:
                     model = pref_model or "meta/llama-3.2-11b-vision-instruct"
                     fallback_model = "deepseek-ai/deepseek-v4.1-flash"
 
-                    # Prepare research dossier for LLM
+                    # Prepare high-density research dossier for LLM
                     dossier_text = ""
                     for i, page in enumerate(enriched_pages, 1):
                         dossier_text += f"\n### Source {i}: {page['title']}\n"
                         dossier_text += f"URL: {page['url']}\n"
-                        dossier_text += f"Content:\n{page['full_content']}\n"
+                        dossier_text += f"Search Snippet: {page['snippet']}\n"
+                        if page['full_content'] and page['full_content'] != page['snippet']:
+                            dossier_text += f"Article Excerpt:\n{page['full_content']}\n"
 
                     synth_messages = [
                         {
                             "role": "system",
                             "content": (
-                                "You are NARI's Web Intelligence Synthesizer. Based on the user's research query and the retrieved "
-                                "web pages below, provide a direct, insightful, and well-reasoned answer. "
-                                "Synthesize key facts, evaluate conflicting points if any, and cite sources naturally using markdown links [Source Title](URL). "
-                                "Be concise, precise, and authoritative."
+                                "You are NARI's High-Density Web Intelligence Synthesizer. Your objective is to extract and summarize "
+                                "CONCRETE DATA, SPECIFIC BREAKTHROUGHS, TECHNICAL SPECIFICATIONS, ENTITY NAMES, AND ACTUAL EVENTS "
+                                "from the retrieved web evidence.\n\n"
+                                "CRITICAL RULES:\n"
+                                "1. ABSOLUTELY FORBIDDEN: NEVER output a directory or list of websites or publications (e.g. NEVER say "
+                                "'News is available on Cultamu', 'Updates can be found on Humanoid Press', or 'Source X provides articles'). "
+                                "The user asked WHAT the developments ARE, not where to read news.\n"
+                                "2. EXTRACT CONCRETE DATA: Report the actual entities, company names (e.g., Figure AI, Boston Dynamics, Unitree, "
+                                "Tesla, Agility Robotics, Sanctuary AI), robot models (e.g., Figure 02, Atlas, Optimus, G1), technical capabilities "
+                                "(degrees of freedom, battery life, tactile sensors, payloads, AI models used), and real-world milestones (deployments, tests, funding).\n"
+                                "3. STRUCTURE: Organize by key developments, companies, or breakthroughs using bold headers or bullet points. "
+                                "Embed markdown citations naturally at the end of statements, e.g., 'Figure AI announced deployment at BMW ([Figure AI News](url)).'\n"
+                                "4. SPARSE OR META EVIDENCE: If the retrieved web content only contains site headers or navigation links without deep event details, "
+                                "synthesize whatever factual clues exist in the snippets, highlight the active industry trends (e.g. commercial warehouse deployments, "
+                                "embodied AI foundation models, tactile dexterity), and state clearly what specific advancements are currently taking place."
                             ),
                         },
                         {
@@ -317,10 +424,10 @@ class WebResearchEngine:
                             client.chat.completions.create(
                                 model=model,
                                 messages=synth_messages,
-                                max_tokens=350,
+                                max_tokens=650,
                                 temperature=0.2,
                             ),
-                            timeout=6.0,
+                            timeout=8.0,
                         )
                     except Exception as model_err:
                         if model != fallback_model:
@@ -329,7 +436,7 @@ class WebResearchEngine:
                                 client.chat.completions.create(
                                     model=fallback_model,
                                     messages=synth_messages,
-                                    max_tokens=350,
+                                    max_tokens=650,
                                     temperature=0.2,
                                 ),
                                 timeout=18.0,
