@@ -173,8 +173,8 @@ else
 fi
 
 # ── NGINX ──
-log "Synchronizing Nginx configuration..."
-cat > /tmp/nari_nginx.conf <<NGINX
+sudo rm -f /tmp/nari_nginx.conf
+sudo tee /etc/nginx/sites-available/nari > /dev/null <<NGINX
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -221,9 +221,8 @@ server {
 }
 NGINX
 
-sudo cp /tmp/nari_nginx.conf /etc/nginx/sites-available/nari
 sudo ln -sf /etc/nginx/sites-available/nari /etc/nginx/sites-enabled/nari
-sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home
+sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/nari-home /tmp/nari_nginx.conf
 sudo nginx -t && ok "Nginx config valid." || { fail "Nginx config invalid — check manually."; exit 1; }
 
 # ── PYTHON DEPS & MIGRATIONS ──

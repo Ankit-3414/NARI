@@ -3,9 +3,10 @@
 Uses the OpenAI SDK configured to point to NVIDIA's API endpoint.
 """
 
+import asyncio
+import json
 from typing import Any, AsyncGenerator
 from openai import AsyncOpenAI
-import json
 
 from ..services.user_service import user_service
 from ..core.config import settings
