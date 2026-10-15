@@ -286,8 +286,8 @@ class WebResearchEngine:
                 if client:
                     from ..services.user_service import user_service
                     pref_model = user_service.get_decrypted_setting(session, "ai_model")
-                    model = pref_model or "deepseek-ai/deepseek-v4.1-flash"
-                    fallback_model = "meta/llama-3.2-11b-vision-instruct"
+                    model = pref_model or "meta/llama-3.2-11b-vision-instruct"
+                    fallback_model = "deepseek-ai/deepseek-v4.1-flash"
 
                     # Prepare research dossier for LLM
                     dossier_text = ""

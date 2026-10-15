@@ -380,7 +380,19 @@ def reminder_dismiss(args: argparse.Namespace) -> None:
 
 def tell_context(args: argparse.Namespace) -> None:
     ensure_ok(request("POST", "/context", {"text": args.text}))
-    print("NARI: Logged.")
+    if args.text.strip().endswith("?"):
+        print("NARI: Context logged. (Tip: To query the AI Co-pilot directly, use: nari ask \"<question>\")")
+    else:
+        print("NARI: Logged.")
+
+
+def ask_copilot(args: argparse.Namespace) -> None:
+    data = ensure_ok(request("POST", "/ai/chat", {"message": args.query}))
+    text = data.get("text", "")
+    action = data.get("action")
+    print(text)
+    if action:
+        print(f"\n[Action Executed: {action}]")
 
 
 def digest_context(args: argparse.Namespace) -> None:
@@ -398,9 +410,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="nari")
     sub = parser.add_subparsers(dest="command", required=True)
     
-    tell = sub.add_parser("tell")
+    tell = sub.add_parser("tell", help="Log personal behavioral facts or preferences into NARI memory.")
     tell.add_argument("text")
     tell.set_defaults(func=tell_context)
+
+    ask = sub.add_parser("ask", help="Directly query the NARI AI Co-pilot and Web Research engine.")
+    ask.add_argument("query", help="The question, directive, or web research query.")
+    ask.set_defaults(func=ask_copilot)
 
     digest = sub.add_parser("digest", help="Process and digest new context logs to extract semantic memories.")
     digest.set_defaults(func=digest_context)

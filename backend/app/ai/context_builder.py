@@ -16,13 +16,17 @@ from ..core.constants import EntityType
 from ..utils.privacy import redact_text_pii
 
 class ContextBuilder:
+    def __init__(self):
+        self._cached_project_meta = None
+
     def build_context_window(
         self, 
         session: Session, 
         current_query: str = "",
         latitude: float | None = None,
         longitude: float | None = None,
-        active_node_label: str | None = None
+        active_node_label: str | None = None,
+        is_pure_greeting: bool = False
     ) -> str:
         """Builds a string representation of the current context for the LLM."""
         from ..services.user_service import user_service
@@ -62,7 +66,7 @@ class ContextBuilder:
         context += "\n"
         
         # 2. Deep Knowledge (Dynamic Persona Injection)
-        if current_query:
+        if current_query and not is_pure_greeting and len(current_query.strip().split()) >= 2:
             try:
                 relevant_knowledge = semantic_memory.search_knowledge(session, current_query, limit=5)
                 if relevant_knowledge:
@@ -148,6 +152,9 @@ class ContextBuilder:
 
     def _get_project_meta(self) -> str:
         """Reads NARI's own README.md and PRODUCT.md to extract product purpose and roadmap features."""
+        if self._cached_project_meta is not None:
+            return self._cached_project_meta
+
         import os
         try:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -181,6 +188,7 @@ class ContextBuilder:
                 "- Active specifications:\n"
                 f"{roadmap_str}\n"
             )
+            self._cached_project_meta = meta
             return meta
         except Exception as e:
             return f"NARI ARCHITECTURE & ROADMAP: (Unable to read project files: {str(e)})\n"

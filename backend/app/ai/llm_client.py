@@ -19,8 +19,8 @@ logger = get_logger(__name__)
 class NIMClient:
     def __init__(self):
         self.base_url = "https://integrate.api.nvidia.com/v1"
-        self.model = "deepseek-ai/deepseek-v4.1-flash" # DeepSeek v4.1 Flash (configurable in settings)
-        self.fallback_model = "meta/llama-3.2-11b-vision-instruct"
+        self.model = "meta/llama-3.2-11b-vision-instruct" # Sub-second primary (NVIDIA NIM)
+        self.fallback_model = "deepseek-ai/deepseek-v4.1-flash"
 
     def _get_client(self, session) -> AsyncOpenAI | None:
         """Initialize the client using the securely stored key or environment fallback."""
@@ -114,7 +114,8 @@ class NIMClient:
             current_query=message,
             latitude=latitude,
             longitude=longitude,
-            active_node_label=active_node_label
+            active_node_label=active_node_label,
+            is_pure_greeting=is_pure_greeting
         )
         system_prompt = (
             "You are NARI (Not A Random Intelligence), Sir's Sovereign Personal AGI in its foundational evolutionary architecture. "

@@ -66,6 +66,23 @@ async def ai_chat(payload: ChatRequest, session: Session = Depends(get_session))
     )
     if "error" in result:
         return error_response("AI_CHAT_ERROR", result["error"])
+
+    # Reasonably log directive to ActivityLog for behavioral grounding
+    try:
+        from ...services.activity_service import activity_service
+        from ...core.constants import EntityType
+        from ...services.user_service import user_service
+        user = user_service.get_default_user(session)
+        activity_service.log(
+            session,
+            EntityType.USER,
+            user.id,
+            "copilot_interaction",
+            f"Directive: {payload.message[:160]}"
+        )
+    except Exception:
+        pass
+
     return success_response(result)
 
 

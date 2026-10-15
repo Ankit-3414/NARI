@@ -102,8 +102,8 @@ class ContextService:
                 raise ValueError("AI Client is offline (API Key not configured).")
 
             preferred_model = user_service.get_decrypted_setting(session, "ai_model")
-            active_model = preferred_model or "deepseek-ai/deepseek-v4.1-flash"
-            fallback_model = "meta/llama-3.2-11b-vision-instruct"
+            active_model = preferred_model or "meta/llama-3.2-11b-vision-instruct"
+            fallback_model = "deepseek-ai/deepseek-v4.1-flash"
 
             prompt = (
                 "You are NARI's cognitive memory consolidation parser. Your mission is to process raw experiential and behavioral context entries "
@@ -112,6 +112,10 @@ class ContextService:
                 "----------------------------\n"
                 + "\n".join(context_texts) +
                 "\n----------------------------\n\n"
+                "CRITICAL REASONABLE LOGGING FILTER:\n"
+                "- Explicitly IGNORE and DISCARD transient web search queries (e.g. 'What are the latest developments in...', 'Who won...', 'Search for...'), general curiosity questions, and ephemeral conversational greetings.\n"
+                "- DO NOT convert questions or search prompts into learned memory nodes.\n"
+                "- ONLY extract authentic, durable personal preferences, operational constraints, identity facts, and life directives stated by or about Sir/Ankit.\n\n"
                 "Format your output ONLY as a valid JSON array of objects. Do not include markdown code fence wrappers, preambles, or conversational filler. Each object in the array must have the following keys:\n"
                 "1. \"concept\": The core concept name (e.g. \"User Coffee Preference\", \"Morning Routine Rules\", \"Diet Allergies\"). Keep it concise and clean.\n"
                 "2. \"summary\": A clear, actionable summary of the fact, rule, preference, or habit.\n"
